@@ -9,8 +9,6 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
-import java.util.Date;
-
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Entity
@@ -37,10 +35,10 @@ public class BookInfo {
     private String description;
 
     @Column(name = "pub_date", nullable = false)
-    private Date pubDate;
+    private String pubDate;
 
     @Builder
-    public BookInfo(String isbn, String title, String author, String publisher, String image, String description, Date pubDate) {
+    public BookInfo(String isbn, String title, String author, String publisher, String image, String description, String pubDate) {
         this.isbn = isbn;
         this.title = title;
         this.author = author;

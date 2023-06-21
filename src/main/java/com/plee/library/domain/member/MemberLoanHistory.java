@@ -41,7 +41,7 @@ public class MemberLoanHistory {
     @ColumnDefault("false")
     private boolean isReturn;
 
-    @Column(name = "is_return")
+    @Column(name = "is_renew")
     @ColumnDefault("false")
     private boolean isRenew;
 

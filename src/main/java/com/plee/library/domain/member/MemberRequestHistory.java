@@ -1,5 +1,6 @@
 package com.plee.library.domain.member;
 
+import com.plee.library.domain.book.BookInfo;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Builder;
@@ -24,36 +25,25 @@ public class MemberRequestHistory {
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "member_seq")
+    @JoinColumn(name = "member_seq", nullable = false)
     private Member member;
 
-    @Column(length = 13, nullable = false)
-    private String isbn;
-
-    @Column(nullable = false)
-    private String title;
-
-    @Column(nullable = false)
-    private String author;
-
-    @Column(nullable = false)
-    private String description;
+    @OneToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "book_info_seq", nullable = false)
+    private BookInfo bookInfo;
 
     @CreatedDate
     @Column(name = "req_date")
     private LocalDateTime reqDate;
 
     @ColumnDefault("false")
-    @Column(name = "is_approved")
+    @Column(name = "is_approved", nullable = false)
     private boolean isApproved;
 
     @Builder
-    public MemberRequestHistory(Member member, String isbn, String title, String author, String description) {
+    public MemberRequestHistory(Member member, BookInfo bookInfo) {
         this.member = member;
-        this.isbn = isbn;
-        this.title = title;
-        this.author = author;
-        this.description = description;
+        this.bookInfo = bookInfo;
     }
 
     public void approve() {
