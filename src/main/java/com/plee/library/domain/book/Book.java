@@ -20,42 +20,19 @@ public class Book {
     @Column(name = "book_seq", updatable = false)
     private Long id;
 
-    @Column(nullable = false)
-    private String title;
+    @OneToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "book_info_isbn", nullable = false)
+    private BookInfo bookInfo;
 
-    @Column(nullable = false)
-    private String author;
-
-    @Column(nullable = false)
-    private String publisher;
-
-    @Column(length = 13, nullable = false, unique = true)
-    private String isbn;
-
-    @Column(nullable = false)
-    private String image;
-
-    @Column(nullable = false)
-    private String description;
-
-    @Column(name = "pub_date", nullable = false)
-    private Date pubDate;
-
-    @Column(nullable = false)
+    @Column(name = "stock", nullable = false)
     private int stock;
 
     @Column(name = "is_loanable", nullable = false)
     private boolean isLoanable;
 
     @Builder
-    public Book(String title, String author, String publisher, String isbn, String image, String description, Date pubDate, int stock, boolean isLoanable) {
-        this.title = title;
-        this.author = author;
-        this.publisher = publisher;
-        this.isbn = isbn;
-        this.image = image;
-        this.description = description;
-        this.pubDate = pubDate;
+    public Book(BookInfo bookInfo, int stock, boolean isLoanable) {
+        this.bookInfo = bookInfo;
         this.stock = stock;
         this.isLoanable = isLoanable;
     }

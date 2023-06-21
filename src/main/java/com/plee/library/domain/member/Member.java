@@ -15,30 +15,32 @@ import java.util.List;
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Entity
-@DynamicInsert
-@Table(name = "member", uniqueConstraints = {@UniqueConstraint(name = "login_id_emp_no_unique", columnNames = {"login_id", "emp_no"})})
+@Table(name = "member", uniqueConstraints = {@UniqueConstraint(name = "login_id_unique", columnNames = {"login_id"})})
 public class Member {
+
+    @PrePersist
+    public void setDefaultRole() {
+        if (this.role == null) {
+            this.role = Role.User;
+        }
+    }
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "member_seq", updatable = false)
     private Long id;
 
-    @Column(length = 25, nullable = false)
+    @Column(name = "name", length = 25, nullable = false)
     private String name;
 
-    @Column(length = 50, nullable = false, unique = true)
+    @Column(name = "login_id", length = 50, nullable = false, unique = true)
     private String loginId;
 
-    @Column(length = 15, nullable = false)
+    @Column(name ="password", length = 15, nullable = false)
     private String password;
 
-    @Column(length = 7, nullable = false)
-    private String empNo;
-
-    @ColumnDefault("'ROLE_USER'")
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
+    @Column(name = "role", nullable = false)
     private Role role;
 
     @OneToMany(mappedBy = "member", cascade = CascadeType.ALL, orphanRemoval = true)
@@ -52,11 +54,10 @@ public class Member {
     private LocalDateTime penaltyEndDate;
 
     @Builder
-    public Member(String name, String loginId, String password, String empNo) {
+    public Member(String name, String loginId, String password) {
         this.name = name;
         this.loginId = loginId;
         this.password = password;
-        this.empNo = empNo;
     }
 
     public void setRole(Role role) {
