@@ -1,16 +1,16 @@
 package com.plee.library.domain.book;
 
 import jakarta.persistence.*;
-import jakarta.validation.constraints.NotNull;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-
-import java.util.Date;
+import org.hibernate.annotations.ColumnDefault;
+import org.hibernate.annotations.DynamicInsert;
 
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
+@DynamicInsert
 @Entity
 @Table(name = "book")
 public class Book {
@@ -27,6 +27,7 @@ public class Book {
     @Column(name = "stock", nullable = false)
     private int stock;
 
+    @ColumnDefault("true")
     @Column(name = "is_loanable", nullable = false)
     private boolean isLoanable;
 

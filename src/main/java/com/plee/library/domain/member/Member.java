@@ -5,8 +5,6 @@ import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import org.hibernate.annotations.ColumnDefault;
-import org.hibernate.annotations.DynamicInsert;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -33,7 +31,7 @@ public class Member {
     @Column(name = "name", length = 25, nullable = false)
     private String name;
 
-    @Column(name = "login_id", length = 50, nullable = false, unique = true)
+    @Column(name = "login_id", length = 40, nullable = false, unique = true)
     private String loginId;
 
     @Column(name ="password", length = 20, nullable = false)
