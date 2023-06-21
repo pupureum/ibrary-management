@@ -36,7 +36,7 @@ public class Member {
     @Column(name = "login_id", length = 50, nullable = false, unique = true)
     private String loginId;
 
-    @Column(name ="password", length = 15, nullable = false)
+    @Column(name ="password", length = 20, nullable = false)
     private String password;
 
     @Enumerated(EnumType.STRING)
