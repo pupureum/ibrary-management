@@ -11,7 +11,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class AddMemberRequest {
 
-    @NotBlank
+    @NotEmpty
     @Size(min = 1, max = 25)
     private String name;
     @NotBlank
