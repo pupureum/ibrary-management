@@ -32,6 +32,9 @@ public class MemberRequestHistory {
     @JoinColumn(name = "book_info_seq", nullable = false)
     private BookInfo bookInfo;
 
+    @Column(name = "req_reason", length = 200, nullable = false)
+    private String reqReason;
+
     @CreatedDate
     @Column(name = "req_date")
     private LocalDateTime reqDate;
@@ -41,12 +44,13 @@ public class MemberRequestHistory {
     private boolean isApproved;
 
     @Builder
-    public MemberRequestHistory(Member member, BookInfo bookInfo) {
+    public MemberRequestHistory(Member member, BookInfo bookInfo, String reqReason) {
         this.member = member;
         this.bookInfo = bookInfo;
+        this.reqReason = reqReason;
     }
 
-    public void approve() {
+    public void doApprove() {
         this.isApproved = true;
     }
 }

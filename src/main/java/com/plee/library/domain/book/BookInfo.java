@@ -28,10 +28,10 @@ public class BookInfo {
     @Column(name = "publisher", nullable = false)
     private String publisher;
 
-    @Column(name = "image", nullable = false)
+    @Column(name = "image")
     private String image;
 
-    @Column(name = "description", nullable = false)
+    @Column(name = "description")
     private String description;
 
     @Column(name = "pub_date", nullable = false)
