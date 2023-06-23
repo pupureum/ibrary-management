@@ -47,15 +47,22 @@ public class Book {
         this.loanable_cnt = stock_amt;
     }
 
-    public void setStock_amt(int stock_amt) {
+    public void updateStockAmt(int stock_amt) {
         this.stock_amt = stock_amt;
     }
 
     public void decreaseLoanableCnt() {
         if (this.loanable_cnt < 1) {
-            throw new IllegalArgumentException("대출 가능한 도서가 없습니다.");
+            throw new IllegalStateException("더 이상 대출 가능한 도서가 없습니다.");
         }
         this.loanable_cnt--;
+    }
+
+    public void increaseLoanableCnt() {
+        if (this.loanable_cnt >= this.stock_amt) {
+            throw new IllegalStateException("대여 가능한 수량이 올바르지 않습니다.");
+        }
+        this.loanable_cnt++;
     }
 
 }

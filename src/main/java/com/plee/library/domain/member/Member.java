@@ -18,11 +18,11 @@ import java.util.List;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Entity
 @Table(name = "member", uniqueConstraints = {@UniqueConstraint(name = "login_id_unique", columnNames = {"login_id"})})
-public class Member implements UserDetails{
+public class Member implements UserDetails {
     @PrePersist
     public void setDefaultRole() {
         if (this.role == null) {
-            this.role = Role.User;
+            this.role = Role.Member;
         }
     }
 
@@ -37,7 +37,7 @@ public class Member implements UserDetails{
     @Column(name = "login_id", length = 40, nullable = false, unique = true)
     private String loginId;
 
-    @Column(name ="password", length = 20, nullable = false)
+    @Column(name = "password", length = 20, nullable = false)
     private String password;
 
     @Enumerated(EnumType.STRING)
@@ -59,6 +59,22 @@ public class Member implements UserDetails{
         this.name = name;
         this.loginId = loginId;
         this.password = password;
+    }
+
+    public void addBookRequest(BookInfo bookInfo, String reqReason) {
+        this.memberRequestHistories.add(new MemberRequestHistory(this, bookInfo, reqReason));
+    }
+
+    public void changeRole(Role role) {
+        this.role = role;
+    }
+
+    public void changePassword(String password) {
+        this.password = password;
+    }
+
+    public void changeName(String name) {
+        this.name = name;
     }
 
     @Override
@@ -89,13 +105,5 @@ public class Member implements UserDetails{
     @Override
     public boolean isEnabled() {
         return false;
-    }
-
-    public void setRole(Role role) {
-        this.role = role;
-    }
-
-    public void addBookRequest(BookInfo bookInfo, String reqReason) {
-        this.memberRequestHistories.add(new MemberRequestHistory(this, bookInfo, reqReason));
     }
 }

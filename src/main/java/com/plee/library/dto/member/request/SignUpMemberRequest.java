@@ -9,7 +9,7 @@ import lombok.NoArgsConstructor;
 @Getter
 @NoArgsConstructor
 @AllArgsConstructor
-public class AddMemberRequest {
+public class JoinMemberRequest {
 
     @NotEmpty
     @Size(min = 1, max = 25)
