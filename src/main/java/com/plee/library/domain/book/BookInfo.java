@@ -9,6 +9,8 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+import java.util.Objects;
+
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Entity
@@ -28,10 +30,10 @@ public class BookInfo {
     @Column(name = "publisher", nullable = false)
     private String publisher;
 
-    @Column(name = "image", nullable = false)
+    @Column(name = "image")
     private String image;
 
-    @Column(name = "description", nullable = false)
+    @Column(name = "description")
     private String description;
 
     @Column(name = "pub_date", nullable = false)
@@ -46,5 +48,18 @@ public class BookInfo {
         this.image = image;
         this.description = description;
         this.pubDate = pubDate;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        BookInfo bookInfo = (BookInfo) o;
+        return Objects.equals(isbn, bookInfo.isbn);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(isbn);
     }
 }
