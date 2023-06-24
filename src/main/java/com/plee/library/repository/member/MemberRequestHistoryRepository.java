@@ -5,8 +5,10 @@ import com.plee.library.domain.member.Member;
 import com.plee.library.domain.member.MemberRequestHistory;
 import org.springframework.data.jpa.repository.JpaRepository;
 
+import java.util.List;
 import java.util.Optional;
 
 public interface MemberRequestHistoryRepository extends JpaRepository<MemberRequestHistory, Long> {
     Optional<MemberRequestHistory> findByBookInfo(BookInfo bookInfo);
+    List<MemberRequestHistory> findAllByMember(Member member);
 }

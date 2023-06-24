@@ -22,7 +22,7 @@ class BookInfoRepositoryTest {
 
     @Test
     @DisplayName("도서 정보 생성 테스트")
-    public void createBookInfo() {
+    void createBookInfo() {
         // given
 //        BookInfo bookInfo = new AddBookRequest("9788994492032", "Java의 정석", "남궁성", "도우출판",
 //                "https://shopping-phinf.pstatic.net/main_3246668/32466681076.20230622071100.jpg", "책 소개입니다", "20160201", "reason").toEntity();
@@ -41,6 +41,7 @@ class BookInfoRepositoryTest {
 
         // then
         assertNotNull(savedBookInfo);
+        assertEquals(bookInfo, savedBookInfo);
         assertEquals(bookInfo.getIsbn(), savedBookInfo.getIsbn());
         assertEquals(bookInfo.getTitle(), savedBookInfo.getTitle());
         assertEquals(bookInfo.getAuthor(), savedBookInfo.getAuthor());
@@ -52,7 +53,7 @@ class BookInfoRepositoryTest {
 
     @Test
     @DisplayName("isbn으로 도서 정보 조회 테스트")
-    public void findBookInfoByIsbn() {
+    void findBookInfoByIsbn() {
         // given
         BookInfo bookInfo = BookInfo.builder()
                 .isbn("9788994492032")
@@ -66,23 +67,24 @@ class BookInfoRepositoryTest {
         bookInfoRepository.save(bookInfo);
 
         // when
-        BookInfo findBookInfo = bookInfoRepository.findById(bookInfo.getIsbn())
+        BookInfo foundBookInfo = bookInfoRepository.findById(bookInfo.getIsbn())
                 .orElse(null);
 
         // then
-        assertNotNull(findBookInfo);
-        assertEquals(bookInfo.getIsbn(), findBookInfo.getIsbn());
-        assertEquals(bookInfo.getTitle(), findBookInfo.getTitle());
-        assertEquals(bookInfo.getAuthor(), findBookInfo.getAuthor());
-        assertEquals(bookInfo.getPublisher(), findBookInfo.getPublisher());
-        assertEquals(bookInfo.getImage(), findBookInfo.getImage());
-        assertEquals(bookInfo.getDescription(), findBookInfo.getDescription());
-        assertEquals(bookInfo.getPubDate(), findBookInfo.getPubDate());
+        assertNotNull(foundBookInfo);
+        assertEquals(bookInfo, foundBookInfo);
+        assertEquals(bookInfo.getIsbn(), foundBookInfo.getIsbn());
+        assertEquals(bookInfo.getTitle(), foundBookInfo.getTitle());
+        assertEquals(bookInfo.getAuthor(), foundBookInfo.getAuthor());
+        assertEquals(bookInfo.getPublisher(), foundBookInfo.getPublisher());
+        assertEquals(bookInfo.getImage(), foundBookInfo.getImage());
+        assertEquals(bookInfo.getDescription(), foundBookInfo.getDescription());
+        assertEquals(bookInfo.getPubDate(), foundBookInfo.getPubDate());
     }
 
     @Test
     @DisplayName("저장된 도서 정보 전체 조회 테스트")
-    public void findAllBooksInfo() {
+    void findAllBooksInfo() {
         // given
         BookInfo bookInfo1 = BookInfo.builder()
                 .isbn("9788994492032")
@@ -116,8 +118,32 @@ class BookInfoRepositoryTest {
     }
 
     @Test
+    @DisplayName("특정 도서 저자 수정 테스트")
+    void updateBookInfo() {
+        // given
+        BookInfo bookInfo = BookInfo.builder()
+                .isbn("9788966261208")
+                .title("HTTP 완벽 가이드")
+                .author("안슈 아가왈")
+                .publisher("인사이트")
+                .image("https://shopping-phinf.pstatic.net/main_3246114/32461143685.20230606105115.jpg")
+                .description("책 소개입니다")
+                .pubDate("20141215")
+                .build();
+        bookInfoRepository.save(bookInfo);
+
+        // when
+        String newAuthor = "안슈 아가왈2";
+        bookInfo.updateAuthor(newAuthor);
+        BookInfo updatedBookInfo = bookInfoRepository.save(bookInfo);
+
+        // then
+        assertEquals(newAuthor, updatedBookInfo.getAuthor());
+    }
+
+    @Test
     @DisplayName("특정 도서 정보 삭제 테스트")
-    public void deleteBookInfo() {
+    void deleteBookInfo() {
         // given
         BookInfo bookInfo = BookInfo.builder()
                 .isbn("9788966261208")
@@ -132,10 +158,8 @@ class BookInfoRepositoryTest {
 
         // when
         bookInfoRepository.delete(bookInfo);
-        BookInfo findBookInfo = bookInfoRepository.findById(bookInfo.getIsbn())
-                .orElse(null);
 
         // then
-        assertNull(findBookInfo);
+        assertFalse(bookInfoRepository.existsById(bookInfo.getIsbn()));
     }
 }
