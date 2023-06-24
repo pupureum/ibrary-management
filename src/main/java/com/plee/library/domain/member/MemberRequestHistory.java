@@ -25,18 +25,18 @@ public class MemberRequestHistory {
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "member_seq", nullable = false)
+    @JoinColumn(name = "member_seq")
     private Member member;
 
-    @OneToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "book_info_seq", nullable = false)
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "book_info_isbn")
     private BookInfo bookInfo;
 
     @Column(name = "req_reason", length = 200, nullable = false)
     private String reqReason;
 
     @CreatedDate
-    @Column(name = "req_date")
+    @Column(name = "req_date", updatable = false)
     private LocalDateTime reqDate;
 
     @ColumnDefault("false")

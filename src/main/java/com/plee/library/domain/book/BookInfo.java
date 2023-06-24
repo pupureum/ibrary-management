@@ -50,6 +50,10 @@ public class BookInfo {
         this.pubDate = pubDate;
     }
 
+    public void updateAuthor(String author) {
+        this.author = author;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
