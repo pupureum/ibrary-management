@@ -5,7 +5,6 @@ import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import org.hibernate.annotations.DynamicInsert;
 import org.springframework.data.annotation.CreatedDate;
 
 import java.time.LocalDateTime;
@@ -25,8 +24,8 @@ public class Book {
     @JoinColumn(name = "book_info_isbn", nullable = false)
     private BookInfo bookInfo;
 
-    @Column(name = "stock_amt", nullable = false)
-    private int stock_amt;
+    @Column(name = "quantity", nullable = false)
+    private int quantity;
 
     @Column(name = "loanable_cnt", nullable = false)
     private int loanable_cnt;
@@ -39,14 +38,14 @@ public class Book {
     private LocalDateTime createdAt;
 
     @Builder
-    public Book(BookInfo bookInfo, int stock_amt) {
+    public Book(BookInfo bookInfo, int quantity) {
         this.bookInfo = bookInfo;
-        this.stock_amt = stock_amt;
-        this.loanable_cnt = stock_amt;
+        this.quantity = quantity;
+        this.loanable_cnt = quantity;
     }
 
-    public void updateStockAmt(int stock_amt) {
-        this.stock_amt = stock_amt;
+    public void setQuantity(int quantity) {
+        this.quantity = quantity;
     }
 
     public void decreaseLoanableCnt() {
@@ -57,7 +56,7 @@ public class Book {
     }
 
     public void increaseLoanableCnt() {
-        if (this.loanable_cnt >= this.stock_amt) {
+        if (this.loanable_cnt >= this.quantity) {
             throw new IllegalStateException("대여 가능한 수량이 올바르지 않습니다.");
         }
         this.loanable_cnt++;
