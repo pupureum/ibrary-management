@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>현인의 서재</title>
+    <link rel="stylesheet" th:href="@{/css/bootstrap.min.css}">
+    <link rel="stylesheet" th:href="@{/css/main.css}">
+    <link rel="stylesheet" th:href="@{/css/sidebar.css}">
+    <script th:src="@{/js/jquery-3.7.0.js}"></script>
+    <script th:src="@{/js/bootstrap.min.js}"></script>
+    <script th:src="@{/js/book.js}"></script>
+</head>
+
+<body>
+<div th:replace="~{fragments/header :: ~{header}}"/>
+<div class="container-fluid">
+    <div class="row">
+        <div th:replace="~{fragments/sidebar :: sidebar(${selectedMenu}, ${isAdmin})}"/>
+        <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
+            <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+                <h3 style="margin-top: 50px; margin-bottom: 30px; margin-left: 20px; font-family: SeoulNamsanM">사내 도서
+                    목록</h3>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                    <tr>
+                        <th scope="col" style="width: 11%; text-align: center">재고 수량</th>
+                        <th scope="col" style="width: 35%; text-align: center">제목</th>
+                        <th scope="col" style="width: 15%; text-align: center">저자</th>
+                        <th scope="col" style="width: 8%; text-align: center">출판사</th>
+                        <th scope="col" style="width: 18%; text-align: center">대출 중 / 대출 가능</th>
+                        <th scope="col" style="width: 5%; text-align: center">삭제</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr th:each="book : ${books}">
+                        <td>
+                            <input type="hidden" th:value="${book.id}" />
+                            <input class="label-style" min="1" max="9999" type="number" th:value="${book.quantity}" style="text-align: center"/>
+                            <button type="button" class="btn btn-sm btn btn-outline-primary update-quantity-btn" data-book-id="${book.id}" style="margin: 0 auto;">변경</button>
+                        </td>
+                        <td th:text="${book.bookInfo.title}" style="text-align: center"></td>
+                        <td th:text="${book.bookInfo.author}" style="text-align: center"></td>
+                        <td th:text="${book.bookInfo.publisher}" style="text-align: center"></td>
+                        <td style="text-align: center">
+                            <span th:text="${book.quantity - book.loanableCnt} + ' / ' + ${book.loanableCnt}"></span>
+                        </td>
+                        <td>
+                            <input type="hidden" th:value="${book.id}" />
+                            <button type="button" class="btn btn-sm btn-outline-danger delete-book-btn" data-book-id="${book.id}" style="margin: 0 auto;">삭제</button>
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </main>
+    </div>
+</div>
+
+
+</body>
+</html>

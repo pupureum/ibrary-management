@@ -24,19 +24,19 @@ public class BookInfo {
     @Column(name = "title", nullable = false)
     private String title;
 
-    @Column(name = "author", nullable = false)
+    @Column(name = "author")
     private String author;
 
-    @Column(name = "publisher", nullable = false)
+    @Column(name = "publisher")
     private String publisher;
 
     @Column(name = "image")
     private String image;
 
-    @Column(name = "description")
+    @Column(name = "description", columnDefinition = "TEXT")
     private String description;
 
-    @Column(name = "pub_date", nullable = false)
+    @Column(name = "pub_date")
     private String pubDate;
 
     @Builder

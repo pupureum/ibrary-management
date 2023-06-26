@@ -6,10 +6,12 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import java.time.LocalDateTime;
 
 @Getter
+@EntityListeners(AuditingEntityListener.class)
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Entity
 @Table(name = "book")
@@ -28,38 +30,44 @@ public class Book {
     private int quantity;
 
     @Column(name = "loanable_cnt", nullable = false)
-    private int loanable_cnt;
+    private int loanableCnt;
 
     @Version
     private Long version;
 
     @CreatedDate
-    @Column(name = "created_at", updatable = false)
+    @Column(name = "created_at")
     private LocalDateTime createdAt;
 
     @Builder
     public Book(BookInfo bookInfo, int quantity) {
         this.bookInfo = bookInfo;
         this.quantity = quantity;
-        this.loanable_cnt = quantity;
+        this.loanableCnt = quantity;
     }
 
     public void setQuantity(int quantity) {
+        int diff = quantity - this.quantity;
         this.quantity = quantity;
+        if (diff < 0) {
+            this.loanableCnt -= Math.abs(diff);
+            return;
+        }
+        this.loanableCnt += diff;
     }
 
     public void decreaseLoanableCnt() {
-        if (this.loanable_cnt < 1) {
+        if (this.loanableCnt < 1) {
             throw new IllegalStateException("더 이상 대출 가능한 도서가 없습니다.");
         }
-        this.loanable_cnt--;
+        this.loanableCnt--;
     }
 
     public void increaseLoanableCnt() {
-        if (this.loanable_cnt >= this.quantity) {
+        if (this.loanableCnt >= this.quantity) {
             throw new IllegalStateException("대여 가능한 수량이 올바르지 않습니다.");
         }
-        this.loanable_cnt++;
+        this.loanableCnt++;
     }
 
 }

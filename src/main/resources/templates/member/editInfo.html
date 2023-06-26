@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>현인의 서재</title>
+    <link rel="stylesheet" th:href="@{/css/bootstrap.min.css}" href="../../static/css/bootstrap.min.css">
+    <link rel="stylesheet" th:href="@{/css/main.css}">
+    <link rel="stylesheet" th:href="@{/css/sidebar.css}">
+    <script th:src="@{/js/bootstrap.min.js}"></script>
+<!--    <style>-->
+<!--        .center-content {-->
+<!--            display: flex;-->
+<!--            flex-direction: column;-->
+<!--            align-items: center;-->
+<!--            justify-content: center;-->
+<!--            min-height: 10vh;-->
+<!--            margin-bottom: 30px;-->
+<!--        }-->
+
+<!--        .form-group {-->
+<!--            margin-bottom: 40px;-->
+<!--            width: 370px;-->
+<!--        }-->
+
+<!--        .btn-lg {-->
+<!--            padding: 10px 60px;-->
+<!--            font-size: 18px;-->
+<!--            width: 300px;-->
+<!--        }-->
+<!--    </style>-->
+</head>
+<body>
+<div th:replace="~{fragments/header :: ~{header}}"/>
+<div class="container-fluid">
+    <div class="row">
+        <div th:replace="~{fragments/sidebar :: sidebar(${selectedMenu}, ${isAdmin})}"/>
+        <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
+            <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+                <h3 style="margin-top: 50px; margin-bottom: 30px; margin-left: 20px; font-family: SeoulNamsanM">개인 정보
+                    수정</h3>
+            </div>
+            <form id="updateForm" th:action="@{/update}" th:object="${userInfoDto}" method="post">
+                <div class="center-content">
+                    <div class="form-group">
+                        <label for="number" style="margin-bottom: 17px" margin>사원 번호</label>
+                        <input type="text" id="number" name="number" value="${user.number}" readonly
+                               class="form-control">
+                        <!--                    th 나중에 다 넣어주자!-->
+                        <!--                    <input type="hidden" name="oldEmail" th:value="${user.email}">-->
+                    </div>
+                    <div class="form-group">
+                        <label for="email" style="margin-bottom: 17px" margin>이메일</label>
+                        <input type="text" id="email" name="email" value="${user.email}" readonly class="form-control">
+                        <input type="hidden" name="oldEmail" value="${user.email}">
+                        <!--                    th 나중에 다 넣어주자!-->
+                        <!--                    <input type="hidden" name="oldEmail" th:value="${user.email}">-->
+                    </div>
+                    <div class="form-group">
+                        <label for="name" style="margin-bottom: 17px">이름</label>
+                        <input type="text" id="name" name="name" value="${user.name}" class="form-control">
+                        <input type="hidden" name="oldName" value="${user.name}">
+                    </div>
+                    <div class="form-group">
+                        <label for="password" style="margin-bottom: 17px">비밀번호</label>
+                        <input type="password" id="password" name="password" class="form-control">
+                    </div>
+                    <button type="submit" class="btn btn-primary btn-lg">수정</button>
+                </div>
+            </form>
+        </main>
+
+    </div>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+<script>
+    // 폼 제출 시 이벤트 처리
+    document.getElementById("updateForm").addEventListener("submit", function (event) {
+        var form = document.getElementById("updateForm");
+        // event.preventDefault(); // 기본 동작(폼 제출) 중지
+        //
+        // // 폼 데이터 가져오기
+        // var form = event.target;
+        var formData = new FormData(form);
+
+        // AJAX를 통한 수정 요청
+        axios.post(form.action, formData)
+            .then(function (response) {
+                // 수정이 성공적으로 처리되었을 때의 처리
+                // 페이지 리디렉션 등을 수행할 수 있습니다.
+                window.location.href = response.request.responseURL;
+            })
+            .catch(function (error) {
+                // 수정에 실패했을 때의 처리
+                console.error("수정 실패");
+            });
+    });
+</script>
+<!--<script th:src="@{/js/user.js}"></script>-->
+</body>
+</html>
+
+</body>
+</html>

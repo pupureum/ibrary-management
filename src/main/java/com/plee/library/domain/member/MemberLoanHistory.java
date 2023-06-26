@@ -9,6 +9,7 @@ import lombok.NoArgsConstructor;
 import org.hibernate.annotations.ColumnDefault;
 import org.hibernate.annotations.DynamicInsert;
 import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import java.time.LocalDateTime;
 
@@ -16,6 +17,7 @@ import static com.plee.library.domain.member.MemberLoanHistoryConstants.LOANABLE
 import static com.plee.library.domain.member.MemberLoanHistoryConstants.RENEWAL_LIMIT;
 
 @Getter
+@EntityListeners(AuditingEntityListener.class)
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Entity
 @DynamicInsert
@@ -40,11 +42,11 @@ public class MemberLoanHistory {
     private boolean isRenew;
 
     @CreatedDate
-    @Column(name = "loan_date", updatable = false)
-    private LocalDateTime loanDate;
+    @Column(name = "loaned_at")
+    private LocalDateTime loanedAt;
 
     @Column(name = "return_date")
-    private LocalDateTime returnDate;
+    private LocalDateTime returnAt;
 
     @Builder
     public MemberLoanHistory(Member member, BookInfo bookInfo) {
@@ -57,11 +59,11 @@ public class MemberLoanHistory {
     }
 
     public void doReturn() {
-        this.returnDate = LocalDateTime.now();
+        this.returnAt = LocalDateTime.now();
     }
 
     public boolean isOverDue() {
-        LocalDateTime dueDate = loanDate.plusDays(isRenew ? RENEWAL_LIMIT : LOANABLE_DAYS);
+        LocalDateTime dueDate = loanedAt.plusDays(isRenew ? RENEWAL_LIMIT : LOANABLE_DAYS);
         LocalDateTime now = LocalDateTime.now();
         return now.isAfter(dueDate);
     }

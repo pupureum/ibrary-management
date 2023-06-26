@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>현인의 서재</title>
+    <link rel="stylesheet" th:href="@{/css/bootstrap.min.css}" href="../../static/css/bootstrap.min.css">
+    <link rel="stylesheet" th:href="@{/css/main.css}">
+    <link rel="stylesheet" th:href="@{/css/sidebar.css}">
+    <script th:src="@{/js/bootstrap.min.js}"></script>
+</head>
+
+<body>
+<div th:replace="~{fragments/header :: ~{header}}"/>
+<div class="container-fluid">
+    <div class="row">
+        <div th:replace="~{fragments/sidebar :: sidebar(${selectedMenu}, ${isAdmin})}"/>
+        <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
+            <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+                <h3 style="margin-top: 50px; margin-bottom: 30px; margin-left: 20px; font-family: SeoulNamsanM">사용자
+                    관리</h3>
+                <form th:action="@{/book/search}" method="get">
+                    <div class="btn-toolbar mb-2 mb-md-2">
+                        <div class="input-group">
+                            <input type="text" class="form-control mb-7" style="width: 400px;" id="keyword"
+                                   placeholder="권한을 변경할 사용자의 이름 또는 아이디를 입력하세요!">
+                            <div>
+                                <button type="submit" class="btn btn-outline-primary">검색</button>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                    <tr>
+                        <th scope="col" style="width: 10%">사원 번호</th>
+                        <th scope="col" style="width: 10%">이름</th>
+                        <th scope="col" style="width: 15%">아이디</th>
+                        <th scope="col" style="width: 15%">권한</th>
+                        <th scope="col" style="width: 20%">권한 수정 / 삭제</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr th:each="user : ${users}">
+                        <td th:text="${user.id}"></td>
+                        <td th:text="${user.name}"></td>
+                        <td th:text="${user.email}"></td>
+                        <td>
+<!--                            <div th:each="type : ${roleTypes}" class="form-check form-check-inline">-->
+<!--                                <input type="radio" th:id="${'role-' + user.id}" th:name="${'role-' + user.id}"-->
+<!--                                       th:value="${type.name()}"-->
+<!--                                       th:checked="${user.role == type}">-->
+<!--                                <label th:text="${type.type}" class="form-check-label"></label>-->
+<!--                            </div>-->
+                        </td>
+                        <td>
+                            <button type="button" class="btn btn-sm btn-outline-secondary update-role-btn">수정</button>
+<!--                            <button type="button" class="btn btn-sm btn-outline-danger delete-user-btn"-->
+<!--                                    th:data-username="${user.name}">삭제-->
+<!--                            </button>-->
+                            <button type="button" class="btn btn-sm btn-outline-danger delete-user-btn"
+                                    th:attr="data-username=${user.name}">삭제
+                            </button>
+
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </main>
+    </div>
+</div>
+
+<script th:inline="javascript">
+    // 페이지가 로드될 때 실행되는 초기화 함수
+    window.onload = function () {
+        // 수정 버튼들에 클릭 이벤트 리스너 추가
+        var updateBtns = document.getElementsByClassName('update-role-btn');
+        for (var i = 0; i < updateBtns.length; i++) {
+            updateBtns[i].addEventListener('click', updateRole);
+        }
+
+        // 삭제 버튼들에 클릭 이벤트 리스너 추가
+        var deleteBtns = document.getElementsByClassName('delete-user-btn');
+        for (var i = 0; i < deleteBtns.length; i++) {
+            deleteBtns[i].addEventListener('click', confirmDeleteUser);
+        }
+    }
+
+    // 역할 업데이트 함수
+    function updateRole(event) {
+        var clickedBtn = event.target;
+        var radioInput = clickedBtn.parentNode.parentNode.querySelector('input[type="radio"]:checked');
+        if (radioInput) {
+            var username = clickedBtn.getAttribute('data-username');
+            var role = clickedBtn.getAttribute('data-role');
+
+            // AJAX를 사용하여 서버에 역할 업데이트 요청 보내기
+            var xhr = new XMLHttpRequest();
+            xhr.open('POST', '/update-role', true);
+            xhr.setRequestHeader('Content-Type', 'application/json');
+            xhr.onreadystatechange = function () {
+                if (xhr.readyState === 4 && xhr.status === 200) {
+                    // 업데이트 성공 시 처리할 로직 작성
+                    // 예: 성공 메시지 표시, 페이지 리로드 등
+                } else {
+                    // 업데이트 실패 시 처리할 로직 작성
+                    // 예: 실패 메시지 표시, 오류 처리 등
+                }
+            };
+
+            // 서버에 보낼 데이터 설정
+            var data = JSON.stringify({
+                username: username,
+                role: role
+            });
+
+            // 요청 보내기
+            xhr.send(data);
+        }
+        location.reload();
+    }
+
+    // 사용자 삭제 확인 함수
+    function confirmDeleteUser(event) {
+        var clickedBtn = event.target;
+        var username = clickedBtn.getAttribute('data-username');
+
+
+        // 삭제 확인 메시지 출력
+        var message = '사용자 "' + username + '"을 삭제하시겠습니까?';
+        var result = confirm(message);
+        if (result) {
+            // 사용자가 확인 버튼을 눌렀을 경우, 삭제 요청 보내기
+            deleteUser(username);
+        } else {
+            // 사용자가 취소 버튼을 눌렀을 경우, 아무 동작 없음
+        }
+        // // 확인 창 띄우기
+        // var result = confirm('사용자를 삭제하시겠습니까?');
+        // if (result) {
+        //     // 사용자가 확인 버튼을 눌렀을 경우, 삭제 요청 보내기
+        //     deleteUser(username);
+        // } else {
+        //     // 사용자가 취소 버튼을 눌렀을 경우, 아무 동작 없음
+        // }
+    }
+
+    // 사용자 삭제 함수
+    function deleteUser(event) {
+        var clickedBtn = event.target;
+        var username = clickedBtn.getAttribute('data-username');
+
+        // AJAX를 사용하여 서버에 사용자 삭제 요청 보내기
+        var xhr = new XMLHttpRequest();
+        xhr.open('POST', '/delete-user', true);
+        xhr.setRequestHeader('Content-Type', 'application/json');
+        xhr.onreadystatechange = function () {
+            if (xhr.readyState === 4 && xhr.status === 200) {
+                // 삭제 성공 시 처리할 로직 작성
+                // 예: 성공 메시지 표시, 페이지 리로드 등
+                location.reload();
+            } else {
+                // 삭제 실패 시 처리할 로직 작성
+                // 예: 실패 메시지 표시, 오류 처리 등
+            }
+        };
+
+        // 서버에 보낼 데이터 설정
+        var data = JSON.stringify({
+            username: username
+        });
+
+        // 요청 보내기
+        xhr.send(data);
+    }
+</script>
+
+<!--<script type="text/javascript">-->
+<!--    function updateRole(userId, role) {-->
+<!--        // AJAX를 사용하여 서버에 역할 업데이트 요청을 보낸다-->
+<!--        // userId와 role을 서버로 전송하고 역할을 업데이트한다.-->
+<!--        // 업데이트가 완료되면 페이지를 새로고침한다.-->
+<!--        // 아래는 AJAX 요청을 보내는 예시 코드이다.-->
+
+<!--        var xhr = new XMLHttpRequest();-->
+<!--        xhr.open('POST', '/user/updateRole', true);-->
+<!--        xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');-->
+<!--        xhr.onreadystatechange = function () {-->
+<!--            if (xhr.readyState === 4 && xhr.status === 200) {-->
+<!--                // 업데이트 완료 후 페이지 새로고침-->
+<!--                location.reload();-->
+<!--            }-->
+<!--        };-->
+<!--        xhr.send('userId=' + userId + '&role=' + role);-->
+<!--    }-->
+<!--</script>-->
+
+</body>
+</html>

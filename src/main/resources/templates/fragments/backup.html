@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="utf-8">
+  <title>현인의 서재</title>
+  <link th:href="@{/css/bootstrap.min.css}"
+        href="../../static/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    body {
+      background-color: white;
+    }
+
+    .header {
+      background-color: #6abfee;
+      padding: 25px;
+    }
+
+    .header-title {
+      font-size: 30px;
+      font-weight: bold;
+      color: whitesmoke;
+    }
+
+    .header-search {
+      width: 300px;
+    }
+
+    .header-buttons button {
+      margin-left: 10px;
+    }
+  </style>
+</head>
+<body>
+  <header class="header">
+    <div class="container">
+      <div class="row align-items-center">
+        <div class="col-auto">
+          <img src="logo.png" alt="현대오토에버 로고">
+        </div>
+        <div class="col">
+          <div class="header-title">현인의 서재</div>
+        </div>
+        <div class="col">
+          <input type="text" class="form-control header-search" placeholder="제목 또는 저자를 입력해주세요!">
+        </div>
+        <div class="col-auto">
+          <a href="login.html" class="btn btn-primary">Login</a>
+          <a href="signup.html" class="btn btn-primary">Signup</a>
+        </div>
+      </div>
+    </div>
+  </header>
+
+<!-- 본문 내용 -->
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.1.0/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

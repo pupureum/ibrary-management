@@ -3,18 +3,20 @@ package com.plee.library.dto.book.request;
 import com.plee.library.domain.book.BookInfo;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotEmpty;
+import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.hibernate.validator.constraints.ISBN;
 
 @Getter
 @NoArgsConstructor
 @AllArgsConstructor
-public class AddBookInfoRequest {
+public class AddBookRequest {
 
     @NotBlank
-    @Size(min = 13, max = 13)
+    @ISBN
     private String isbn;
 
     @NotEmpty
@@ -35,7 +37,11 @@ public class AddBookInfoRequest {
     @NotEmpty
     private String pubDate;
 
-    public BookInfo toBookInfoEntity() {
+    @NotNull
+    @Size(min = 1, max = 200)
+    private String reqReason;
+
+    public BookInfo toEntity() {
         return BookInfo.builder()
                 .isbn(this.isbn)
                 .title(this.title)

@@ -21,14 +21,12 @@
             text-align: center;
             font-family: 'SeoulNamsanM', sans-serif;
         }
-
         .book-item {
             margin-bottom: 20px;
         }
-
         .book-image {
-            width: 220px;
-            height: 250px;
+            width: 250px;
+            height: 280px;
         }
     </style>
 </head>
@@ -104,31 +102,31 @@
                     <div class="form-group center-content">
                         <div>
                             <label for="selectedBookIsbn" class="label-style">ISBN:</label>
-                            <input type="text" id="selectedBookIsbn" name="isbn" th:value="${saveBookRequest.isbn}"
+                            <input type="text" id="selectedBookIsbn" name="isbn" value="${saveBookRequest.isbn}"
                                    readonly>
                         </div>
                         <div>
                             <label for="selectedBookTitle" class="label-style">제목:</label>
-                            <input type="text" id="selectedBookTitle" name="title" th:value="${saveBookRequest.title}"
+                            <input type="text" id="selectedBookTitle" name="title" value="${saveBookRequest.title}"
                                    readonly>
                         </div>
                         <div>
                             <label for="selectedBookAuthor" class="label-style">저자:</label>
                             <input type="text" id="selectedBookAuthor" name="author"
-                                   th:value="${saveBookRequest.author}" readonly>
+                                   value="${saveBookRequest.author}" readonly>
                         </div>
                         <div>
                             <label for="selectedBookPublisher" class="label-style">출판사:</label>
                             <input type="text" id="selectedBookPublisher" name="publisher"
-                                   th:value="${saveBookRequest.publisher}" readonly>
+                                   value="${saveBookRequest.publisher}" readonly>
                         </div>
                         <input type="hidden" id="selectedBookDescription" name="description"
-                               th:value="${saveBookRequest.description}">
-                        <input type="hidden" id="selectedBookImage" name="image" th:value="${saveBookRequest.image}">
+                               value="${saveBookRequest.description}">
+                        <input type="hidden" id="selectedBookImage" name="image" value="${saveBookRequest.image}">
                         <div>
                             <label for="selectedBookPubDate" class="label-style">출판일:</label>
                             <input type="text" id="selectedBookPubDate" name="pubDate"
-                                   th:value="${saveBookRequest.pubDate}" readonly>
+                                   value="${saveBookRequest.pubDate}" readonly>
                         </div>
                         <div>
                             <label for="quantity">재고 수량:</label>

@@ -51,8 +51,8 @@ public class Member implements UserDetails {
     private List<MemberRequestHistory> memberRequestHistories = new ArrayList<MemberRequestHistory>();
 
 
-    @Column(name = "penalty_end_date")
-    private LocalDateTime penaltyEndDate;
+    @Column(name = "penalty_end_at")
+    private LocalDateTime penaltyEndAt;
 
     @Builder
     public Member(String name, String loginId, String password) {

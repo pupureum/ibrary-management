@@ -9,10 +9,12 @@ import lombok.NoArgsConstructor;
 import org.hibernate.annotations.ColumnDefault;
 import org.hibernate.annotations.DynamicInsert;
 import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import java.time.LocalDateTime;
 
 @Getter
+@EntityListeners(AuditingEntityListener.class)
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @DynamicInsert
 @Entity
@@ -32,12 +34,12 @@ public class MemberRequestHistory {
     @JoinColumn(name = "book_info_isbn")
     private BookInfo bookInfo;
 
-    @Column(name = "req_reason", length = 200, nullable = false)
+    @Column(name = "request_reason", length = 200, nullable = false)
     private String reqReason;
 
     @CreatedDate
-    @Column(name = "req_date", updatable = false)
-    private LocalDateTime reqDate;
+    @Column(name = "requested_at")
+    private LocalDateTime reqAt;
 
     @ColumnDefault("false")
     @Column(name = "is_approved", nullable = false)
