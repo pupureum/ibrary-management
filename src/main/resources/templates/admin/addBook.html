@@ -34,7 +34,7 @@
 <div th:replace="~{fragments/header :: ~{header}}"/>
 <div class="container-fluid">
     <div class="row">
-        <div th:replace="~{fragments/sidebar :: sidebar(${selectedMenu}, ${isAdmin})}"/>
+        <div th:replace="~{fragments/sidebar :: sidebar(${selectedMenu})}"/>
         <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
             <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
                 <h3 style="margin-top: 50px; margin-bottom: 30px; margin-left: 20px; font-family: SeoulNamsanM">신규 도서
@@ -98,7 +98,8 @@
 
             <!-- 선택한 책 정보를 담을 폼 -->
             <div class="center-content">
-                <form id="selectedBookForm" th:action="@{/admin/new-book}" method="post" class="form-group">
+                <form id="selectedBookForm" method="post" class="form-group">
+<!--                <form id="selectedBookForm" th:action="@{/admin/new-book}" method="post" class="form-group">-->
                     <div class="form-group center-content">
                         <div>
                             <label for="selectedBookIsbn" class="label-style">ISBN:</label>

@@ -67,4 +67,8 @@ public class MemberLoanHistory {
         LocalDateTime now = LocalDateTime.now();
         return now.isAfter(dueDate);
     }
+
+    public boolean isReturned() {
+        return returnAt != null;
+    }
 }
