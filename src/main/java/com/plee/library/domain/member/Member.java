@@ -6,25 +6,19 @@ import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.ColumnDefault;
+import org.hibernate.annotations.DynamicInsert;
 
-import java.time.LocalDateTime;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Entity
+@DynamicInsert
 @Table(name = "member", uniqueConstraints = {@UniqueConstraint(name = "login_id_unique", columnNames = {"login_id"})})
 public class Member {
-    @PrePersist
-    public void setDefaultRole() {
-        if (this.role == null) {
-            this.role = Role.Member;
-        }
-//        if (this.role == null) {
-//            this.role = Role.Admin;
-//        }
-    }
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -41,6 +35,7 @@ public class Member {
     private String password;
 
     @Enumerated(EnumType.STRING)
+    @ColumnDefault("'MEMBER'")
     @Column(name = "role", nullable = false)
     private Role role;
 
@@ -53,8 +48,9 @@ public class Member {
     @OneToMany(mappedBy = "member", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<MemberBookmark> memberBookmarks = new ArrayList<MemberBookmark>();
 
-    @Column(name = "penalty_end_at")
-    private LocalDateTime penaltyEndAt;
+    // TODO 수정 필요
+//    @Column(name = "penalty_end_at")
+//    private LocalDate penaltyEndAt;
 
     @Builder
     public Member(String name, String loginId, String password) {
@@ -80,18 +76,10 @@ public class Member {
     }
 
     public void loanBook(BookInfo bookInfo) {
-        if (this.memberLoanHistories.stream().anyMatch(history -> history.getBookInfo().equals(bookInfo) &&
-                !history.isReturned())) {
-            throw new IllegalArgumentException("이미 대여중인 책입니다.: " + loginId);
-        }
         this.memberLoanHistories.add(new MemberLoanHistory(this, bookInfo));
     }
 
-    public void returnBook(BookInfo bookInfo) {
-        MemberLoanHistory targetHistory = this.memberLoanHistories.stream()
-                .filter(history -> history.getBookInfo().equals(bookInfo) && !history.isReturned())
-                .findFirst()
-                .orElseThrow(() -> new IllegalArgumentException("대출 기록을 찾을 수 없습니다."));
+    public void returnBook(MemberLoanHistory targetHistory) {
         targetHistory.doReturn();
     }
 

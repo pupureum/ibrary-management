@@ -16,7 +16,10 @@ import java.time.LocalDateTime;
 @EntityListeners(AuditingEntityListener.class)
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Entity
-@Table(name = "member_bookmark")
+@Table(name = "member_bookmark",
+        uniqueConstraints = {
+                @UniqueConstraint(name = "member_book_info_unique", columnNames = {"member_seq", "book_info_isbn"})
+        })
 public class MemberBookmark {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

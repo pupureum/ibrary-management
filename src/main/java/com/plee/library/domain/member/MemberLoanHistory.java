@@ -11,6 +11,7 @@ import org.hibernate.annotations.DynamicInsert;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 import static com.plee.library.domain.member.MemberLoanHistoryConstants.LOANABLE_DAYS;
@@ -45,8 +46,8 @@ public class MemberLoanHistory {
     @Column(name = "loaned_at")
     private LocalDateTime loanedAt;
 
-    @Column(name = "return_date")
-    private LocalDateTime returnAt;
+    @Column(name = "returned_at")
+    private LocalDateTime returnedAt;
 
     @Builder
     public MemberLoanHistory(Member member, BookInfo bookInfo) {
@@ -59,16 +60,20 @@ public class MemberLoanHistory {
     }
 
     public void doReturn() {
-        this.returnAt = LocalDateTime.now();
+        this.returnedAt = LocalDateTime.now();
     }
 
-    public boolean isOverDue() {
-        LocalDateTime dueDate = loanedAt.plusDays(isRenew ? RENEWAL_LIMIT : LOANABLE_DAYS);
-        LocalDateTime now = LocalDateTime.now();
-        return now.isAfter(dueDate);
+    public boolean isRenewable() {
+        return !isRenew;
     }
+
+//    public boolean isOverDue() {
+//        LocalDate dueDate = loanedAt.plusDays(isRenew ? RENEWAL_LIMIT : LOANABLE_DAYS);
+//        LocalDate now = LocalDate.now();
+//        return now.isAfter(dueDate);
+//    }
 
     public boolean isReturned() {
-        return returnAt != null;
+        return returnedAt != null;
     }
 }
