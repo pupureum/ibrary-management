@@ -20,13 +20,13 @@
                 <ul class="nav flex-column">
                     <a>Book</a>
                     <li class="nav-item">
-                        <a class="nav-link" th:href="@{/book}">
+                        <a class="nav-link" th:href="@{/books}">
                             <span data-feather="home" class="align-text-bottom"></span>
                             전체 도서 목록
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" th:href="@{/member/request}">
+                        <a class="nav-link" th:href="@{/books/request}">
                             <span data-feather="file" class="align-text-bottom"></span>
                             도서 신청
                         </a>
@@ -34,13 +34,13 @@
                     <hr/>
                     <a>MyPage</a>
                     <li class="nav-item">
-                        <a class="nav-link" th:href="@{/member/loan-history}">
+                        <a class="nav-link" th:href="@{/books/loan}">
                             <span data-feather="shopping-cart" class="align-text-bottom"></span>
                             대여 기록
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" th:href="@{/member/request-history}">
+                        <a class="nav-link" th:href="@{/books/request-history}">
                             <span data-feather="users" class="align-text-bottom"></span>
                             도서 신청 내역
                         </a>
@@ -51,7 +51,7 @@
                             개인 정보 수정
                         </a>
                     </li>
-                    <div sec:authorize="hasRole('Admin')">
+                    <div sec:authorize="hasRole('ROLE_ADMIN')">
                         <hr/>
                         <a>AdminPage</a>
                         <li class="nav-item">
@@ -156,7 +156,7 @@
                             th:if="${bookLoaned}">
                         대출중
                     </button>
-                    <form th:if="${book.loanableCnt > 0 and !bookLoaned}" method="post" action="/book/loan">
+                    <form th:if="${book.loanableCnt > 0 and !bookLoaned}" method="post" action="/books/loan">
                         <input type="hidden" name="bookId" th:value="${book.id}"/>
                         <button type="submit" class="btn btn-lg btn btn-outline-primary loan-book-btn">
                             대출하기

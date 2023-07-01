@@ -17,8 +17,10 @@
         <div th:replace="~{fragments/sidebar :: sidebar(${selectedMenu})}"/>
         <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
             <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
-                <h6 th:text="'총 ' + ${totalCount} + '권이 있어요!'"></h6>
-                <form th:action="@{/book/search}" method="get">
+                <h6>
+                    <span th:text="'총 ' + ${#lists.size(books)} + '권이 있어요!'"></span>
+                </h6>
+                <form th:action="@{/books/search}" method="get">
                     <div class="btn-toolbar mb-2 mb-md-2">
                         <div class="input-group">
                             <input type="text" class="form-control mb-7" style="width: 250px;" id="keyword"
@@ -50,7 +52,7 @@
                         </td>
                         <td>
                             <div>
-                                <a th:href="@{/book/{bookId}(bookId=${book.id})}" style="text-align: center; font-size: 20px; font-weight: bold; font-family: 'Pretendard-Regular'; cursor: pointer;
+                                <a th:href="@{/books/{bookId}(bookId=${book.id})}" style="text-align: center; font-size: 20px; font-weight: bold; font-family: 'Pretendard-Regular'; cursor: pointer;
                                     text-decoration: none;">
                                     <span th:text="${book.bookInfo.title}"></span>
                                 </a>
@@ -70,10 +72,10 @@
                             </div>
                         </td>
                         <td>
-                            <form th:action="@{/book/{bookId}(bookId=${book.id})}" method="get">
+                            <form th:action="@{/books/{bookId}(bookId=${book.id})}" method="get">
                                 <input type="hidden" name="bookId" th:value="${book.id}"/>
                                 <button type="submit" class="btn btn-sm btn btn-outline-primary loan-book-btn"
-                                        th:if="${book.loanableCnt > 0}">대출하러 가기
+                                        th:if="${book.loanableCnt > 0}" style="margin-top: 70px;">대출하러<br>가기
                                 </button>
                             </form>
                             <!--                            <button type="button" class="btn btn-sm btn btn-outline-primary loan-book-btn"-->
@@ -82,7 +84,7 @@
                             <!--                            </button>-->
                             <button type="button" class="btn btn-sm btn-outline-dark" disabled="disabled"
                                     th:unless="${book.loanableCnt > 0}"
-                                    style="margin-top: 70px;">대출불가
+                                    style="margin-top: 70px;">대출불가<br>
                             </button>
                             <button type="button" class="btn btn-sm like-book-btn"
                                     style="margin-top: 20px; margin-left: 10px; border-color: hotpink;">
