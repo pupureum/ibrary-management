@@ -1,0 +1,18 @@
+#selectedBookForm {
+    display: none;
+    font-family: 'SeoulNamsanM', sans-serif;
+}
+.modal-body {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    font-family: 'SeoulNamsanM', sans-serif;
+}
+.book-item {
+    margin-bottom: 20px;
+}
+.book-image {
+    width: 250px;
+    height: 280px;
+}

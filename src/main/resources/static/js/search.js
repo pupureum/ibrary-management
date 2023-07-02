@@ -9,44 +9,38 @@ $(function () {
 
         $.ajax({
             type: 'GET',
-            url: 'api/book',
+            url: '/books/api/book',
             data: {keyword: keyword},
             dataType: 'json',
             success: function (response) {
-                // 요청 성공 시 도서 정보를 받아옴
                 $('#bookModal').modal('show');
-
-                // 모달 창 내부에 도서 정보 추가
-                var modalBody = $('#bookModal').find('.modal-body');
-                modalBody.empty(); // 기존 도서 정보 제거
+                let modalBody = $('#bookModal').find('.modal-body');
+                modalBody.empty();
 
                 $('<p>').addClass('total-books').text(response.total + '개의 검색 결과가 있습니다!').css('color', 'blue').appendTo(modalBody);
                 response.items.forEach(function (book) {
+                    let bookItem = $('<div>').addClass('book-item');
                     $('<hr>').appendTo(bookItem);
-                    var bookItem = $('<div>').addClass('book-item');
                     $('<h6>').addClass('book-title').text(book.title).appendTo(bookItem);
-                    var selectedBookImage = book.image;
-                    var imageElement = $('<img>').addClass('book-image').attr('src', selectedBookImage);
+                    let selectedBookImage = book.image;
+                    let imageElement = $('<img>').addClass('book-image').attr('src', selectedBookImage);
                     imageElement.appendTo(bookItem);
                     $('<p>').addClass('book-isbn').text('ISBN: ' + book.isbn).appendTo(bookItem);
                     $('<p>').addClass('book-author').text('저자: ' + book.author).appendTo(bookItem);
                     $('<p>').addClass('book-publisher').text('출판사: ' + book.publisher).appendTo(bookItem);
-                    // $('<p>').addClass('book-description').text('설명: ' + book.description).appendTo(bookItem);
                     $('<p>').addClass('book-pubDate').text('출판일: ' + book.pubdate).appendTo(bookItem);
-                    var selectButton = $('<button>').addClass('btn btn-outline-primary btn-select-book').text('선택');
+                    let selectButton = $('<button>').addClass('btn btn-outline-primary btn-select-book').text('선택');
 
                     selectButton.click(function () {
-                        // 선택 버튼이 클릭되었을 때 실행되는 동작
                         // 선택된 도서 정보 추출
-                        var selectedBookIsbn = book.isbn;
-                        var selectedBookTitle = book.title;
-                        var selectedBookAuthor = book.author;
-                        var selectedBookPublisher = book.publisher;
-                        var selectedBookDescription = book.description;
-                        var selectedBookImage = book.image;
-                        var selectedBookPubDate = book.pubdate;
+                        let selectedBookIsbn = book.isbn;
+                        let selectedBookTitle = book.title;
+                        let selectedBookAuthor = book.author;
+                        let selectedBookPublisher = book.publisher;
+                        let selectedBookDescription = book.description;
+                        let selectedBookImage = book.image;
+                        let selectedBookPubDate = book.pubdate;
 
-                        // 추출된 도서 정보를 사용하여 필요한 동작 수행
                         $('#selectedBookIsbn').val(selectedBookIsbn);
                         $('#selectedBookTitle').val(selectedBookTitle);
                         $('#selectedBookAuthor').val(selectedBookAuthor);
@@ -55,8 +49,8 @@ $(function () {
                         $('#selectedBookImage').val(selectedBookImage);
                         $('#selectedBookPubDate').val(selectedBookPubDate);
 
-                        // 폼을 보이도록 설정
                         $('#bookModal').modal('hide');
+                        // 폼이 보이도록 설정
                         $('#selectedBookForm').show();
 
                     });

@@ -1,5 +1,6 @@
 package com.plee.library.dto.book.request;
 
+import com.plee.library.domain.book.BookInfo;
 import jakarta.validation.constraints.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -13,7 +14,10 @@ import org.hibernate.validator.constraints.ISBN;
 @NoArgsConstructor
 public class ReturnBookRequest {
 
-    @NotBlank
+    @NotNull
+    private Long historyId;
+
+    @NotNull
     @ISBN
-    private String isbn;
+    private String bookInfoIsbn;
 }

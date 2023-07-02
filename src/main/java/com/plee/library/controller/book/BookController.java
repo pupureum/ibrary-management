@@ -5,6 +5,8 @@ import com.plee.library.domain.book.BookInfo;
 import com.plee.library.dto.book.request.AddBookRequest;
 import com.plee.library.dto.book.request.ReturnBookRequest;
 import com.plee.library.dto.book.response.AllBooksResponse;
+import com.plee.library.dto.book.response.RequestHistoryResponse;
+import com.plee.library.dto.book.response.SearchBookResponse;
 import com.plee.library.service.book.BookService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -19,6 +21,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.security.Principal;
+import java.util.List;
 
 @RequiredArgsConstructor
 @Slf4j
@@ -45,6 +48,7 @@ public class BookController {
         model.addAttribute("book", bookService.findBookById(bookId));
         model.addAttribute("bookMarked", bookService.isBookMarked(bookId, principal.getName()));
         model.addAttribute("bookLoaned", bookService.isLoaned(bookId, principal.getName()));
+        model.addAttribute("selectedMenu", "none");
         return "book/bookDetail";
     }
 
@@ -58,8 +62,9 @@ public class BookController {
         log.info("loanBook bookId={}, Member={}", bookId, principal.getName());
         try {
             bookService.loanBook(bookId, principal.getName());
+            redirectAttributes.addFlashAttribute("successMessage", "대출이 성공적으로 처리되었습니다.");
         } catch (Exception e) {
-            log.error("loanBook error", e);
+            log.warn("loanBook error", e);
             redirectAttributes.addFlashAttribute("errorMessage", e.getMessage());
         }
         return "redirect:/books/loan";
@@ -81,7 +86,7 @@ public class BookController {
             bookService.returnBook(request);
             redirectAttributes.addFlashAttribute("successMessage", "반납이 성공적으로 처리되었습니다.");
         } catch (Exception e) {
-            log.error("returnBook error", e);
+            log.warn("returnBook error", e);
             redirectAttributes.addFlashAttribute("errorMessage", e.getMessage());
         }
         return "redirect:/books/loan";
@@ -94,7 +99,7 @@ public class BookController {
             bookService.renewBook(historyId);
             redirectAttributes.addFlashAttribute("successMessage", "연장이 성공적으로 처리되었습니다.");
         } catch (Exception e) {
-            log.error("renewBook error", e);
+            log.warn("renewBook error", e);
             redirectAttributes.addFlashAttribute("errorMessage", e.getMessage());
         }
         return "redirect:/books/loan";
@@ -106,15 +111,25 @@ public class BookController {
         return "book/request";
     }
 
+    @GetMapping("/api/book")
+    @ResponseBody
+    public SearchBookResponse searchBooksByApi(@RequestParam("keyword") String keyword) {
+        SearchBookResponse response = bookService.findBySearchApi(keyword);
+        return response;
+    }
+
     @PostMapping("/request")
-    public ResponseEntity requestNewBook(@Valid AddBookRequest request) {
+    public ResponseEntity requestNewBook(@Valid AddBookRequest request, Principal principal) {
         log.info("requestNewBook request={}", request.getReqReason());
-//        bookService.addRequest(request);
+        bookService.addNewBookRequest(request, principal.getName());
         return ResponseEntity.status(HttpStatus.OK).build();
     }
 
     @GetMapping("/request/history")
-    public String requestHistory(Model model) {
+    public String requestHistory(Model model, Principal principal) {
+        log.info("member={} request History", principal.getName());
+        List<RequestHistoryResponse> response = bookService.findMemberRequestHistory(principal.getName());
+        model.addAttribute("requestHistory", response);
         model.addAttribute("selectedMenu", "member-request-history");
         return "book/requestHistory";
     }

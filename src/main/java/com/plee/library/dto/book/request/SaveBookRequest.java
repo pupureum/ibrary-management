@@ -3,8 +3,10 @@ package com.plee.library.dto.book.request;
 import com.plee.library.domain.book.BookInfo;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotEmpty;
+import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import lombok.*;
+import org.hibernate.validator.constraints.ISBN;
 import org.hibernate.validator.constraints.Range;
 
 @Setter
@@ -14,28 +16,23 @@ import org.hibernate.validator.constraints.Range;
 public class SaveBookRequest {
 
     @NotBlank
-    @Size(min = 13, max = 13)
+    @ISBN
     private String isbn;
 
     @NotEmpty
     private String title;
 
-    @NotEmpty
     private String author;
 
-    @NotEmpty
     private String publisher;
 
-    @NotEmpty
     private String image;
 
-    @NotEmpty
     private String description;
 
-    @NotEmpty
     private String pubDate;
 
-    @NotBlank
+    @NotNull
     @Range(min = 1, max = 9999)
     private int quantity;
 

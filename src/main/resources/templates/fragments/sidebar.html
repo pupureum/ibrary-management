@@ -15,15 +15,6 @@
                 </a>
             </li>
             <li class="nav-item">
-                <a class="nav-link" th:classappend="${selectedMenu == 'member-request-book'} ? 'active' : ''"
-                   th:href="@{/books/request}">
-                    <span data-feather="file" class="align-text-bottom"></span>
-                    도서 신청
-                </a>
-            </li>
-            <hr/>
-            <a>MyPage</a>
-            <li class="nav-item">
                 <a class="nav-link" th:classappend="${selectedMenu == 'member-loan-history'} ? 'active' : ''"
                    th:href="@{/books/loan}">
                     <span data-feather="shopping-cart" class="align-text-bottom"></span>
@@ -31,12 +22,21 @@
                 </a>
             </li>
             <li class="nav-item">
+                <a class="nav-link" th:classappend="${selectedMenu == 'member-request-book'} ? 'active' : ''"
+                   th:href="@{/books/request}">
+                    <span data-feather="file" class="align-text-bottom"></span>
+                    도서 신청
+                </a>
+            </li>
+            <li class="nav-item">
                 <a class="nav-link" th:classappend="${selectedMenu == 'member-request-history'} ? 'active' : ''"
-                   th:href="@{/books/request-history}">
+                   th:href="@{/books/request/history}">
                     <span data-feather="users" class="align-text-bottom"></span>
                     도서 신청 내역
                 </a>
             </li>
+            <hr/>
+            <a>MyPage</a>
             <li class="nav-item">
                 <a class="nav-link" th:classappend="${selectedMenu == 'member-edit-info'} ? 'active' : ''"
                    th:href="@{/member/edit}">
@@ -56,14 +56,14 @@
                 </li>
                 <li class="nav-item">
                     <a class="nav-link" th:classappend="${selectedMenu == 'admin-loan-status'} ? 'active' : ''"
-                       th:href="@{/admin/loan-status}">
+                       th:href="@{/admin/loan}">
                         <span data-feather="users" class="align-text-bottom"></span>
-                        대출 현황
+                        대출 내역
                     </a>
                 </li>
                 <li class="nav-item">
                     <a class="nav-link" th:classappend="${selectedMenu == 'admin-request-status'} ? 'active' : ''"
-                       th:href="@{/admin/request-status}">
+                       th:href="@{/admin/request}">
                         <span data-feather="bar-chart-2" class="align-text-bottom"></span>
                         도서 요청 목록
                     </a>

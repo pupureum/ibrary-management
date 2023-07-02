@@ -6,8 +6,10 @@ import com.plee.library.domain.book.BookInfo;
 import com.plee.library.domain.member.Member;
 import com.plee.library.domain.member.MemberLoanHistory;
 import com.plee.library.domain.member.MemberRequestHistory;
+import com.plee.library.dto.admin.response.AllBookRequestResponse;
 import com.plee.library.dto.book.request.*;
 import com.plee.library.dto.book.response.AllBooksResponse;
+import com.plee.library.dto.book.response.RequestHistoryResponse;
 import com.plee.library.dto.book.response.SearchBookResponse;
 import com.plee.library.dto.book.response.LoanHistoryResponse;
 import com.plee.library.exception.CustomException;
@@ -47,15 +49,21 @@ public class BookServiceImpl implements BookService {
 
     @Override
     @Transactional
-    public void addBookInfo(AddBookRequest request, String loginId) {
-        BookInfo bookInfo = bookInfoRepository.save(request.toEntity());
-
+    public void addNewBookRequest(AddBookRequest request, String loginId) {
+        // 이미 추가 요청을 한 경우 예외 처리
+        //TODO member ID 받는걸로 바꾸기
         Member member = memberRepository.findByLoginId(loginId)
                 .orElseThrow(() -> new CustomException(MemberErrorCode.NOT_FOUND_MEMBER));
+        if (memberReqHisRepository.existsByMemberIdAndBookInfoIsbn(member.getId(), request.getIsbn())) {
+            throw new CustomException(BookErrorCode.ALREADY_EXIST_BOOK_REQUEST);
+        }
+        BookInfo bookInfo = bookInfoRepository.findById(request.getIsbn())
+                .orElseGet(() -> bookInfoRepository.save(request.toEntity()));
         member.addBookRequest(bookInfo, request.getReqReason());
     }
 
     @Override
+    @Transactional
     public void saveBook(SaveBookRequest request) {
         if (bookRepository.findByBookInfoIsbn(request.getIsbn()).isPresent()) {
             throw new CustomException(BookErrorCode.ALREADY_EXIST_BOOK);
@@ -69,7 +77,7 @@ public class BookServiceImpl implements BookService {
         bookRepository.save(book);
     }
 
-    public BookInfo checkBookRequestAlready(SaveBookRequest request) {
+    private BookInfo checkBookRequestAlready(SaveBookRequest request) {
         Optional<BookInfo> bookInfo = bookInfoRepository.findById(request.getIsbn());
         if (bookInfo.isPresent()) { //TODO bookInfo는 있지만, memberRequestHistory가 없어도 예외가 아닌경우도 생각 필요
             acceptBookRequestAlready(bookInfo.get());
@@ -78,10 +86,10 @@ public class BookServiceImpl implements BookService {
         return bookInfoRepository.save(request.toEntity());
     }
 
-    public void acceptBookRequestAlready(BookInfo bookInfo) {
-        MemberRequestHistory memberRequestHistory = memberReqHisRepository.findByBookInfo(bookInfo)
-                .orElseThrow(() -> new CustomException(BookErrorCode.NOT_FOUND_BOOK_INFO)); // bookInfo는 있으나, memberRequestHistory가 없는 경우
-        memberRequestHistory.doApprove();
+    private void acceptBookRequestAlready(BookInfo bookInfo) {
+        if (memberReqHisRepository.existsByBookInfoIsbnAndIsApprovedFalse(bookInfo.getIsbn())) {
+            memberReqHisRepository.approveByBookInfoIsbn(bookInfo.getIsbn());
+        }
     }
 
     @Override
@@ -146,7 +154,7 @@ public class BookServiceImpl implements BookService {
     @Override
     public List<LoanHistoryResponse> findLoanHistory(String loginId) {
         Member member = memberRepository.findByLoginId(loginId)
-                .orElseThrow(() -> new IllegalArgumentException("not found member: " + loginId));
+                .orElseThrow(() -> new IllegalArgumentException("회원 정보를 찾을 수 없습니다."));
         // TODO loginID 말고, ID 받아오도록 수정 필요!
         List<MemberLoanHistory> histories = memberLoanHisRepository.findAllByMemberIdOrderByLoanedAtDesc(member.getId());
         return histories.stream()
@@ -156,6 +164,37 @@ public class BookServiceImpl implements BookService {
                         .isRenew(h.isRenew())
                         .loanedAt(h.getLoanedAt().toLocalDate())
                         .returnedAt(Optional.ofNullable(h.getReturnedAt()).map(LocalDateTime::toLocalDate).orElse(null))
+                        .build())
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public List<RequestHistoryResponse> findMemberRequestHistory(String loginId) {
+        //member의 Id를 받아오도록 바꾸기! TODO
+        Member member = memberRepository.findByLoginId(loginId)
+                .orElseThrow(() -> new IllegalArgumentException("회원 정보를 찾을 수 없습니다."));
+        List<MemberRequestHistory> histories = memberReqHisRepository.findAllByMemberIdOrderByRequestedAtDesc(member.getId());
+        return histories.stream()
+                .map(h -> RequestHistoryResponse.builder()
+                        .id(h.getId())
+                        .bookInfo(h.getBookInfo())
+                        .requestReason(h.getRequestReason())
+                        .isApproved(h.isApproved())
+                        .requestedAt(h.getRequestedAt().toLocalDate())
+                        .build())
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public List<AllBookRequestResponse> findAllMemberRequestHistory() {
+        return memberReqHisRepository.findAllByOrderByRequestedAtDesc().stream()
+                .map(h -> AllBookRequestResponse.builder()
+                        .id(h.getId())
+                        .member(h.getMember())
+                        .bookInfo(h.getBookInfo())
+                        .requestReason(h.getRequestReason())
+                        .isApproved(h.isApproved())
+                        .requestedAt(h.getRequestedAt().toLocalDate())
                         .build())
                 .collect(Collectors.toList());
     }
@@ -201,10 +240,6 @@ public class BookServiceImpl implements BookService {
         }
         // TODO 책 삭제 시, 대출 기록이나, 신규도서 요청내역에 존재하지 않는 경우, 책 정보도 삭제되도록 하기
         bookRepository.deleteById(bookId);
-    }
-
-    public void addRequest(AddBookRequest request) {
-
     }
 
     @Override

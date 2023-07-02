@@ -1,6 +1,7 @@
 package com.plee.library.controller.admin;
 
 import com.plee.library.domain.member.Role;
+import com.plee.library.dto.admin.response.AllBookRequestResponse;
 import com.plee.library.dto.book.request.SaveBookRequest;
 import com.plee.library.dto.book.response.SearchBookResponse;
 import com.plee.library.service.book.BookService;
@@ -11,8 +12,9 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
-import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @Slf4j
 @Controller
@@ -33,15 +35,8 @@ public class AdminController {
         return ResponseEntity.status(HttpStatus.OK).build();
     }
 
-    @GetMapping("/api/book")
-    @ResponseBody
-    public SearchBookResponse searchBooksByApi(@RequestParam("keyword") String keyword) {
-        SearchBookResponse response = bookService.findBySearchApi(keyword);
-        return response;
-    }
-
     @GetMapping("/books")
-    public String getAllBooks(Model model) {
+    public String allBooks(Model model) {
         model.addAttribute("books", bookService.findAllBooks());
         model.addAttribute("selectedMenu", "admin-book-list");
         return "admin/bookList";
@@ -60,17 +55,19 @@ public class AdminController {
         return ResponseEntity.ok("Success");
     }
 
-    @GetMapping("/loan-status")
-    public String getLoanStatus(Model model) {
+    @GetMapping("/loan")
+    public String loanStatus(Model model) {
         model.addAttribute("selectedMenu", "admin-loan-status");
         return "admin/loanStatus";
     }
 
-    @GetMapping("/request-status")
-    public String getRequestStatus(Model model) {
-        model.addAttribute("isAdmin", true);
+    @GetMapping("/request")
+    public String requestHistory(Model model) {
+        log.info("admin request History");
+        List<AllBookRequestResponse> response = bookService.findAllMemberRequestHistory();
+        model.addAttribute("requestHistory", response);
         model.addAttribute("selectedMenu", "admin-request-status");
-        return "admin/requestList";
+        return "admin/requestStatus";
     }
 
     @GetMapping("/members")

@@ -19,16 +19,15 @@
                 <h3 style="margin-top: 50px; margin-bottom: 30px; margin-left: 20px; font-family: SeoulNamsanM">대출
                     기록</h3>
             </div>
-
             <div class="table-responsive">
                 <table class="table table-hover">
                     <thead>
                     <tr>
                         <th scope="col" style="width: 15%; text-align: center">이미지</th>
-                        <th scope="col" style="width: 20%; text-align: center">제목</th>
+                        <th scope="col" style="width: 23%; text-align: center">제목</th>
                         <th scope="col" style="width: 15%; text-align: center">저자</th>
-                        <th scope="col" style="width: 15%; text-align: center">대출일</th>
-                        <th scope="col" style="width: 15%; text-align: center">반납(예정)일</th>
+                        <th scope="col" style="width: 12%; text-align: center">대출일</th>
+                        <th scope="col" style="width: 12%; text-align: center">반납(예정)일</th>
                         <th scope="col" style="width: 10%; text-align: center">상태</th>
                         <!--                        <th scope="col" style="width: 15%"></th>-->
                     </tr>
@@ -39,32 +38,53 @@
                             <img th:src="${history.bookInfo.image}" alt="Book Image"
                                  style="max-height: 180px; max-width: 220px;"/>
                         </td>
-                        <td th:text="${history.bookInfo.title}" style="text-align: center; padding-top: 70px"></td>
-                        <td th:text="${history.bookInfo.author}" style="text-align: center; padding-top: 70px"></td>
-                        <!--                        <td th:text="${history.loanedAt}" style="text-align: center"></td>-->
-                        <!-- TODO 날짜계산 plusDays 쓰려면 LocalDate로 타입 변경해야함 -->
-                        <td>
-                            <span 날짜></span>
+                        <td th:text="${history.bookInfo.title}" style="text-align: center; padding-top: 77px"></td>
+                        <td th:text="${history.bookInfo.author}" style="text-align: center; padding-top: 80px"></td>
+                        <td th:text="${#temporals.format(history.loanedAt, 'yyyy-MM-dd')}"
+                            style="text-align: center; padding-top: 80px"></td>
+                        <td th:if="${history.returnedAt == null and !history.isRenew}"
+                            th:text="${#temporals.format(history.loanedAt.plusDays(7), 'yyyy-MM-dd')}"
+                            style="text-align: center; padding-top: 80px"></td>
+                        <td th:if="${history.returnedAt == null and history.isRenew}"
+                            th:text="${#temporals.format(history.loanedAt.plusDays(14), 'yyyy-MM-dd')}"
+                            style="text-align: center; padding-top: 80px">
+                            <br/>
+                            <span style="color: green;">연장 완료</span>
                         </td>
-                        <!--                        <td th:text="${#dates.format(history.loanedAt, 'yyyy-MM-dd HH:mm:ss')}" style="text-align: center"></td>-->
+                        <td th:if="${history.returnedAt != null}"
+                            th:text="${#temporals.format(history.returnedAt, 'yyyy-MM-dd')}"
+                            style="text-align: center; padding-top: 80px"></td>
                         <td>
-                            <span 날짜></span>
-                            <!--                            <span th:if="${history.returnedAt == null and history.isRenew}" th:text="${#dates.format(history.loanedAt.plusDays(22), 'yyyy-MM-dd HH:mm:ss')}" style="text-align: center"></span>-->
-                            <!--                            <span th:if="${history.returnedAt == null and !history.isRenew}" th:text="${#dates.format(history.loanedAt.plusDays(15), 'yyyy-MM-dd HH:mm:ss')}" style="text-align: center"></span>-->
-                        </td>
-                        <td>
-                            <div class="btn-group me-2" th:if="${history.returnedAt == null and history.isRenew}">
-                                <button type="button" class="btn btn-sm btn-outline-secondary" style="margin-top: 70px; margin-left: 10px">반납</button>
-                            </div>
-                            <div class="btn-group me-2" th:if="${history.returnedAt == null}">
-                                <button type="button" class="btn btn-sm btn-outline-secondary" style="margin-top: 70px;margin-left: 10px">반납</button>
-                                <button type="button" class="btn btn-sm btn-outline-secondary"
-                                        th:if="${!history.isRenew}" style="margin-top: 70px;">연장
+                            <form th:if="${history.returnedAt == null and history.isRenew}" th:action="@{/books/return}"
+                                  method="post">
+                                <input type="hidden" name="_method" value="put"/>
+                                <input type="hidden" name="historyId" th:value="${history.id}"/>
+                                <input type="hidden" name="bookInfoIsbn" th:value="${history.bookInfo.isbn}"/>
+                                <button type="submit" class="btn btn-sm btn-outline-secondary"
+                                        style="margin-top: 70px; margin-left: 10px">반납
                                 </button>
+                            </form>
+                            <div class="btn-group me-2" th:if="${history.returnedAt == null and !history.isRenew}">
+                                <form th:action="@{/books/return}" method="post">
+                                    <input type="hidden" name="_method" value="put"/>
+                                    <input type="hidden" name="historyId" th:value="${history.id}"/>
+                                    <input type="hidden" name="bookInfoIsbn" th:value="${history.bookInfo.isbn}"/>
+                                    <button type="submit" class="btn btn-sm btn-outline-secondary"
+                                            style="margin-top: 70px;margin-left: 10px">반납
+                                    </button>
+                                </form>
+                                <form th:action="@{/books/renewal}" method="post">
+                                    <input type="hidden" name="_method" value="put"/>
+                                    <input type="hidden" name="historyId" th:value="${history.id}"/>
+                                    <button type="submit" class="btn btn-sm btn-outline-secondary"
+                                            style="margin-top: 70px;margin-left: 10px">연장
+                                    </button>
+                                </form>
                             </div>
                             <div class="btn-group me-2" th:if="${history.returnedAt != null}">
                                 <button type="button" class="btn btn-sm btn-outline-secondary"
-                                        th:if="${!history.isRenew}" style="margin-top: 70px;margin-left: 10px" disabled="disabled">반납완료
+                                        style="margin-top: 70px;margin-left: 10px"
+                                        disabled="disabled">반납완료
                                 </button>
                             </div>
                         </td>
@@ -75,7 +95,15 @@
         </main>
     </div>
 </div>
-
-
+<script th:inline="javascript">
+    let errorMessage = /*[[${errorMessage}]]*/ null;
+    let successMessage = /*[[${successMessage}]]*/ null;
+    if (errorMessage) {
+        alert(errorMessage);
+    }
+    if (successMessage) {
+        alert(successMessage);
+    }
+</script>
 </body>
 </html>

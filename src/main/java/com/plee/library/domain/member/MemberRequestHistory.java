@@ -35,21 +35,21 @@ public class MemberRequestHistory {
     private BookInfo bookInfo;
 
     @Column(name = "request_reason", length = 200, nullable = false)
-    private String reqReason;
+    private String requestReason;
 
     @CreatedDate
     @Column(name = "requested_at")
-    private LocalDateTime reqAt;
+    private LocalDateTime requestedAt;
 
     @ColumnDefault("false")
     @Column(name = "is_approved", nullable = false)
     private boolean isApproved;
 
     @Builder
-    public MemberRequestHistory(Member member, BookInfo bookInfo, String reqReason) {
+    public MemberRequestHistory(Member member, BookInfo bookInfo, String requestReason) {
         this.member = member;
         this.bookInfo = bookInfo;
-        this.reqReason = reqReason;
+        this.requestReason = requestReason;
     }
 
     public void doApprove() {

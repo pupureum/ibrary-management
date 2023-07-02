@@ -19,6 +19,6 @@ public class LoginMemberRequest {
     private String loginId;
 
     @NotBlank
-//    @Size(min = 8, max = 20 , message = "비밀번호는 8~20자 이내여야 합니다.")
+//    @Size(min = 6, max = 20 , message = "비밀번호는 6~20자 이내여야 합니다.")
     private String password;
 }

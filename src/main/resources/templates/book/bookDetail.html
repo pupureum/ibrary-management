@@ -15,84 +15,8 @@
 <div th:replace="~{fragments/header :: ~{header}}"/>
 <div class="container-fluid">
     <div class="row">
-        <nav class="col-md-3 col-lg-2 d-md-block bg-light sidebar collapse">
-            <div class="position-sticky pt-3 sidebar-sticky">
-                <ul class="nav flex-column">
-                    <a>Book</a>
-                    <li class="nav-item">
-                        <a class="nav-link" th:href="@{/books}">
-                            <span data-feather="home" class="align-text-bottom"></span>
-                            전체 도서 목록
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" th:href="@{/books/request}">
-                            <span data-feather="file" class="align-text-bottom"></span>
-                            도서 신청
-                        </a>
-                    </li>
-                    <hr/>
-                    <a>MyPage</a>
-                    <li class="nav-item">
-                        <a class="nav-link" th:href="@{/books/loan}">
-                            <span data-feather="shopping-cart" class="align-text-bottom"></span>
-                            대여 기록
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" th:href="@{/books/request-history}">
-                            <span data-feather="users" class="align-text-bottom"></span>
-                            도서 신청 내역
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" th:href="@{/member/edit}">
-                            <span data-feather="bar-chart-2" class="align-text-bottom"></span>
-                            개인 정보 수정
-                        </a>
-                    </li>
-                    <div sec:authorize="hasRole('ROLE_ADMIN')">
-                        <hr/>
-                        <a>AdminPage</a>
-                        <li class="nav-item">
-                            <a class="nav-link" th:href="@{/admin/books}">
-                                사내 도서 목록
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" th:href="@{/admin/loan-status}">
-                                <span data-feather="users" class="align-text-bottom"></span>
-                                대여 현황
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" th:href="@{/admin/request-status}">
-                                <span data-feather="bar-chart-2" class="align-text-bottom"></span>
-                                도서 요청 목록
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" th:href="@{/admin/new-book}">
-                                <span data-feather="bar-chart-2" class="align-text-bottom"></span>
-                                신규 도서 추가
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" th:href="@{/admin/members}">
-                                <span data-feather="bar-chart-2" class="align-text-bottom"></span>
-                                사용자 관리
-                            </a>
-                        </li>
-                    </div>
-                </ul>
-            </div>
-        </nav>
-        <!--        <div th:replace="~{fragments/sidebar :: sidebar}"/>-->
+        <div th:replace="~{fragments/sidebar :: sidebar(${selectedMenu})}"/>
         <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
-            <!--            <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom page-heading">-->
-            <!--                <h3 style="margin-top: 50px; margin-bottom: 30px; margin-left: 20px; font-family: SeoulNamsanM">상세-->
-            <!--                    페이지</h3>-->
-            <!--            </div>-->
             <div style="margin-top: 20px">
                 <table class="table">
                     <thead>

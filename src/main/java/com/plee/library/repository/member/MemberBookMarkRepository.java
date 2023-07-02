@@ -11,5 +11,7 @@ import java.util.List;
 public interface MemberBookMarkRepository extends JpaRepository<MemberRequestHistory, Long> {
     List<MemberBookmark> findAllByMember(Member member);
 
-    boolean existsByMemberAndBookInfo(Member member, BookInfo bookInfo);
+//    boolean existsByMemberAndBookInfo(Member member, BookInfo bookInfo);
+
+//    boolean existsByMemberLoginIdAndBookInfoIsbn(Long memberId, String isbn);
 }

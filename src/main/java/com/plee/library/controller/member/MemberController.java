@@ -57,6 +57,14 @@ public class MemberController {
         return "redirect:/";
     }
 
+    @GetMapping("/logout")
+    public String logout(HttpServletRequest request, HttpServletResponse response, Model model) {
+        log.info("logout");
+        new SecurityContextLogoutHandler().logout(request, response,
+                SecurityContextHolder.getContext().getAuthentication());
+        return "redirect:/";
+    }
+
     @GetMapping("/signup")
     public String signupForm(Model model) {
         model.addAttribute("signUpMemberRequest", new SignUpMemberRequest());
@@ -78,42 +86,6 @@ public class MemberController {
         }
         memberService.saveMember(request);
         return "redirect:/member/login";
-    }
-
-    @GetMapping("/logout")
-    public String logout(HttpServletRequest request, HttpServletResponse response, Model model) {
-        log.info("logout");
-        new SecurityContextLogoutHandler().logout(request, response,
-                SecurityContextHolder.getContext().getAuthentication());
-        return "redirect:/login";
-    }
-
-    @GetMapping("/request")
-    public String requestBookForm(Model model, Principal principal) {
-        System.out.println("principal = " + principal.getName());
-        Member member = memberService.findByLoginId(principal.getName());
-        System.out.println(member.getRole());
-        model.addAttribute("selectedMenu", "member-request-book");
-        return "member/request";
-    }
-
-    @GetMapping("/request-history")
-    public String requestHistory(Model model) {
-        model.addAttribute("isAdmin", true);
-//        model.addAttribute("isAdmin", false);
-//        model.addAttribute("totalCount", 100);
-        model.addAttribute("selectedMenu", "member-request-history");
-        return "member/requestHistory";
-    }
-
-    @PostMapping("/like/{bookId}")
-    public String likeBook(@PathVariable Long bookId, Principal principal) {
-        System.out.println("bookId = " + bookId);
-        System.out.println("principal = " + principal.getName());
-//        Member member = memberService.findByLoginId(principal.getName());
-//        System.out.println(member.getRole());
-//        memberService.likeBook(member, bookId);
-        return "redirect:/book";
     }
 
     @GetMapping("/edit")

@@ -21,17 +21,17 @@ $(document).ready(function () {
             alert("수량은 0 이상의 숫자이어야 합니다.");
             return;
         }
-        console.log(bookId, newQuantity)
         $.ajax({
-            url: '/admin/quantity/' + bookId + '?quantity=' + newQuantity,
+            url: '/admin/books/' + bookId + '?quantity=' + newQuantity,
             type: 'PUT',
             data: {quantity: newQuantity},
             success: function (response) {
                 console.log(response);
+                alert("수량이 " + newQuantity + "권으로 변경되었습니다.")
                 location.reload();
             },
             error: function (xhr) {
-                var errorMessage = xhr.responseText;
+                let errorMessage = xhr.responseText;
                 alert(errorMessage);
             }
         });
@@ -48,7 +48,7 @@ $(document).ready(function () {
                     location.reload();
                 },
                 error: function (xhr) {
-                    var errorMessage = xhr.responseText;
+                    let errorMessage = xhr.responseText;
                     alert(errorMessage);
                 }
             });

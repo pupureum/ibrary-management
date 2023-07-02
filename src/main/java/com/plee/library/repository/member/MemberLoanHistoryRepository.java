@@ -6,9 +6,16 @@ import com.plee.library.domain.member.MemberLoanHistory;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;
+import java.util.Optional;
 
 public interface MemberLoanHistoryRepository extends JpaRepository<MemberLoanHistory, Long> {
-    List<MemberLoanHistory> findAllByMember(Member member);
+    List<MemberLoanHistory> findAllByMemberId(Long memberId);
 
-    boolean existsByMemberAndBookInfoAndReturnAtIsNull(Member member, BookInfo bookInfo);
+    List<MemberLoanHistory> findAllByMemberIdOrderByLoanedAtDesc(Long memberId);
+
+    boolean existsByMemberIdAndBookInfoIsbnAndReturnedAtIsNull(Long memberId, String bookInfoId);
+
+    Optional<MemberLoanHistory> findByIdAndReturnedAtIsNull(Long historyId);
+
+    long countByMemberIdAndReturnedAtIsNull(Long memberId);
 }

@@ -6,29 +6,10 @@
     <link rel="stylesheet" th:href="@{/css/bootstrap.min.css}">
     <link rel="stylesheet" th:href="@{/css/main.css}">
     <link rel="stylesheet" th:href="@{/css/sidebar.css}">
+    <link rel="stylesheet" th:href="@{/css/search.css}">
     <script th:src="@{/js/jquery-3.7.0.js}"></script>
     <script th:src="@{/js/bootstrap.min.js}"></script>
     <script th:src="@{/js/search.js}"></script>
-    <style>
-        #selectedBookForm {
-            display: none;
-            font-family: 'SeoulNamsanM', sans-serif;
-        }
-        .modal-body {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            text-align: center;
-            font-family: 'SeoulNamsanM', sans-serif;
-        }
-        .book-item {
-            margin-bottom: 20px;
-        }
-        .book-image {
-            width: 250px;
-            height: 280px;
-        }
-    </style>
 </head>
 <body>
 <div th:replace="~{fragments/header :: ~{header}}"/>
@@ -37,8 +18,7 @@
         <div th:replace="~{fragments/sidebar :: sidebar(${selectedMenu})}"/>
         <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
             <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
-                <h3 style="margin-top: 50px; margin-bottom: 30px; margin-left: 20px; font-family: SeoulNamsanM">신규 도서
-                    추가</h3>
+                <h3 style="margin-top: 50px; margin-bottom: 30px; margin-left: 20px; font-family: SeoulNamsanM">신규 도서 추가</h3>
             </div>
             <form id="searchForm" class="center-content">
                 <div class="btn-toolbar mb-2 mb-md-2">
@@ -142,8 +122,27 @@
 
     </div>
 </div>
-</body>
-</html>
+<script>
+    $('#selectedBookForm').on('submit', function (event) {
+        event.preventDefault();
+        let formData = $(this).serialize();
+
+        $.ajax({
+            type: 'POST',
+            url: '/admin/new-book',
+            data: formData,
+            success: function (response) {
+                alert('도서가 추가되었습니다.');
+                window.location.href = '/admin/books';
+            },
+            error: function (xhr, status) {
+                console.log('도서 추가 오류 발생:', xhr);
+                console.log(status);
+                alert(xhr.responseText);
+            }
+        });
+    });
+</script>
 
 </body>
 </html>
