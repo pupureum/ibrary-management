@@ -1,5 +1,6 @@
 package com.plee.library.domain.member;
 
+import com.plee.library.domain.BaseTimeEntity;
 import com.plee.library.domain.book.BookInfo;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
@@ -14,12 +15,11 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 import java.time.LocalDateTime;
 
 @Getter
-@EntityListeners(AuditingEntityListener.class)
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @DynamicInsert
 @Entity
 @Table(name = "member_request_history")
-public class MemberRequestHistory {
+public class MemberRequestHistory extends BaseTimeEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -36,10 +36,6 @@ public class MemberRequestHistory {
 
     @Column(name = "request_reason", length = 200, nullable = false)
     private String requestReason;
-
-    @CreatedDate
-    @Column(name = "requested_at")
-    private LocalDateTime requestedAt;
 
     @ColumnDefault("false")
     @Column(name = "is_approved", nullable = false)

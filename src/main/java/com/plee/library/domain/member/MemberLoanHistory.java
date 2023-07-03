@@ -1,5 +1,6 @@
 package com.plee.library.domain.member;
 
+import com.plee.library.domain.BaseTimeEntity;
 import com.plee.library.domain.book.BookInfo;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
@@ -8,22 +9,15 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.ColumnDefault;
 import org.hibernate.annotations.DynamicInsert;
-import org.springframework.data.annotation.CreatedDate;
-import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 
-import static com.plee.library.domain.member.MemberLoanHistoryConstants.LOANABLE_DAYS;
-import static com.plee.library.domain.member.MemberLoanHistoryConstants.RENEWAL_LIMIT;
-
 @Getter
-@EntityListeners(AuditingEntityListener.class)
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Entity
 @DynamicInsert
 @Table(name = "member_loan_history")
-public class MemberLoanHistory {
+public class MemberLoanHistory extends BaseTimeEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -41,10 +35,6 @@ public class MemberLoanHistory {
     @Column(name = "is_renew")
     @ColumnDefault("false")
     private boolean isRenew;
-
-    @CreatedDate
-    @Column(name = "loaned_at")
-    private LocalDateTime loanedAt;
 
     @Column(name = "returned_at")
     private LocalDateTime returnedAt;

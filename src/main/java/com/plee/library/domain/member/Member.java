@@ -1,5 +1,6 @@
 package com.plee.library.domain.member;
 
+import com.plee.library.domain.BaseTimeEntity;
 import com.plee.library.domain.book.BookInfo;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
@@ -8,8 +9,10 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.ColumnDefault;
 import org.hibernate.annotations.DynamicInsert;
+import org.springframework.data.annotation.CreatedDate;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -18,7 +21,7 @@ import java.util.List;
 @Entity
 @DynamicInsert
 @Table(name = "member", uniqueConstraints = {@UniqueConstraint(name = "login_id_unique", columnNames = {"login_id"})})
-public class Member {
+public class Member extends BaseTimeEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
