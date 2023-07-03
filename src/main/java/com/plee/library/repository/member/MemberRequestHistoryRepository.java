@@ -13,9 +13,9 @@ import java.util.Optional;
 public interface MemberRequestHistoryRepository extends JpaRepository<MemberRequestHistory, Long> {
     boolean existsByBookInfoIsbnAndIsApprovedFalse(String isbn);
 
-    List<MemberRequestHistory> findAllByOrderByRequestedAtDesc();
+    List<MemberRequestHistory> findAllByOrderByCreatedAtDesc();
 
-    List<MemberRequestHistory> findAllByMemberIdOrderByRequestedAtDesc(Long memberId);
+    List<MemberRequestHistory> findAllByMemberIdOrderByCreatedAtDesc(Long memberId);
 
     boolean existsByMemberIdAndBookInfoIsbn(Long memberId, String isbn);
 

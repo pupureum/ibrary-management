@@ -5,6 +5,7 @@ import com.plee.library.domain.book.BookInfo;
 import com.plee.library.dto.book.request.AddBookRequest;
 import com.plee.library.dto.book.request.ReturnBookRequest;
 import com.plee.library.dto.book.response.AllBooksResponse;
+import com.plee.library.dto.book.response.BookInfoResponse;
 import com.plee.library.dto.book.response.RequestHistoryResponse;
 import com.plee.library.dto.book.response.SearchBookResponse;
 import com.plee.library.service.book.BookService;
@@ -26,23 +27,24 @@ import java.util.List;
 @RequiredArgsConstructor
 @Slf4j
 @Controller
-@RequestMapping("/books")
 public class BookController {
     private final BookService bookService;
 
-    //
-//    @GetMapping("/test")
-//    public String test() {
-//        return "book/test";
-//    }
-    @GetMapping
+    @GetMapping("/")
+    public String home(Model model) {
+        List<BookInfoResponse> response = bookService.findNewBooks();
+        model.addAttribute("newBooks", response);
+        return "index";
+    }
+
+    @GetMapping("/books")
     public String getAllBooks(Model model) {
         model.addAttribute("books", bookService.findAllBooks());
         model.addAttribute("selectedMenu", "book-list");
         return "book/bookList";
     }
 
-    @GetMapping("/{bookId}")
+    @GetMapping("/books/{bookId}")
     public String getBookDetail(@PathVariable("bookId") Long bookId, Model model, Principal principal) {
         log.info("getBookDetail bookId={}, loginId={}", bookId, principal.getName());
         model.addAttribute("book", bookService.findBookById(bookId));
@@ -57,7 +59,7 @@ public class BookController {
 //        model.addAttribute("selectedMenu", "none");
 //        return "book/searchBookList";
 //    }
-    @PostMapping("/loan")
+    @PostMapping("/books/loan")
     public String loanBook(@RequestParam("bookId") Long bookId, Principal principal, RedirectAttributes redirectAttributes) {
         log.info("loanBook bookId={}, Member={}", bookId, principal.getName());
         try {
@@ -70,7 +72,7 @@ public class BookController {
         return "redirect:/books/loan";
     }
 
-    @GetMapping("/loan")
+    @GetMapping("/books/loan")
     public String loanHistory(Model model, Principal principal) {
         log.info("loanHistory loginId={}", principal.getName());
         model.addAttribute("selectedMenu", "member-loan-history");
@@ -78,7 +80,7 @@ public class BookController {
         return "book/loanHistory";
     }
 
-    @PutMapping("/return")
+    @PutMapping("/books/return")
     public String returnBook(@ModelAttribute("returnBookRequest") ReturnBookRequest request, RedirectAttributes redirectAttributes) {
         log.info("returnBook historyId={}", request.getHistoryId());
         log.info("returnBook bookInfo.isbn={}", request.getBookInfoIsbn());
@@ -92,7 +94,7 @@ public class BookController {
         return "redirect:/books/loan";
     }
 
-    @PutMapping("/renewal")
+    @PutMapping("/books/renewal")
     public String renewBook(@RequestParam("historyId") Long historyId, RedirectAttributes redirectAttributes) {
         log.info("renewBook historyId={}", historyId);
         try {
@@ -105,27 +107,27 @@ public class BookController {
         return "redirect:/books/loan";
     }
 
-    @GetMapping("/request")
-    public String requestBookForm(Model model) {
-        model.addAttribute("selectedMenu", "member-request-book");
-        return "book/request";
-    }
-
-    @GetMapping("/api/book")
+    @GetMapping("/books/api/book")
     @ResponseBody
     public SearchBookResponse searchBooksByApi(@RequestParam("keyword") String keyword) {
         SearchBookResponse response = bookService.findBySearchApi(keyword);
         return response;
     }
 
-    @PostMapping("/request")
-    public ResponseEntity requestNewBook(@Valid AddBookRequest request, Principal principal) {
+    @GetMapping("/books/request")
+    public String requestBookForm(Model model) {
+        model.addAttribute("selectedMenu", "member-request-book");
+        return "book/request";
+    }
+
+    @PostMapping("/books/request")
+    public ResponseEntity<String> requestNewBook(@Valid AddBookRequest request, Principal principal) {
         log.info("requestNewBook request={}", request.getReqReason());
         bookService.addNewBookRequest(request, principal.getName());
         return ResponseEntity.status(HttpStatus.OK).build();
     }
 
-    @GetMapping("/request/history")
+    @GetMapping("/books/request/history")
     public String requestHistory(Model model, Principal principal) {
         log.info("member={} request History", principal.getName());
         List<RequestHistoryResponse> response = bookService.findMemberRequestHistory(principal.getName());
@@ -134,7 +136,7 @@ public class BookController {
         return "book/requestHistory";
     }
 
-    @PostMapping("/like/{bookId}")
+    @PostMapping("/books/like/{bookId}")
     public String likeBook(@PathVariable Long bookId, Principal principal) {
         log.info("likeBook bookId={}, loginId={}", bookId, principal.getName());
 //        Member member = memberService.findByLoginId(principal.getName());
@@ -143,7 +145,7 @@ public class BookController {
         return "redirect:/book";
     }
 
-//    @GetMapping("/api/search")
+//    @GetMapping("/books/api/search")
 //    public String searchBooks(@RequestParam("keyword") String keyword, Model model) {
 //        List<BookInfoResponse> books = new ArrayList<>();
 //        books.add(BookInfoResponse.builder()

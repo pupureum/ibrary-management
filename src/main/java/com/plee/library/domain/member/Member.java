@@ -9,10 +9,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.ColumnDefault;
 import org.hibernate.annotations.DynamicInsert;
-import org.springframework.data.annotation.CreatedDate;
 
-import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -86,15 +83,15 @@ public class Member extends BaseTimeEntity {
         targetHistory.doReturn();
     }
 
-    public void changeRole(Role role) {
+    public void updateRole(Role role) {
         this.role = role;
     }
 
-    public void changePassword(String password) {
+    public void updatePassword(String password) {
         this.password = password;
     }
 
-    public void changeName(String name) {
+    public void updateName(String name) {
         this.name = name;
     }
 }

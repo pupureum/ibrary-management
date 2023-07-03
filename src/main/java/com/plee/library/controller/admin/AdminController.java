@@ -1,10 +1,11 @@
 package com.plee.library.controller.admin;
 
-import com.plee.library.domain.member.Role;
 import com.plee.library.dto.admin.response.AllBookRequestResponse;
 import com.plee.library.dto.book.request.SaveBookRequest;
-import com.plee.library.dto.book.response.SearchBookResponse;
+import com.plee.library.dto.member.request.UpdateMemberRequest;
+import com.plee.library.dto.member.response.AllMembersResponse;
 import com.plee.library.service.book.BookService;
+import com.plee.library.service.member.MemberService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -22,6 +23,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class AdminController {
     private final BookService bookService;
+    private final MemberService memberService;
 
     @GetMapping("/new-book")
     public String addBook(Model model) {
@@ -71,14 +73,17 @@ public class AdminController {
     }
 
     @GetMapping("/members")
-    public String manageUserForm(Model model) {
-        model.addAttribute("isAdmin", true);
+    public String manageMember(Model model) {
+        List<AllMembersResponse> response = memberService.findAllMembers();
         model.addAttribute("selectedMenu", "admin-member-management");
-        model.addAttribute("roleTypes", Role.values());
-//        TestUserDto test1 = new TestUserDto("1", "test1", "test1@gmail.com", Role.Member);
-//        TestUserDto test2 = new TestUserDto("2", "test2", "test2@gmail.com", Role.Admin);
-//        List<TestUserDto> users = List.of(test1, test2);
-//        model.addAttribute("users", users);
-        return "admin/userManagement";
+        model.addAttribute("members", response);
+        return "admin/memberManagement";
+    }
+
+    @PutMapping("/members/{memberId}")
+    public ResponseEntity<String> updateMemberInfo(@PathVariable Long memberId, UpdateMemberRequest request) {
+        log.info("update memberId: {}", memberId);
+        memberService.updateMemberByAdmin(memberId, request);
+        return ResponseEntity.ok("Success");
     }
 }

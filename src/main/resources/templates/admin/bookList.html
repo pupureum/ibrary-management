@@ -35,18 +35,18 @@
                     </thead>
                     <tbody>
                     <tr th:each="book : ${books}">
-                        <td>
+                        <td class="text-center">
                             <input type="hidden" th:value="${book.id}" />
-                            <input class="label-style" min="1" max="9999" type="number" th:value="${book.quantity}" style="text-align: center"/>
+                            <input class="label-style" min="1" max="9999" type="number" th:value="${book.quantity}"/>
                             <button type="button" class="btn btn-sm btn btn-outline-primary update-quantity-btn" data-book-id="${book.id}" style="margin: 0 auto;">변경</button>
                         </td>
-                        <td th:text="${book.bookInfo.title}" style="text-align: center"></td>
-                        <td th:text="${book.bookInfo.author}" style="text-align: center"></td>
-                        <td th:text="${book.bookInfo.publisher}" style="text-align: center"></td>
+                        <td th:text="${book.bookInfo.title}" class="text-center"></td>
+                        <td th:text="${book.bookInfo.author}" class="text-center"></td>
+                        <td th:text="${book.bookInfo.publisher}"class="text-center"></td>
                         <td style="text-align: center">
                             <span th:text="${book.quantity - book.loanableCnt} + ' / ' + ${book.loanableCnt}"></span>
                         </td>
-                        <td>
+                        <td class="text-center">
                             <input type="hidden" th:value="${book.id}" />
                             <button type="button" class="btn btn-sm btn-outline-danger delete-book-btn" data-book-id="${book.id}" style="margin: 0 auto;">삭제</button>
                         </td>

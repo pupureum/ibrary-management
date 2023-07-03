@@ -11,7 +11,7 @@ import java.util.Optional;
 public interface MemberLoanHistoryRepository extends JpaRepository<MemberLoanHistory, Long> {
     List<MemberLoanHistory> findAllByMemberId(Long memberId);
 
-    List<MemberLoanHistory> findAllByMemberIdOrderByLoanedAtDesc(Long memberId);
+    List<MemberLoanHistory> findAllByMemberIdOrderByCreatedAtDesc(Long memberId);
 
     boolean existsByMemberIdAndBookInfoIsbnAndReturnedAtIsNull(Long memberId, String bookInfoId);
 

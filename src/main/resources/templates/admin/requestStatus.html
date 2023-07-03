@@ -34,12 +34,12 @@
                     </thead>
                     <tbody>
                     <tr th:each="request : ${requestHistory}">
-                        <td th:text="${request.member.name}" style="text-align: center; padding-top: 30px"></td>
-                        <td th:text="${request.bookInfo.title}" style="text-align: center; padding-top: 25px"></td>
-                        <td th:text="${request.bookInfo.author}" style="text-align: center; padding-top: 30px"></td>
-                        <td th:text="${request.requestedAt}" style="text-align: center; padding-top: 30px"></td>
-                        <td>
-                            <div class="btn-group me-2" style="margin-top: 15px; margin-left: 25px">
+                        <td th:text="${request.member.name}" class="text-center" style="padding-top: 30px"></td>
+                        <td th:text="${request.bookInfo.title}" class="text-center" style="padding-top: 25px"></td>
+                        <td th:text="${request.bookInfo.author}" class="text-center" style="padding-top: 30px"></td>
+                        <td th:text="${request.requestedAt}" class="text-center" style=" padding-top: 30px"></td>
+                        <td class="text-center">
+                            <div class="btn-group me-2" style="margin-top: 15px;">
                                 <div th:if="${!request.isApproved}">
                                     <button type="button" class="btn btn-sm btn-outline-primary" disabled>요청중</button>
                                 </div>
@@ -63,7 +63,7 @@
                                 </button>
                             </div>
                         </td>
-                        <td>
+                        <td class="text-center">
                             <div th:if="${!request.isApproved}" style="margin-top: 15px;">
                             <button type="button" class="btn btn-sm btn-outline-primary stock-modal-trigger"
                                     data-toggle="modal" data-target="#stockModal"
@@ -199,15 +199,14 @@
                 alert('입고 수량을 입력해주세요.');
                 return;
             }
-            let formData = {
-                isbn: $('#addBookIsbn').val(),
-                quantity: quantity
-            };
 
             $.ajax({
                 type: 'POST',
                 url: '/admin/new-book',
-                data: formData,
+                data: {
+                    isbn: $('#addBookIsbn').val(),
+                    quantity: quantity
+                },
                 success: function (response) {
                     alert('도서가 추가되었습니다.');
                     hideModal();
