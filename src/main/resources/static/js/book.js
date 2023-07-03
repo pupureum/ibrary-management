@@ -13,6 +13,7 @@ $(document).ready(function () {
             updateButton.prop('disabled', true);
         }
     });
+    // 도서 재고 수량 변경
     $(document).on('click', '.update-quantity-btn', function () {
         let bookId = $(this).siblings("input[type='hidden']").val();
         let newQuantity = $(this).closest("tr").find("input[type='number']").val();

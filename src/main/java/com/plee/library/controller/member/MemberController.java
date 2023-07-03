@@ -1,13 +1,14 @@
 package com.plee.library.controller.member;
 
-import com.plee.library.domain.member.Member;
 import com.plee.library.dto.member.request.LoginMemberRequest;
 import com.plee.library.dto.member.request.SignUpMemberRequest;
+import com.plee.library.dto.admin.request.UpdateMemberRequest;
 import com.plee.library.service.member.MemberService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.authentication.logout.SecurityContextLogoutHandler;
 import org.springframework.stereotype.Controller;
@@ -37,24 +38,6 @@ public class MemberController {
         model.addAttribute("loginMemberRequest", new LoginMemberRequest());
         model.addAttribute("error", error);
         return "member/login";
-    }
-
-    @PostMapping("/login")
-    public String login(@Validated @ModelAttribute LoginMemberRequest request, BindingResult bindingResult, Model model) {
-        System.out.println("-------------------");
-        log.info("login request={}", request);
-        if (bindingResult.hasErrors()) {
-            log.info("binding errors={} ", bindingResult);
-            return "member/login";
-        }
-        Member loginMember = memberService.login(request);
-        if (loginMember == null) {
-            System.out.println("3");
-            bindingResult.reject("loginFail", "아이디 또는 비밀번호가 일치하지 않습니다.");
-            return "member/login";
-        }
-        log.info("login success");
-        return "redirect:/";
     }
 
     @GetMapping("/logout")
@@ -89,12 +72,25 @@ public class MemberController {
     }
 
     @GetMapping("/edit")
-    public String editInformationForm(Model model) {
-        model.addAttribute("isAdmin", true);
-//        model.addAttribute("isAdmin", false);
-//        model.addAttribute("totalCount", 100);
+    public String editInfoForm(Model model, Principal principal) {
+        model.addAttribute("member", memberService.findMember(principal.getName()));
         model.addAttribute("selectedMenu", "member-edit-info");
         return "member/editInfo";
     }
 
+    @PutMapping("/edit/{memberId}")
+    public ResponseEntity<String> editInfo(@PathVariable Long memberId, @Validated UpdateMemberRequest request) {
+        log.info("editInfo request");
+        System.out.println("memberId = " + memberId);
+        System.out.println("memberName = " + request.getName());
+        System.out.println("request = " + request.getNewPassword());
+        memberService.updateMemberInfo(memberId, request);
+        return ResponseEntity.ok("success");
+    }
+
+    @GetMapping("/edit/current-password")
+    public ResponseEntity<Boolean> checkCurrentPassword(@RequestParam("currentPassword") String currentPassword, Principal principal) {
+        boolean isPasswordMatched = memberService.checkCurrentPassword(currentPassword, principal.getName());
+        return ResponseEntity.ok(isPasswordMatched); //TODO Pincipal로 받을것인지 고민 필요!!!
+    }
 }

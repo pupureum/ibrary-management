@@ -1,10 +1,8 @@
 package com.plee.library.service.member;
 
-import com.plee.library.domain.member.Member;
-import com.plee.library.dto.member.request.LoginMemberRequest;
+import com.plee.library.dto.admin.request.UpdateMemberRequest;
 import com.plee.library.dto.member.request.SignUpMemberRequest;
-import com.plee.library.dto.member.request.UpdateMemberRequest;
-import com.plee.library.dto.member.response.AllMembersResponse;
+import com.plee.library.dto.member.response.MemberInfoResponse;
 
 import java.util.List;
 
@@ -17,7 +15,9 @@ public interface MemberService {
 
     boolean checkLoginIdDuplicate(String loginId);
 
-    Member findByLoginId(String loginId);
+    boolean checkCurrentPassword(String currentPassword, String loginId);
 
-    List<AllMembersResponse> findAllMembers();
+    MemberInfoResponse findMember(String loginId);
+
+    List<MemberInfoResponse> findAllMembers();
 }

@@ -1,9 +1,9 @@
 package com.plee.library.controller.admin;
 
+import com.plee.library.dto.admin.request.UpdateMemberRequest;
 import com.plee.library.dto.admin.response.AllBookRequestResponse;
 import com.plee.library.dto.book.request.SaveBookRequest;
-import com.plee.library.dto.member.request.UpdateMemberRequest;
-import com.plee.library.dto.member.response.AllMembersResponse;
+import com.plee.library.dto.member.response.MemberInfoResponse;
 import com.plee.library.service.book.BookService;
 import com.plee.library.service.member.MemberService;
 import jakarta.validation.Valid;
@@ -74,7 +74,7 @@ public class AdminController {
 
     @GetMapping("/members")
     public String manageMember(Model model) {
-        List<AllMembersResponse> response = memberService.findAllMembers();
+        List<MemberInfoResponse> response = memberService.findAllMembers();
         model.addAttribute("selectedMenu", "admin-member-management");
         model.addAttribute("members", response);
         return "admin/memberManagement";

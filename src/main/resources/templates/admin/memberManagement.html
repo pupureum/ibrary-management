@@ -131,12 +131,12 @@
                     role: updatedRole
                 },
                 success: function () {
-                    alert('정보가 수정되었습니다.');
+                    alert('회원 정보가 수정되었습니다.');
                     $('#editModal').modal('hide');
                     location.reload();
                 },
                 error: function (xhr, status) {
-                    console.log('member 수정 오류 발생:', xhr);
+                    console.log('회원 정보 admin 수정 오류 발생:', xhr);
                     console.log(status);
                     alert(xhr.responseText);
                 }

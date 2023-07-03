@@ -18,35 +18,11 @@
 <div class="album py-5 bg-light">
     <div class="container">
         <div class="row row-cols-1 row-cols-sm-2 row-cols-md-4 g-4 ">
-            <div class="col">
+            <div class="col" th:each="book: ${newBooks}">
                 <div class="card shadow-sm">
-                    <img src="/images/javaBook.jpg" width="100%" height="225" style="width: 100%;">
+                    <img th:src="${book.image}" alt="Book Image" width="100%" height="300" style="width: 100%;">
                     <div class="card-body">
-                        <p class="card-text">JAVA의 정석</p>
-                    </div>
-                </div>
-            </div>
-            <div class="col">
-                <div class="card shadow-sm">
-                    <img src="/images/javaBook.jpg" width="100%" height="225" style="width: 100%;">
-                    <div class="card-body">
-                        <p class="card-text">JAVA의 정석</p>
-                    </div>
-                </div>
-            </div>
-            <div class="col">
-                <div class="card shadow-sm">
-                    <img src="/images/javaBook.jpg" width="100%" height="225" style="width: 100%;">
-                    <div class="card-body">
-                        <p class="card-text">JAVA의 정석</p>
-                    </div>
-                </div>
-            </div>
-            <div class="col">
-                <div class="card shadow-sm">
-                    <img src="/images/javaBook.jpg" width="100%" height="225" style="width: 100%;">
-                    <div class="card-body">
-                        <p class="card-text">JAVA의 정석</p>
+                        <p class="card-text" th:text="${book.title}"></p>
                     </div>
                 </div>
             </div>

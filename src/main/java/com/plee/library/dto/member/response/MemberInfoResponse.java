@@ -7,7 +7,7 @@ import lombok.Getter;
 import java.time.LocalDate;
 
 @Getter
-public class AllMembersResponse {
+public class MemberInfoResponse {
     private final Long id;
     private final String name;
     private final String loginId;
@@ -17,7 +17,7 @@ public class AllMembersResponse {
     private final LocalDate createdAt;
 
     @Builder
-    public AllMembersResponse(Long id, String name, String loginId, String password, Role role, LocalDate createdAt) {
+    public MemberInfoResponse(Long id, String name, String loginId, String password, Role role, LocalDate createdAt) {
         this.id = id;
         this.name = name;
         this.loginId = loginId;
