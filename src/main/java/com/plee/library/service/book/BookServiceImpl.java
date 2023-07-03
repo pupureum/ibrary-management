@@ -8,10 +8,7 @@ import com.plee.library.domain.member.MemberLoanHistory;
 import com.plee.library.domain.member.MemberRequestHistory;
 import com.plee.library.dto.admin.response.AllBookRequestResponse;
 import com.plee.library.dto.book.request.*;
-import com.plee.library.dto.book.response.AllBooksResponse;
-import com.plee.library.dto.book.response.RequestHistoryResponse;
-import com.plee.library.dto.book.response.SearchBookResponse;
-import com.plee.library.dto.book.response.LoanHistoryResponse;
+import com.plee.library.dto.book.response.*;
 import com.plee.library.exception.CustomException;
 import com.plee.library.exception.code.BookErrorCode;
 import com.plee.library.exception.code.MemberErrorCode;
@@ -54,9 +51,13 @@ public class BookServiceImpl implements BookService {
         //TODO member ID 받는걸로 바꾸기
         Member member = memberRepository.findByLoginId(loginId)
                 .orElseThrow(() -> new CustomException(MemberErrorCode.NOT_FOUND_MEMBER));
+        if (bookRepository.existsByBookInfoIsbn(request.getIsbn())) {
+            throw new CustomException(BookErrorCode.ALREADY_EXIST_BOOK);
+        }
         if (memberReqHisRepository.existsByMemberIdAndBookInfoIsbn(member.getId(), request.getIsbn())) {
             throw new CustomException(BookErrorCode.ALREADY_EXIST_BOOK_REQUEST);
         }
+        //다른 사용자의 요청 등의 이유로 bookInfo 존재 여부 판단
         BookInfo bookInfo = bookInfoRepository.findById(request.getIsbn())
                 .orElseGet(() -> bookInfoRepository.save(request.toEntity()));
         member.addBookRequest(bookInfo, request.getReqReason());
@@ -137,10 +138,21 @@ public class BookServiceImpl implements BookService {
     }
 
     @Override
+    public List<BookInfoResponse> findNewBooks() {
+        List<Book> books = bookRepository.findTop4ByOrderByCreatedAtDesc();
+        return books.stream()
+                .map(book -> BookInfoResponse.builder()
+                        .image(book.getBookInfo().getImage())
+                        .title(book.getBookInfo().getTitle())
+                        .build())
+                .collect(Collectors.toList());
+    }
+
+    @Override
     public List<AllBooksResponse> findAllBooks() {
         List<Book> books = bookRepository.findAllByOrderByCreatedAtDesc();
 
-        List<AllBooksResponse> allBooksResponses = books.stream()
+        return books.stream()
                 .map(book -> AllBooksResponse.builder()
                         .id(book.getId())
                         .quantity(book.getQuantity())
@@ -148,7 +160,6 @@ public class BookServiceImpl implements BookService {
                         .bookInfo(book.getBookInfo())
                         .build())
                 .collect(Collectors.toList());
-        return allBooksResponses;
     }
 
     @Override
@@ -156,13 +167,13 @@ public class BookServiceImpl implements BookService {
         Member member = memberRepository.findByLoginId(loginId)
                 .orElseThrow(() -> new IllegalArgumentException("회원 정보를 찾을 수 없습니다."));
         // TODO loginID 말고, ID 받아오도록 수정 필요!
-        List<MemberLoanHistory> histories = memberLoanHisRepository.findAllByMemberIdOrderByLoanedAtDesc(member.getId());
+        List<MemberLoanHistory> histories = memberLoanHisRepository.findAllByMemberIdOrderByCreatedAtDesc(member.getId());
         return histories.stream()
                 .map(h -> LoanHistoryResponse.builder()
                         .id(h.getId())
                         .bookInfo(h.getBookInfo())
                         .isRenew(h.isRenew())
-                        .loanedAt(h.getLoanedAt().toLocalDate())
+                        .loanedAt(h.getCreatedAt().toLocalDate())
                         .returnedAt(Optional.ofNullable(h.getReturnedAt()).map(LocalDateTime::toLocalDate).orElse(null))
                         .build())
                 .collect(Collectors.toList());
@@ -173,28 +184,28 @@ public class BookServiceImpl implements BookService {
         //member의 Id를 받아오도록 바꾸기! TODO
         Member member = memberRepository.findByLoginId(loginId)
                 .orElseThrow(() -> new IllegalArgumentException("회원 정보를 찾을 수 없습니다."));
-        List<MemberRequestHistory> histories = memberReqHisRepository.findAllByMemberIdOrderByRequestedAtDesc(member.getId());
+        List<MemberRequestHistory> histories = memberReqHisRepository.findAllByMemberIdOrderByCreatedAtDesc(member.getId());
         return histories.stream()
                 .map(h -> RequestHistoryResponse.builder()
                         .id(h.getId())
                         .bookInfo(h.getBookInfo())
                         .requestReason(h.getRequestReason())
                         .isApproved(h.isApproved())
-                        .requestedAt(h.getRequestedAt().toLocalDate())
+                        .requestedAt(h.getCreatedAt().toLocalDate())
                         .build())
                 .collect(Collectors.toList());
     }
 
     @Override
     public List<AllBookRequestResponse> findAllMemberRequestHistory() {
-        return memberReqHisRepository.findAllByOrderByRequestedAtDesc().stream()
+        return memberReqHisRepository.findAllByOrderByCreatedAtDesc().stream()
                 .map(h -> AllBookRequestResponse.builder()
                         .id(h.getId())
                         .member(h.getMember())
                         .bookInfo(h.getBookInfo())
                         .requestReason(h.getRequestReason())
                         .isApproved(h.isApproved())
-                        .requestedAt(h.getRequestedAt().toLocalDate())
+                        .requestedAt(h.getCreatedAt().toLocalDate())
                         .build())
                 .collect(Collectors.toList());
     }
