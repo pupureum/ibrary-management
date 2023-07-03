@@ -6,6 +6,7 @@
     <link rel="stylesheet" th:href="@{/css/bootstrap.min.css}" href="../../static/css/bootstrap.min.css">
     <link rel="stylesheet" th:href="@{/css/main.css}">
     <link rel="stylesheet" th:href="@{/css/sidebar.css}">
+    <script th:src="@{/js/jquery-3.7.0.js}"></script>
     <script th:src="@{/js/bootstrap.min.js}"></script>
 </head>
 
@@ -23,34 +24,53 @@
                 <table class="table table-hover" id="table-book-list">
                     <thead>
                     <tr>
-                        <th scope="col" style="width: 6%; text-align: center">요청자</th>
-                        <th scope="col" style="width: 10%; text-align: center">ISBN</th>
+                        <th scope="col" style="width: 8%; text-align: center">요청자</th>
                         <th scope="col" style="width: 25%; text-align: center">제목</th>
-                        <th scope="col" style="width: 15%; text-align: center">저자</th>
-                        <th scope="col" style="width: 17%; text-align: center">출판사</th>
-                        <th scope="col" style="width: 10%; text-align: center">신청일</th>
-                        <th scope="col" style="width: 7%; text-align: center">상태</th>
+                        <th scope="col" style="width: 13%; text-align: center">저자</th>
+                        <th scope="col" style="width: 7%; text-align: center">신청일</th>
+                        <th scope="col" style="width: 14%; text-align: center">상태</th>
+                        <th scope="col" style="width: 8%; text-align: center"></th>
                     </tr>
                     </thead>
                     <tbody>
                     <tr th:each="request : ${requestHistory}">
-                        <td th:text="${request.member.name}" style="text-align: center; padding-top: 40px"></td>
-                        <td th:text="${request.bookInfo.isbn}" style="text-align: center; padding-top: 40px"></td>
-                        <td th:text="${request.bookInfo.title}" style="text-align: center; padding-top: 35px"></td>
-                        <td th:text="${request.bookInfo.author}" style="text-align: center; padding-top: 40px"></td>
-                        <td th:text="${request.bookInfo.publisher}" style="text-align: center; padding-top: 40px"></td>
-                        <td th:text="${request.requestedAt}" style="text-align: center; padding-top: 40px"></td>
+                        <td th:text="${request.member.name}" style="text-align: center; padding-top: 30px"></td>
+                        <td th:text="${request.bookInfo.title}" style="text-align: center; padding-top: 25px"></td>
+                        <td th:text="${request.bookInfo.author}" style="text-align: center; padding-top: 30px"></td>
+                        <td th:text="${request.requestedAt}" style="text-align: center; padding-top: 30px"></td>
                         <td>
-                            <div class="btn-group me-2" th:if="${!request.isApproved}">
-                                <button type="button" class="btn btn-sm btn-outline-primary"
-                                        style="margin-top: 30px;margin-left: 20px">접수
+                            <div class="btn-group me-2" style="margin-top: 15px; margin-left: 25px">
+                                <div th:if="${!request.isApproved}">
+                                    <button type="button" class="btn btn-sm btn-outline-primary" disabled>요청중</button>
+                                </div>
+                                <div th:if="${request.isApproved}">
+                                    <button type="button" class="btn btn-sm btn-outline-success" disabled>입고완료
+                                    </button>
+                                </div>
+                                <button type="button" class="btn btn-sm btn-outline-secondary view-details-btn"
+                                        data-toggle="modal" data-target="#detailsModal"
+                                        th:data-member-name="${request.member.name}"
+                                        th:data-member-email="${request.member.loginId}"
+                                        th:data-book-isbn="${request.bookInfo.isbn}"
+                                        th:data-book-image="${request.bookInfo.image}"
+                                        th:data-book-title="${request.bookInfo.title}"
+                                        th:data-book-author="${request.bookInfo.author}"
+                                        th:data-book-publisher="${request.bookInfo.publisher}"
+                                        th:data-request-status="${request.isApproved}"
+                                        th:data-requested-at="${#temporals.format(request.requestedAt, 'yyyy-MM-dd')}"
+                                        th:data-request-reason="${request.requestReason}">
+                                    자세히 보기
                                 </button>
                             </div>
-                            <div class="btn-group me-2" th:if="${request.isApproved}">
-                                <button type="button" class="btn btn-sm btn-outline-success"
-                                        style="margin-top: 30px;margin-left: 20px"
-                                        disabled="disabled">처리 완료
-                                </button>
+                        </td>
+                        <td>
+                            <div th:if="${!request.isApproved}" style="margin-top: 15px;">
+                            <button type="button" class="btn btn-sm btn-outline-primary stock-modal-trigger"
+                                    data-toggle="modal" data-target="#stockModal"
+                                    th:data-request-id="${request.id}"
+                                    th:data-book-isbn="${request.bookInfo.isbn}">
+                                입고 처리하기
+                            </button>
                             </div>
                         </td>
                     </tr>
@@ -61,6 +81,147 @@
     </div>
 </div>
 
+<div class="modal fade" id="stockModal" tabindex="-1" role="dialog" aria-labelledby="stockModalLabel"
+     aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="stockModalLabel">입고 처리</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="닫기">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="stockForm" method="post">
+<!--                    <input type="hidden" id="addRequestId">-->
+                    <input type="hidden" id="addBookIsbn" , name="isbn">
+                    <div class="mb-3">
+                        <label for="quantity" class="form-label">수량: </label>
+                        <input type="number" class="label-style" id="quantity" name="quantity" min="1" max="9999"
+                               required>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-primary" id="confirmButton">확인</button>
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">닫기</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="modal fade" id="detailsModal" tabindex="-1" role="dialog" aria-labelledby="detailsModalLabel"
+     aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="detailsModalLabel">도서 요청 상세정보</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="닫기">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <h6>이름: <span id="memberName"></span></h6>
+                <h6>이메일: <span id="memberEmail"></span></h6>
+                <hr>
+                <img id="bookImage" src="" alt="Book Image"
+                     style="max-height: 140px; max-width: 180px; margin-left: 40px"/>
+                <h6>ISBN: <span id="bookIsbn"></span></h6>
+                <h6>제목: <span id="bookTitle"></span></h6>
+                <h6>저자: <span id="bookAuthor"></span></h6>
+                <h6>출판사: <span id="bookPublisher"></span></h6>
+                <hr>
+                <h6>처리상태: <span id="requestStatus"></span></h6>
+                <h6>신청일: <span id="requestedAt"></span></h6>
+                <h6>신청사유:</h6>
+                <textarea id="requestReason" rows="4" style="width: 100%; resize: none;" readonly></textarea>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">닫기</button>
+            </div>
+        </div>
+    </div>
+</div>
+<script>
+    $(document).ready(function () {
+        $('.view-details-btn').click(function () {
+            let memberName = $(this).data('member-name');
+            let memberEmail = $(this).data('member-email');
+            let bookIsbn = $(this).data('book-isbn');
+            let bookImage = $(this).data('book-image');
+            let bookTitle = $(this).data('book-title');
+            let bookAuthor = $(this).data('book-author');
+            let bookPublisher = $(this).data('book-publisher');
+            let requestedAt = $(this).data('requested-at');
+            let requestReason = $(this).data('request-reason');
+            let requestStatus = $(this).data('request-status');
 
+            $('#memberName').text(memberName);
+            $('#memberEmail').text(memberEmail);
+            $('#bookIsbn').text(bookIsbn);
+            $('#bookImage').attr('src', bookImage);
+            $('#bookTitle').text(bookTitle);
+            $('#bookAuthor').text(bookAuthor);
+            $('#bookPublisher').text(bookPublisher);
+            $('#requestedAt').text(requestedAt);
+            $('#requestReason').val(requestReason);
+            if (requestStatus) {
+                $('#requestStatus').text('입고 완료');
+            } else {
+                $('#requestStatus').text('요청중');
+            }
+        });
+        $('.stock-modal-trigger').click(function () {
+            // let addRequestId = $(this).data('request-id');
+            let addBookIsbn = $(this).data('book-isbn');
+
+            // $('#addRequestId').val(addRequestId);
+            $('#addBookIsbn').val(addBookIsbn);
+            $('#quantity').val('');
+            $('#stockModal').modal('show');
+        });
+        // $('#stockModal').modal({
+        //     backdrop: true,
+        //     keyboard: true
+        // });
+        $('#stockModal').on('hidden.bs.modal', function () {
+            $('#addBookIsbn').val('');
+            $('#quantity').val('');
+        });
+        $('.close, [data-dismiss="modal"]').click(function () {
+            hideModal();
+        });
+        function hideModal() {
+            $('#stockModal').modal('hide');
+        }
+        $('#stockModal').on('click', '#confirmButton', function () {
+            let quantity = $('#quantity').val();
+            if (quantity === '') {
+                alert('입고 수량을 입력해주세요.');
+                return;
+            }
+            let formData = {
+                isbn: $('#addBookIsbn').val(),
+                quantity: quantity
+            };
+
+            $.ajax({
+                type: 'POST',
+                url: '/admin/new-book',
+                data: formData,
+                success: function (response) {
+                    alert('도서가 추가되었습니다.');
+                    hideModal();
+                    location.reload();
+                    // window.location.href = '/admin/books';
+                },
+                error: function (xhr, status) {
+                    console.log('도서 추가 오류 발생:', xhr);
+                    console.log(status);
+                    alert(xhr.responseText);
+                }
+            });
+        });
+    });
+</script>
 </body>
 </html>

@@ -19,7 +19,6 @@ public class SaveBookRequest {
     @ISBN
     private String isbn;
 
-    @NotEmpty
     private String title;
 
     private String author;
@@ -33,7 +32,7 @@ public class SaveBookRequest {
     private String pubDate;
 
     @NotNull
-    @Range(min = 1, max = 9999)
+    @Range(min = 1, max = 9999, message = "1 ~ 9999 까지의 수량만 입력 가능합니다.")
     private int quantity;
 
     public BookInfo toEntity() {

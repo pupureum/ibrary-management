@@ -21,7 +21,7 @@ public class WebSecurityConfig {
     @Bean
     public WebSecurityCustomizer configure() {
         return (web) -> web.ignoring()
-                .requestMatchers("/static/**", "/css/**", "/js/**", "/images/**", "/favicon.ico");
+                .requestMatchers("/static/**", "/css/**", "/js/**", "/images/**", "/favicon.ico", "/error");
     }
 
     @Bean
