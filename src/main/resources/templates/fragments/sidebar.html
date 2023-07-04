@@ -18,7 +18,7 @@
                 <a class="nav-link" th:classappend="${selectedMenu == 'member-loan-history'} ? 'active' : ''"
                    th:href="@{/books/loan}">
                     <span data-feather="shopping-cart" class="align-text-bottom"></span>
-                    대출 현황
+                    대출 기록
                 </a>
             </li>
             <li class="nav-item">
@@ -44,7 +44,6 @@
                     개인 정보 수정
                 </a>
             </li>
-            <!--            <div sec:authorize="hasRole('ADMIN')">-->
             <div sec:authorize="hasRole('ROLE_ADMIN')">
                 <hr/>
                 <a>AdminPage</a>

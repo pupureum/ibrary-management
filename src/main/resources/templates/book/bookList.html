@@ -9,7 +9,6 @@
     <script th:src="@{/js/jquery-3.7.0.js}"></script>
     <script th:src="@{/js/bootstrap.min.js}"></script>
 </head>
-
 <body>
 <div th:replace="~{fragments/header :: ~{header}}"/>
 <div class="container-fluid">
@@ -38,9 +37,6 @@
                     <tr>
                         <th scope="col" style="width: 20%"></th>
                         <th scope="col" style="width: 70%"></th>
-                        <!--                        <th scope="col" style="width: 30%">제목</th>-->
-                        <!--                        <th scope="col" style="width: 20%">저자</th>-->
-                        <!--                        <th scope="col" style="width: 20%">출판사</th>-->
                         <th scope="col" style="width: 20%"></th>
                     </tr>
                     </thead>
@@ -78,10 +74,6 @@
                                         th:if="${book.loanableCnt > 0}" style="margin-top: 70px;">대출하러<br>가기
                                 </button>
                             </form>
-                            <!--                            <button type="button" class="btn btn-sm btn btn-outline-primary loan-book-btn"-->
-                            <!--                                    th:if="${book.loanableCnt > 0}"-->
-                            <!--                                    style="margin-top: 70px;">대출하기-->
-                            <!--                            </button>-->
                             <button type="button" class="btn btn-sm btn-outline-dark" disabled="disabled"
                                     th:unless="${book.loanableCnt > 0}"
                                     style="margin-top: 70px;">대출불가<br>
@@ -101,6 +93,7 @@
         </main>
     </div>
 </div>
+
 <!-- 페이징 처리 -->
 <nav aria-label="Page navigation">
     <ul class="pagination justify-content-center">
@@ -193,7 +186,6 @@
             })
             .catch(error => console.error('Error:', error));
     }
-
 </script>
 
 </body>

@@ -22,7 +22,7 @@ public interface BookService {
 
     void deleteBook(Long bookId);
 
-    void addNewBookRequest(AddBookRequest request, String loginId);
+    void addNewBookRequest(AddBookRequest request, Long memberId);
 
     List<BookInfoResponse> findNewBooks();
 
@@ -30,10 +30,11 @@ public interface BookService {
 
     SearchBookResponse findBySearchApi(String keyword);
 
-    List<LoanHistoryResponse> findLoanHistory(String loginId);
+    Page<LoanHistoryResponse> findLoanHistory(Long memberId, Pageable pageable);
 
-    List<RequestHistoryResponse> findMemberRequestHistory(String loginId);
-    List<AllBookRequestResponse> findAllMemberRequestHistory();
+    Page<RequestHistoryResponse> findMemberRequestHistory(Long memberId, Pageable pageable);
+
+    Page<AllBookRequestResponse> findAllMemberRequestHistory(Pageable pageable);
 
     Book findBookById(Long id);
 

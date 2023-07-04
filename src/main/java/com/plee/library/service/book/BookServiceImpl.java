@@ -33,7 +33,6 @@ import java.util.stream.Collectors;
 
 @Slf4j
 @Service
-@Transactional(readOnly = true)
 @RequiredArgsConstructor
 public class BookServiceImpl implements BookService {
 
@@ -49,10 +48,9 @@ public class BookServiceImpl implements BookService {
 
     @Override
     @Transactional
-    public void addNewBookRequest(AddBookRequest request, String loginId) {
+    public void addNewBookRequest(AddBookRequest request, Long memberId) {
         // 이미 추가 요청을 한 경우 예외 처리
-        //TODO member ID 받는걸로 바꾸기
-        Member member = memberRepository.findByLoginId(loginId)
+        Member member = memberRepository.findById(memberId)
                 .orElseThrow(() -> new CustomException(MemberErrorCode.NOT_FOUND_MEMBER));
         if (bookRepository.existsByBookInfoIsbn(request.getIsbn())) {
             throw new CustomException(BookErrorCode.ALREADY_EXIST_BOOK);
@@ -141,6 +139,7 @@ public class BookServiceImpl implements BookService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<BookInfoResponse> findNewBooks() {
         List<Book> books = bookRepository.findTop4ByOrderByCreatedAtDesc();
         return books.stream()
@@ -152,9 +151,13 @@ public class BookServiceImpl implements BookService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public Page<AllBooksResponse> findAllBooks(Pageable pageable) {
-        Page<Book> bookPage = bookRepository.findAllByOrderByCreatedAtDesc(pageable);
-        List<AllBooksResponse> responses = bookPage.stream()
+        // 책들을 최신순으로 Pagination 하여 조회
+        Page<Book> books = bookRepository.findAllByOrderByCreatedAtDesc(pageable);
+
+        // 조회된 책들을 AllBooksResponse 객체로 변환
+        List<AllBooksResponse> response = books.stream()
                 .map(book -> AllBooksResponse.builder()
                         .id(book.getId())
                         .quantity(book.getQuantity())
@@ -162,16 +165,24 @@ public class BookServiceImpl implements BookService {
                         .bookInfo(book.getBookInfo())
                         .build())
                 .collect(Collectors.toList());
-        return new PageImpl<>(responses, pageable, bookPage.getTotalElements());
+        return new PageImpl<>(response, pageable, books.getTotalElements());
     }
 
+    /**
+     * 특정 회원의 대출 기록을 조회합니다.
+     *
+     * @param memberId 회원의 ID
+     * @param pageable Pagination 정보
+     * @return 회원의 대출 기록 페이지 (LoanHistoryResponse 객체의 리스트)
+     */
     @Override
-    public List<LoanHistoryResponse> findLoanHistory(String loginId) {
-        Member member = memberRepository.findByLoginId(loginId)
-                .orElseThrow(() -> new IllegalArgumentException("회원 정보를 찾을 수 없습니다."));
-        // TODO loginID 말고, ID 받아오도록 수정 필요!
-        List<MemberLoanHistory> histories = memberLoanHisRepository.findAllByMemberIdOrderByCreatedAtDesc(member.getId());
-        return histories.stream()
+    @Transactional(readOnly = true)
+    public Page<LoanHistoryResponse> findLoanHistory(Long memberId, Pageable pageable) {
+        // 회원의 대출 기록 조회
+        Page<MemberLoanHistory> histories = memberLoanHisRepository.findAllByMemberIdOrderByCreatedAtDesc(memberId, pageable);
+
+        // 대출 기록을 LoanHistoryResponse 객체로 변환
+        List<LoanHistoryResponse> response = histories.stream()
                 .map(h -> LoanHistoryResponse.builder()
                         .id(h.getId())
                         .bookInfo(h.getBookInfo())
@@ -180,15 +191,24 @@ public class BookServiceImpl implements BookService {
                         .returnedAt(Optional.ofNullable(h.getReturnedAt()).map(LocalDateTime::toLocalDate).orElse(null))
                         .build())
                 .collect(Collectors.toList());
+        return new PageImpl<>(response, pageable, histories.getTotalElements());
     }
 
+    /**
+     * 특정 회원의 신규 도서 신청 내역을 조회합니다.
+     *
+     * @param memberId 회원 ID
+     * @param pageable Pagination 정보
+     * @return 회원의 도서 신청 내역 페이지 (RequestHistoryResponse 객체의 리스트)
+     */
     @Override
-    public List<RequestHistoryResponse> findMemberRequestHistory(String loginId) {
-        //member의 Id를 받아오도록 바꾸기! TODO
-        Member member = memberRepository.findByLoginId(loginId)
-                .orElseThrow(() -> new IllegalArgumentException("회원 정보를 찾을 수 없습니다."));
-        List<MemberRequestHistory> histories = memberReqHisRepository.findAllByMemberIdOrderByCreatedAtDesc(member.getId());
-        return histories.stream()
+    @Transactional(readOnly = true)
+    public Page<RequestHistoryResponse> findMemberRequestHistory(Long memberId, Pageable pageable) {
+        // 회원의 신규 도서 요청 기록 조회
+        Page<MemberRequestHistory> histories = memberReqHisRepository.findAllByMemberIdOrderByCreatedAtDesc(memberId, pageable);
+
+        // 요청 기록을 RequestHistoryResponse 객체로 변환
+        List<RequestHistoryResponse> response = histories.stream()
                 .map(h -> RequestHistoryResponse.builder()
                         .id(h.getId())
                         .bookInfo(h.getBookInfo())
@@ -197,11 +217,17 @@ public class BookServiceImpl implements BookService {
                         .requestedAt(h.getCreatedAt().toLocalDate())
                         .build())
                 .collect(Collectors.toList());
+        return new PageImpl<>(response, pageable, histories.getTotalElements());
     }
 
     @Override
-    public List<AllBookRequestResponse> findAllMemberRequestHistory() {
-        return memberReqHisRepository.findAllByOrderByCreatedAtDesc().stream()
+    @Transactional(readOnly = true)
+    public Page<AllBookRequestResponse> findAllMemberRequestHistory(Pageable pageable) {
+        // 요청들을 최신순으로 Pagination 하여 조회
+        Page<MemberRequestHistory> histories = memberReqHisRepository.findAllByOrderByCreatedAtDesc(pageable);
+
+        // 조회된 요청들을 AllBookRequestResponse 객체로 변환
+        List<AllBookRequestResponse> response = histories.stream()
                 .map(h -> AllBookRequestResponse.builder()
                         .id(h.getId())
                         .member(h.getMember())
@@ -211,36 +237,56 @@ public class BookServiceImpl implements BookService {
                         .requestedAt(h.getCreatedAt().toLocalDate())
                         .build())
                 .collect(Collectors.toList());
+        return new PageImpl<>(response, pageable, histories.getTotalElements());
     }
 
     @Override
+    @Transactional(readOnly = true)
     public Book findBookById(Long id) {
         return bookRepository.findById(id)
                 .orElseThrow(() -> new CustomException(BookErrorCode.NOT_FOUND_BOOK));
     }
 
+    /**
+     * 네이버 도서 검색 API를 통해 주어진 키워드로 책을 검색하고, 검색 결과를 반환하는 메서드입니다.
+     *
+     * @param keyword 검색할 키워드
+     * @return 검색 결과를 담은 SearchBookResponse 객체.
+     */
     @Override
     public SearchBookResponse findBySearchApi(String keyword) {
         if (keyword == null || keyword.isBlank()) {
             return null;
         }
+
+        // 네이버 도서 검색 API를 사용하여 키워드로 도서를 검색
         SearchBookRequest searchReq = new SearchBookRequest();
         searchReq.setKeyword(keyword);
         return naverBookSearchConfig.searchBook(searchReq);
     }
 
+    /**
+     * 책의 수량을 업데이트하는 메서드입니다.
+     *
+     * @param bookId      업데이트할 책의 ID
+     * @param newQuantity 업데이트할 수량
+     * @throws CustomException 대출 중인 도서 수보다 적은 수량으로 업데이트하려는 경우 발생하는 예외
+     */
     @Override
     @Transactional
     public void updateBookQuantity(Long bookId, Integer newQuantity) {
         Book book = bookRepository.findById(bookId)
                 .orElseThrow(() -> new CustomException(BookErrorCode.NOT_FOUND_BOOK));
-        // 이미 대출중인 도서 수보다 적게 수정하려는 경우, 수정할 수 없도록 예외 발생
+
+        // 이미 대출중인 도서 수보다 작게 수정하려는 경우, 수정할 수 없도록 예외 발생
         int loanedCnt = book.getQuantity() - book.getLoanableCnt();
         if (newQuantity < loanedCnt) {
             throw new CustomException(BookErrorCode.CANNOT_UPDATE_QUANTITY);
         }
         book.setQuantity(newQuantity);
         bookRepository.save(book);
+
+        log.info("SUCCESS updateBookQuantity Book ID: {}, New quantity: {}", bookId, newQuantity);
     }
 
     @Override
@@ -271,4 +317,3 @@ public class BookServiceImpl implements BookService {
         return memberLoanHisRepository.existsByMemberIdAndBookInfoIsbnAndReturnedAtIsNull(member.getId(), book.getBookInfo().getIsbn());
     }
 }
-

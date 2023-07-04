@@ -1,6 +1,7 @@
 package com.plee.library.service.member;
 
 import com.plee.library.domain.member.Member;
+import com.plee.library.config.MemberAdapter;
 import com.plee.library.dto.admin.request.UpdateMemberRequest;
 import com.plee.library.dto.member.request.SignUpMemberRequest;
 import com.plee.library.dto.member.response.MemberInfoResponse;
@@ -9,7 +10,9 @@ import com.plee.library.exception.code.MemberErrorCode;
 import com.plee.library.repository.member.MemberRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.security.core.userdetails.User;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -29,7 +32,6 @@ public class MemberServiceImpl implements MemberService, UserDetailsService {
     private final BCryptPasswordEncoder passwordEncoder;
 
     @Override
-    @Transactional
     public void saveMember(SignUpMemberRequest request) {
         BCryptPasswordEncoder encoder = new BCryptPasswordEncoder();
         memberRepository.save(Member.builder()
@@ -54,8 +56,12 @@ public class MemberServiceImpl implements MemberService, UserDetailsService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<MemberInfoResponse> findAllMembers() {
-        return memberRepository.findAllByOrderByCreatedAtDesc().stream()
+    public Page<MemberInfoResponse> findAllMembers(Pageable pageable) {
+        // 회원들을 최신순으로 Pagination 하여 조회
+        Page<Member> members = memberRepository.findAllByOrderByCreatedAtDesc(pageable);
+
+        // 조회된 회원들을 MemberInfoResponse 객체로 변환
+        List<MemberInfoResponse> response = members.stream()
                 .map(m -> MemberInfoResponse.builder()
                         .id(m.getId())
                         .loginId(m.getLoginId())
@@ -64,6 +70,7 @@ public class MemberServiceImpl implements MemberService, UserDetailsService {
                         .createdAt(m.getCreatedAt().toLocalDate())
                         .build())
                 .collect(Collectors.toList());
+        return new PageImpl<>(response, pageable, members.getTotalElements());
     }
 
     @Override
@@ -113,22 +120,10 @@ public class MemberServiceImpl implements MemberService, UserDetailsService {
         return memberRepository.existsByLoginId(loginId);
     }
 
-//    @Override
-//    @Transactional(readOnly = true)
-//    public Member findByLoginId(String loginId) {
-//        return memberRepository.findByLoginId(loginId)
-//                .orElseThrow(() -> new UsernameNotFoundException("계정이 존재하지 않습니다. 회원가입 진행 후 로그인 해주세요."));
-//    }
-
-
     @Override
     public UserDetails loadUserByUsername(String loginId) throws UsernameNotFoundException {
         Member member = memberRepository.findByLoginId(loginId)
                 .orElseThrow(() -> new UsernameNotFoundException("계정이 존재하지 않습니다."));
-        return User.builder()
-                .username(member.getLoginId())
-                .password(member.getPassword())
-                .roles(member.getRole().toString())
-                .build();
+        return new MemberAdapter(member);
     }
 }
