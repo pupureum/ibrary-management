@@ -14,6 +14,9 @@ import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
@@ -38,8 +41,9 @@ public class BookController {
     }
 
     @GetMapping("/books")
-    public String getAllBooks(Model model) {
-        model.addAttribute("books", bookService.findAllBooks());
+    public String getAllBooks(@PageableDefault(size = 5) Pageable pageable, Model model) {
+        Page<AllBooksResponse> books = bookService.findAllBooks(pageable);
+        model.addAttribute("books", books);
         model.addAttribute("selectedMenu", "book-list");
         return "book/bookList";
     }
@@ -73,7 +77,7 @@ public class BookController {
     }
 
     @GetMapping("/books/loan")
-    public String loanHistory(Model model, Principal principal) {
+    public String loanHistory(@PageableDefault(size = 5) Pageable pageable, Model model, Principal principal) {
         log.info("loanHistory loginId={}", principal.getName());
         model.addAttribute("selectedMenu", "member-loan-history");
         model.addAttribute("loanHistory", bookService.findLoanHistory(principal.getName()));

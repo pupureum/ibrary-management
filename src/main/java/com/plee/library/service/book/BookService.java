@@ -4,6 +4,8 @@ import com.plee.library.domain.book.Book;
 import com.plee.library.dto.admin.response.AllBookRequestResponse;
 import com.plee.library.dto.book.request.*;
 import com.plee.library.dto.book.response.*;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 import java.util.List;
 
@@ -24,7 +26,7 @@ public interface BookService {
 
     List<BookInfoResponse> findNewBooks();
 
-    List<AllBooksResponse> findAllBooks();
+    Page<AllBooksResponse> findAllBooks(Pageable pageable);
 
     SearchBookResponse findBySearchApi(String keyword);
 

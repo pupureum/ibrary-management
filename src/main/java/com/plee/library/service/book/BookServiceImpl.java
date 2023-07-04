@@ -20,6 +20,9 @@ import com.plee.library.repository.member.MemberRepository;
 import com.plee.library.repository.member.MemberRequestHistoryRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -149,10 +152,9 @@ public class BookServiceImpl implements BookService {
     }
 
     @Override
-    public List<AllBooksResponse> findAllBooks() {
-        List<Book> books = bookRepository.findAllByOrderByCreatedAtDesc();
-
-        return books.stream()
+    public Page<AllBooksResponse> findAllBooks(Pageable pageable) {
+        Page<Book> bookPage = bookRepository.findAllByOrderByCreatedAtDesc(pageable);
+        List<AllBooksResponse> responses = bookPage.stream()
                 .map(book -> AllBooksResponse.builder()
                         .id(book.getId())
                         .quantity(book.getQuantity())
@@ -160,6 +162,7 @@ public class BookServiceImpl implements BookService {
                         .bookInfo(book.getBookInfo())
                         .build())
                 .collect(Collectors.toList());
+        return new PageImpl<>(responses, pageable, bookPage.getTotalElements());
     }
 
     @Override
