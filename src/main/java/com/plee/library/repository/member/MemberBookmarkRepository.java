@@ -1,17 +1,16 @@
 package com.plee.library.repository.member;
 
-import com.plee.library.domain.book.BookInfo;
-import com.plee.library.domain.member.Member;
 import com.plee.library.domain.member.MemberBookmark;
-import com.plee.library.domain.member.MemberRequestHistory;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 
-import java.util.List;
+public interface MemberBookmarkRepository extends JpaRepository<MemberBookmark, Long> {
+    Page<MemberBookmark> findAllByMemberIdOrderByCreatedAtDesc(Long memberId, Pageable pageable);
 
-public interface MemberBookMarkRepository extends JpaRepository<MemberRequestHistory, Long> {
-    List<MemberBookmark> findAllByMember(Member member);
+    boolean existsByMemberIdAndBookId(Long memberId, Long bookId);
 
-//    boolean existsByMemberAndBookInfo(Member member, BookInfo bookInfo);
+    void deleteByMemberIdAndBookId(Long memberId, Long bookId);
 
 //    boolean existsByMemberLoginIdAndBookInfoIsbn(Long memberId, String isbn);
 }

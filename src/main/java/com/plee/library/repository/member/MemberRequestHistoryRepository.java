@@ -21,6 +21,8 @@ public interface MemberRequestHistoryRepository extends JpaRepository<MemberRequ
 
     boolean existsByMemberIdAndBookInfoIsbn(Long memberId, String isbn);
 
+    boolean existsByBookInfoIsbn(String isbn);
+
     @Modifying
     @Query("UPDATE MemberRequestHistory m SET m.isApproved = true WHERE m.bookInfo.isbn = :isbn")
     void approveByBookInfoIsbn(String isbn);

@@ -1,7 +1,11 @@
 package com.plee.library.service.book;
 
 import com.plee.library.domain.book.Book;
-import com.plee.library.dto.admin.response.AllBookRequestResponse;
+import com.plee.library.dto.admin.request.UpdateBookRequest;
+import com.plee.library.dto.admin.response.AllBooksResponse;
+import com.plee.library.dto.admin.response.AllLoanHistoryResponse;
+import com.plee.library.dto.admin.response.RequestStatusResponse;
+import com.plee.library.dto.admin.response.LoanStatusResponse;
 import com.plee.library.dto.book.request.*;
 import com.plee.library.dto.book.response.*;
 import org.springframework.data.domain.Page;
@@ -12,21 +16,26 @@ import java.util.List;
 public interface BookService {
     void saveBook(SaveBookRequest request);
 
-    void loanBook(Long bookId, String loginId);
+    void loanBook(Long bookId, Long memberId);
 
-    void returnBook(ReturnBookRequest request);
+    void returnBook(ReturnBookRequest request, Long memberId);
 
     void renewBook(Long historyId);
 
-    void updateBookQuantity(Long bookId, Integer quantity);
+    void updateBookQuantity(Long bookId, UpdateBookRequest request);
 
     void deleteBook(Long bookId);
 
     void addNewBookRequest(AddBookRequest request, Long memberId);
 
+    void addBookmark(Long memberId, Long bookId);
+    void removeBookmark(Long memberId, Long bookId);
+
     List<BookInfoResponse> findNewBooks();
 
     Page<AllBooksResponse> findAllBooks(Pageable pageable);
+
+    Page<AllBooksMarkResponse> findAllBooksWithMark(Long memberId, Pageable pageable);
 
     SearchBookResponse findBySearchApi(String keyword);
 
@@ -34,11 +43,17 @@ public interface BookService {
 
     Page<RequestHistoryResponse> findMemberRequestHistory(Long memberId, Pageable pageable);
 
-    Page<AllBookRequestResponse> findAllMemberRequestHistory(Pageable pageable);
+    Page<RequestStatusResponse> findAllNewBookReqHistory(Pageable pageable);
+
+    Page<AllLoanHistoryResponse> findAllLoanHistory(Pageable pageable);
+
+    LoanStatusResponse calculateDailyLoanCounts();
 
     Book findBookById(Long id);
 
-    boolean isBookMarked(Long bookId, String loginId);
+    Page<LikeBooksResponse> findLikeBooks(Long memberId, Pageable pageable);
 
-    boolean isLoaned(Long bookId, String loginId);
+    boolean isBookMarked(Long bookId, Long memberId);
+
+    boolean isLoaned(Long bookId, Long memberId);
 }

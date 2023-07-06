@@ -61,7 +61,7 @@
                             th:text="${#temporals.format(history.loanedAt.plusDays(14), 'yyyy-MM-dd')}"
                             style="text-align: center; padding-top: 80px">
                             <br/>
-                            <span style="color: green;">연장 완료</span>
+                            <span style="color: green;" th:inline="text">연장 완료</span>
                         </td>
                         <td th:if="${history.returnedAt != null}"
                             th:text="${#temporals.format(history.returnedAt, 'yyyy-MM-dd')}"
@@ -107,6 +107,7 @@
         </main>
     </div>
 </div>
+
 <!-- 페이징 처리 -->
 <nav aria-label="Page navigation">
     <ul class="pagination justify-content-center">

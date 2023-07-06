@@ -2,6 +2,7 @@ package com.plee.library.domain.member;
 
 import com.plee.library.domain.BaseTimeEntity;
 import com.plee.library.domain.book.BookInfo;
+import com.plee.library.domain.book.Book;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Builder;
@@ -10,8 +11,7 @@ import lombok.NoArgsConstructor;
 import org.hibernate.annotations.ColumnDefault;
 import org.hibernate.annotations.DynamicInsert;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
@@ -39,18 +39,14 @@ public class Member extends BaseTimeEntity {
     @Column(name = "role", nullable = false)
     private Role role;
 
-    @OneToMany(mappedBy = "member", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<MemberLoanHistory> memberLoanHistories = new ArrayList<MemberLoanHistory>();
+    @OneToMany(mappedBy = "member", cascade = CascadeType.ALL)
+    private List<MemberLoanHistory> memberLoanHistories = new ArrayList<>();
 
-    @OneToMany(mappedBy = "member", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<MemberRequestHistory> memberRequestHistories = new ArrayList<MemberRequestHistory>();
+    @OneToMany(mappedBy = "member", cascade = CascadeType.ALL)
+    private List<MemberRequestHistory> memberRequestHistories = new ArrayList<>();
 
-    @OneToMany(mappedBy = "member", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<MemberBookmark> memberBookmarks = new ArrayList<MemberBookmark>();
-
-    // TODO 수정 필요
-//    @Column(name = "penalty_end_at")
-//    private LocalDate penaltyEndAt;
+    @OneToMany(mappedBy = "member", cascade = CascadeType.ALL)
+    private Set<MemberBookmark> memberBookmarks = new HashSet<>();
 
     @Builder
     public Member(String name, String loginId, String password) {
@@ -63,23 +59,19 @@ public class Member extends BaseTimeEntity {
         this.memberRequestHistories.add(new MemberRequestHistory(this, bookInfo, reqReason));
     }
 
-    public void addBookmark(BookInfo bookInfo) {
-        this.memberBookmarks.add(new MemberBookmark(this, bookInfo));
-    }
-
-    public void removeBookmark(BookInfo bookInfo) {
-        MemberBookmark targetBookmark = this.memberBookmarks.stream()
-                .filter(bookmark -> bookmark.getBookInfo().equals(bookInfo))
-                .findFirst()
-                .orElseThrow(() -> new IllegalArgumentException("찜한 책을 찾을 수 없습니다."));
-        this.memberBookmarks.remove(targetBookmark);
+    public void addBookmark(Book book) {
+        this.memberBookmarks.add(new MemberBookmark(this, book));
     }
 
     public void loanBook(BookInfo bookInfo) {
         this.memberLoanHistories.add(new MemberLoanHistory(this, bookInfo));
     }
 
-    public void returnBook(MemberLoanHistory targetHistory) {
+    public void returnBook(BookInfo bookInfo) {
+        MemberLoanHistory targetHistory = this.memberLoanHistories.stream()
+                .filter(history -> history.getBookInfo().equals(bookInfo) && !history.isReturned())
+                .findFirst()
+                .orElseThrow(() -> new NoSuchElementException("대출 내역이 없습니다."));
         targetHistory.doReturn();
     }
 

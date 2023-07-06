@@ -1,7 +1,7 @@
 package com.plee.library.domain.member;
 
 import com.plee.library.domain.BaseTimeEntity;
-import com.plee.library.domain.book.BookInfo;
+import com.plee.library.domain.book.Book;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Builder;
@@ -13,7 +13,7 @@ import lombok.NoArgsConstructor;
 @Entity
 @Table(name = "member_bookmark",
         uniqueConstraints = {
-                @UniqueConstraint(name = "member_book_info_unique", columnNames = {"member_seq", "book_info_isbn"})
+                @UniqueConstraint(name = "member_book_info_unique", columnNames = {"member_seq", "book_seq"})
         })
 public class MemberBookmark extends BaseTimeEntity {
     @Id
@@ -26,12 +26,12 @@ public class MemberBookmark extends BaseTimeEntity {
     private Member member;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "book_info_isbn")
-    private BookInfo bookInfo;
+    @JoinColumn(name = "book_seq")
+    private Book book;
 
     @Builder
-    public MemberBookmark(Member member, BookInfo bookInfo) {
+    public MemberBookmark(Member member, Book book) {
         this.member = member;
-        this.bookInfo = bookInfo;
+        this.book = book;
     }
 }

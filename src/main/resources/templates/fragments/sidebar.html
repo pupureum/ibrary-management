@@ -35,6 +35,13 @@
                     도서 신청 내역
                 </a>
             </li>
+            <li class="nav-item">
+                <a class="nav-link" th:classappend="${selectedMenu == 'liked-books'} ? 'active' : ''"
+                   th:href="@{/books/like}">
+                    <span data-feather="users" class="align-text-bottom"></span>
+                    찜한 도서
+                </a>
+            </li>
             <hr/>
             <a>MyPage</a>
             <li class="nav-item">

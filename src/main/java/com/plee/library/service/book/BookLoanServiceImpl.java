@@ -5,7 +5,7 @@
 //import com.plee.library.domain.member.MemberLoanHistory;
 //import com.plee.library.dto.book.request.LoanBookRequest;
 //import com.plee.library.dto.book.request.ReturnBookRequest;
-//import com.plee.library.dto.book.response.AllBooksResponse;
+//import com.plee.library.dto.admin.response.AllBooksResponse;
 //import com.plee.library.dto.book.response.LoanHistoryResponse;
 //import com.plee.library.repository.book.BookRepository;
 //import com.plee.library.repository.member.MemberRepository;

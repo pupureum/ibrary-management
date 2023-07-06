@@ -8,7 +8,31 @@
     <link rel="stylesheet" th:href="@{/css/sidebar.css}">
     <script th:src="@{/js/jquery-3.7.0.js}"></script>
     <script th:src="@{/js/bootstrap.min.js}"></script>
+    <script th:inline="javascript">
+        let errorMessage = /*[[${errorMessage}]]*/ null;
+        let successMessage = /*[[${successMessage}]]*/ null;
+        if (errorMessage) {
+            alert(errorMessage);
+        }
+        if (successMessage) {
+            alert(successMessage);
+        }
+    </script>
 </head>
+<style>
+    .btn-outline-danger:hover {
+        background-color: hotpink;
+        border-color: hotpink;
+        color: white;
+    }
+
+    .like-book-btn:hover .like-book-icon,
+    .like-book-btn:hover .like-book-text,
+    .unlike-book-btn:hover .unlike-book-icon,
+    .unlike-book-btn:hover .unlike-book-text {
+        color: white !important;
+    }
+</style>
 <body>
 <div th:replace="~{fragments/header :: ~{header}}"/>
 <div class="container-fluid">
@@ -68,22 +92,41 @@
                             </div>
                         </td>
                         <td>
-                            <form th:action="@{/books/{bookId}(bookId=${book.id})}" method="get">
-                                <input type="hidden" name="bookId" th:value="${book.id}"/>
-                                <button type="submit" class="btn btn-sm btn btn-outline-primary loan-book-btn"
-                                        th:if="${book.loanableCnt > 0}" style="margin-top: 70px;">대출하러<br>가기
+                            <div class="btn-group-vertical">
+                                <form th:action="@{/books/{bookId}(bookId=${book.id})}" method="get">
+                                    <input type="hidden" name="bookId" th:value="${book.id}"/>
+                                    <button type="submit" class="btn btn-sm btn btn-outline-primary loan-book-btn"
+                                            th:if="${book.loanableCnt > 0}" style="margin-top: 70px;margin-left: 15px">
+                                        대출하러<br>가기
+                                    </button>
+                                </form>
+                                <button type="button" class="btn btn-sm btn-outline-dark" disabled="disabled"
+                                        th:unless="${book.loanableCnt > 0}"
+                                        style="margin-top: 70px; margin-left: 10px">대출불가
                                 </button>
-                            </form>
-                            <button type="button" class="btn btn-sm btn-outline-dark" disabled="disabled"
-                                    th:unless="${book.loanableCnt > 0}"
-                                    style="margin-top: 70px;">대출불가<br>
-                            </button>
-                            <button type="button" class="btn btn-sm like-book-btn"
-                                    style="margin-top: 20px; margin-left: 10px; border-color: hotpink;">
-                                <span class="like-book-icon" style="color: hotpink">&#x2661;</span>
-                                <span class="like-book-text" style="color: #463f3f">찜</span>
-                            </button>
-
+                                <form th:if="${book.isMarked}" method="post"
+                                      th:action="@{'/books/unlike/' + ${book.id}}">
+                                    <input type="hidden" name="_method" value="delete"/>
+                                    <input type="hidden" name="pageNumber" th:value="${books.getNumber()}"/>
+                                    <button type="submit" class="btn btn-sm unlike-book-btn btn-outline-danger"
+                                            style="margin-top: 20px; margin-left: 10px; border-color: hotpink;"
+                                            th:if="${book.isMarked}">
+                                        <span class="unlike-book-icon" style="color: hotpink">&#x2665;</span>
+                                        <span class="unlike-book-text" style="color: #463f3f">찜 해제</span>
+                                    </button>
+                                </form>
+                                <form th:unless="${book.isMarked}" method="post"
+                                      th:action="@{'/books/like/' + ${book.id}}">
+                                    <input type="hidden" name="pageNumber" th:value="${books.getNumber()}"/>
+                                    <button type="submit" class="btn btn-sm like-book-btn btn-outline-danger"
+                                            style="margin-top: 20px; margin-left: 25px; border-color: hotpink;"
+                                            th:unless="${book.isMarked}">
+                                        <span class="like-book-icon" style="color: hotpink">&#x2661;</span>
+                                        <span class="like-book-text" style="color: #463f3f">찜</span>
+                                        <!--                                    <img src="/images/heart.svg" alt="Heart Icon" class="like-book-icon" style="width: 16px; height: 16px;">-->
+                                    </button>
+                                </form>
+                            </div>
                         </td>
                     </tr>
                     </tbody>
@@ -93,26 +136,45 @@
         </main>
     </div>
 </div>
+<!--                                <button type="button" class="btn btn-sm unlike-book-btn btn-outline-danger"-->
+<!--                                        style="margin-top: 20px; margin-left: 10px; border-color: hotpink;"-->
+<!--                                        th:if="${book.isMarked}">-->
+<!--                                    <span class="unlike-book-icon" style="color: hotpink">&#x2665;</span>-->
+<!--                                    <span class="unlike-book-text" style="color: #463f3f">찜 해제</span>-->
+<!--&lt;!&ndash;                                    <img src="/images/heart-fill.svg" alt="Heart Icon" fill="hotpink" class="like-book-icon" style="width: 16px; height: 16px;">&ndash;&gt;-->
+<!--                                </button>-->
+
+<!--                                <button type="button" class="btn btn-sm like-book-btn btn-outline-danger"-->
+<!--                                        style="margin-top: 20px; margin-left: 10px; border-color: hotpink;"-->
+<!--                                        th:unless="${book.isMarked}">-->
+<!--                                    <span class="like-book-icon" style="color: hotpink">&#x2661;</span>-->
+<!--                                    <span class="like-book-text" style="color: #463f3f">찜</span>-->
+<!--&lt;!&ndash;                                    <img src="/images/heart.svg" alt="Heart Icon" class="like-book-icon" style="width: 16px; height: 16px;">&ndash;&gt;-->
+<!--                                </button>-->
 
 <!-- 페이징 처리 -->
 <nav aria-label="Page navigation">
     <ul class="pagination justify-content-center">
         <li th:class="${books.getNumber() == 0 ? 'page-item disabled' : 'page-item'}">
-            <a class="page-link" th:if="${books.getNumber() != 0}" th:href="@{/books(page=${books.getNumber() - 1})}" aria-label="Previous">
+            <a class="page-link" th:if="${books.getNumber() != 0}" th:href="@{/books(page=${books.getNumber() - 1})}"
+               aria-label="Previous">
                 <span class="sr-only">Previous</span>
             </a>
             <span class="page-link" th:if="${books.getNumber() == 0}" aria-disabled="true" aria-label="Previous">
                 <span class="sr-only">Previous</span>
             </span>
         </li>
-        <li th:each="page : ${#numbers.sequence(1, books.getTotalPages())}" th:class="${page - 1 == books.getNumber() ? 'page-item active' : 'page-item'}">
+        <li th:each="page : ${#numbers.sequence(1, books.getTotalPages())}"
+            th:class="${page - 1 == books.getNumber() ? 'page-item active' : 'page-item'}">
             <a class="page-link" th:href="@{/books(page=${page - 1})}" th:text="${page}"></a>
         </li>
         <li th:class="${books.getNumber() == books.getTotalPages() - 1 ? 'page-item disabled' : 'page-item'}">
-            <a class="page-link" th:if="${books.getNumber() != books.getTotalPages() - 1}" th:href="@{/books(page=${books.getNumber() + 1})}" aria-label="Next">
+            <a class="page-link" th:if="${books.getNumber() != books.getTotalPages() - 1}"
+               th:href="@{/books(page=${books.getNumber() + 1})}" aria-label="Next">
                 <span class="sr-only">Next</span>
             </a>
-            <span class="page-link" th:if="${books.getNumber() == books.getTotalPages() - 1}" aria-disabled="true" aria-label="Next">
+            <span class="page-link" th:if="${books.getNumber() == books.getTotalPages() - 1}" aria-disabled="true"
+                  aria-label="Next">
                 <span class="sr-only">Next</span>
             </span>
         </li>
@@ -131,61 +193,7 @@
                 descriptionElement.textContent = shortenedText;
             }
         }
-
-        let likeButtons = document.getElementsByClassName("like-book-btn");
-        for (let i = 0; i < likeButtons.length; i++) {
-            let likeButton = likeButtons[i];
-            likeButton.addEventListener("click", function () {
-                let bookId = this.previousElementSibling.value;
-                let isLiked = this.classList.contains("liked");
-
-                if (isLiked) {
-                    unlikeBook(bookId, this);
-                } else {
-                    likeBook(bookId, this);
-                }
-            });
-        }
     });
-
-    function likeBook(bookId, button) {
-        fetch(`/member/like/${bookId}`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({bookId: bookId})
-        })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    button.classList.add("liked");
-                    button.querySelector(".like-book-text").textContent = "찜 해제";
-                    button.querySelector(".like-book-icon").style.color = "hotpink";
-                }
-            })
-            .catch(error => console.error('Error:', error));
-    }
-
-    function unlikeBook(bookId, button) {
-        fetch(`/member/unlike/${bookId}`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({bookId: bookId})
-        })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    button.classList.remove("liked");
-                    button.style.borderColor = "";
-                    button.querySelector(".like-book-text").textContent = "찜";
-                    button.querySelector(".like-book-icon").style.color = "#463f3f";
-                }
-            })
-            .catch(error => console.error('Error:', error));
-    }
 </script>
 
 </body>

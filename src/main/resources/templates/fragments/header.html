@@ -1,22 +1,16 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org"
       xmlns:sec="http://www.thymeleaf.org/thymeleaf-extras-springsecurity5">
-<head>
-    <!--    <div th:fragment="header">-->
-    <!--    <link rel="stylesheet" th:href="@{/css/bootstrap.min.css}"-->
-    <!--          href="../../static/css/bootstrap.min.css">-->
-    <!--    <link rel="stylesheet" th:href="@{/css/main.css}">-->
-    <!--    <link rel="stylesheet" th:href="@{/css/sidebar.css}">-->
-    <!--    <script th:src="@{/js/bootstrap.min.js}"></script>-->
-    <!--    </div>-->
-</head>
 <body>
 <div th:fragment="header">
     <header class="header">
         <div class="container">
             <div class="d-flex align-items-center">
                 <div class="col">
-                    <img src="/images/hyundai-autoever.png" alt="hyundai-autoever-logo" th:width="100" th:height="50">
+                    <a href="/" th:href="@{/}">
+                        <img src="/images/hyundai-autoever.png" alt="hyundai-autoever-logo" th:width="100"
+                             th:height="50">
+                    </a>
                 </div>
                 <a class="col" th:href="@{/books}" style="text-decoration: none;">
                     <h2 class="header-title">현인의 서재</h2>
