@@ -8,6 +8,16 @@
     <link rel="stylesheet" th:href="@{/css/sidebar.css}">
     <script th:src="@{/js/jquery-3.7.0.js}"></script>
     <script th:src="@{/js/bootstrap.min.js}"></script>
+    <script th:inline="javascript">
+        let errorMessage = /*[[${errorMessage}]]*/ null;
+        let successMessage = /*[[${successMessage}]]*/ null;
+        if (errorMessage) {
+            alert(errorMessage);
+        }
+        if (successMessage) {
+            alert(successMessage);
+        }
+    </script>
 </head>
 
 <body>
@@ -56,7 +66,11 @@
                         <td class="text-center">
                             <button type="button" class="btn btn-sm btn-outline-secondary update-member-btn"
                                     th:data-member-id="${member.id}" th:data-member-email="${member.loginId}" th:data-member-name="${member.name}" th:data-member-role="${member.role}" style="margin: 0 auto;">수정</button>
-                            <button type="button" class="btn btn-sm btn-outline-danger delete-member-btn" th:data-member-id="${member.id}" style="margin: 0 auto;">삭제</button>
+                            <form th:action="@{/admin/members/{memberId}(memberId=${member.id})}" th:method="post"
+                                  onsubmit="return confirm('회원의 대출 이력과, 신규 도서 요청 내역 모두 삭제됩니다.\n정말로 삭제하시겠습니까?');">
+                                <input type="hidden" name="_method" value="delete"/>
+                                <button type="submit" class="btn btn-sm btn-outline-danger delete-member-btn" style="margin: 0 auto;">삭제</button>
+                            </form>
                         </td>
                     </tr>
                     </tbody>
@@ -108,14 +122,14 @@
                 <span class="sr-only">Previous</span>
             </span>
         </li>
-        <li th:each="page : ${#numbers.sequence(1, members.getTotalPages())}" th:class="${page - 1 == members.getNumber() ? 'page-item active' : 'page-item'}">
+        <li th:each="page : ${members.getTotalPages() > 0 ? #numbers.sequence(1, members.getTotalPages()) : null}" th:class="${page - 1 == members.getNumber() ? 'page-item active' : 'page-item'}">
             <a class="page-link" th:href="@{/admin/members(page=${page - 1})}" th:text="${page}"></a>
         </li>
-        <li th:class="${members.getNumber() == members.getTotalPages() - 1 ? 'page-item disabled' : 'page-item'}">
-            <a class="page-link" th:if="${members.getNumber() != members.getTotalPages() - 1}" th:href="@{/admin/members(page=${members.getNumber() + 1})}" aria-label="Next">
+        <li th:class="${members.getNumber() == members.getTotalPages() - 1 && members.getTotalPages() > 1 ? 'page-item disabled' : 'page-item'}">
+            <a class="page-link" th:if="${members.getNumber() != members.getTotalPages() - 1 && members.getTotalPages() > 1}" th:href="@{/admin/members(page=${members.getNumber() + 1})}" aria-label="Next">
                 <span class="sr-only">Next</span>
             </a>
-            <span class="page-link" th:if="${members.getNumber() == members.getTotalPages() - 1}" aria-disabled="true" aria-label="Next">
+            <span class="page-link" th:if="${members.getNumber() == members.getTotalPages() - 1 && members.getTotalPages() > 1}" aria-disabled="true" aria-label="Next">
                 <span class="sr-only">Next</span>
             </span>
         </li>
