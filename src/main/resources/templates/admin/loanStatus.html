@@ -9,7 +9,6 @@
     <script th:src="@{/js/bootstrap.min.js}"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
-
 <body>
 <div th:replace="~{fragments/header :: ~{header}}"/>
 <div class="container-fluid">
@@ -119,19 +118,13 @@
 <script th:inline="javascript">
     let ctx = document.getElementById('loanCountChart').getContext('2d');
 
-    // 최근 5일 날짜 계산
-    let currentDate = new Date();
-    let chartLabels = [];
-    for (let i = 4; i >= 0; i--) {
-        let date = new Date(currentDate);
-        date.setDate(date.getDate() - i);
-        chartLabels.push(date.toISOString().split('T')[0]);
-    }
-    let dailyLoanData = /*[[${data.dailyLoanData}]]*/ [];
+    // 날짜 라벨과, 대출 수 데이터
+    let dateLabels = /*[[${data.dailyLoanData.keySet()}]]*/ [];
+    let dailyLoanData = /*[[${data.dailyLoanData.values()}]]*/ [];
 
     // 그래프 데이터
     let chartData = {
-        labels: chartLabels,
+        labels: dateLabels,
         datasets: [{
             label: '대출 수',
             data: dailyLoanData,

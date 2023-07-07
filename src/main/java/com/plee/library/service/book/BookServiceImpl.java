@@ -34,10 +34,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.NoSuchElementException;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -207,7 +204,7 @@ public class BookServiceImpl implements BookService {
         LocalDate startDate = endDate.minusDays(4);
 
         List<Object[]> data = memberLoanHisRepository.countGroupByCreatedAtRange(startDate, endDate);
-        List<Integer> dailyLoanCounts = new ArrayList<>();
+        Map<LocalDate, Integer> dailyLoanCounts = new LinkedHashMap<>();
 
         //시작 날짜부터 마지막까지의 날짜 범위를 순회하며, 해당 날짜에 대출된 도서의 수를 리스트에 추가
         startDate.datesUntil(endDate.plusDays(1)).forEach(date -> {
@@ -216,9 +213,9 @@ public class BookServiceImpl implements BookService {
                     .findFirst();
 
             if (matchingRow.isPresent()) {
-                dailyLoanCounts.add(((Long) matchingRow.get()[1]).intValue());
+                dailyLoanCounts.put(date, ((Long) matchingRow.get()[1]).intValue());
             } else {
-                dailyLoanCounts.add(0); // 대출 수가 없는 경우 0으로 처리
+                dailyLoanCounts.put(date, 0); // 대출 수가 없는 경우 0으로 처리
             }
         });
 
@@ -251,7 +248,6 @@ public class BookServiceImpl implements BookService {
         if (!bookRepository.existsById(bookId)) {
             throw new NoSuchElementException("존재하지 않는 도서입니다.");
         }
-
         if (!isAlreadyBookmark(memberId, bookId)) {
             throw new IllegalStateException("찜한 도서가 아닙니다.");
         }
@@ -303,11 +299,17 @@ public class BookServiceImpl implements BookService {
                 .collect(Collectors.toList());
     }
 
+    /**
+     * 전체 도서를 최근 도서순으로 조회합니다.
+     *
+     * @param pageable Pagination 정보
+     * @return 전체 도서 목록 페이지 (AllBooksMarkResponse 객체의 리스트)
+     */
     @Override
     @Transactional(readOnly = true)
     public Page<AllBooksResponse> findAllBooks(Pageable pageable) {
         // 책들을 최신순으로 Pagination 하여 조회
-        Page<Book> books = bookRepository.findAllByOrderByCreatedAtDesc(pageable);
+        Page<Book> books = bookRepository.findAll(pageable);
 
         // 조회된 책들을 AllBooksResponse 객체로 변환
         List<AllBooksResponse> response = books.stream()
@@ -321,20 +323,37 @@ public class BookServiceImpl implements BookService {
         return new PageImpl<>(response, pageable, books.getTotalElements());
     }
 
+    /**
+     * 특정 회원의 찜 여부 정보와 전체 도서를 최근 도서순으로 조회합니다.
+     *
+     * @param memberId 회원의 ID
+     * @param pageable Pagination 정보
+     * @return 전체 도서 목록 페이지 (AllBooksMarkResponse 객체의 리스트)
+     */
     public Page<AllBooksMarkResponse> findAllBooksWithMark(Long memberId, Pageable pageable) {
         // 책들을 최신순으로 Pagination 하여 조회
-        Page<Book> books = bookRepository.findAllByOrderByCreatedAtDesc(pageable);
+        Page<Book> books = bookRepository.findAll(pageable);
 
         // 조회된 책들을 AllBooksMarkResponse 객체로 변환
-        List<AllBooksMarkResponse> response = books.stream()
-                .map(book -> AllBooksMarkResponse.builder()
-                        .id(book.getId())
-                        .quantity(book.getQuantity())
-                        .loanableCnt(book.getLoanableCnt())
-                        .bookInfo(book.getBookInfo())
-                        .isMarked(isBookMarked(memberId, book.getId()))
-                        .build())
-                .collect(Collectors.toList());
+        List<AllBooksMarkResponse> response = books.map(book -> mapToAllBooksMarkResponse(book, memberId)).toList();
+        return new PageImpl<>(response, pageable, books.getTotalElements());
+    }
+
+    private AllBooksMarkResponse mapToAllBooksMarkResponse(Book book, Long memberId) {
+        return AllBooksMarkResponse.builder()
+                .id(book.getId())
+                .quantity(book.getQuantity())
+                .loanableCnt(book.getLoanableCnt())
+                .bookInfo(book.getBookInfo())
+                .isMarked(isBookMarked(memberId, book.getId()))
+                .build();
+    }
+
+    public Page<AllBooksMarkResponse> findBySearchKeyword(SearchBookRequest request, Long memberId, Pageable pageable) {
+        Page<Book> books = bookRepository.findBooksWithSearchValue(request.getKeyword(), pageable);
+
+        // 조회된 책들을 AllBooksMarkResponse 객체로 변환
+        List<AllBooksMarkResponse> response = books.map(book -> mapToAllBooksMarkResponse(book, memberId)).toList();
         return new PageImpl<>(response, pageable, books.getTotalElements());
     }
 
@@ -423,7 +442,7 @@ public class BookServiceImpl implements BookService {
         }
 
         // 네이버 도서 검색 API를 사용하여 키워드로 도서를 검색
-        SearchBookRequest searchReq = new SearchBookRequest();
+        SearchApiBookRequest searchReq = new SearchApiBookRequest();
         searchReq.setKeyword(keyword);
         return naverBookSearchConfig.searchBook(searchReq);
     }
@@ -500,7 +519,7 @@ public class BookServiceImpl implements BookService {
     @Override
     public Page<LikeBooksResponse> findLikeBooks(Long memberId, Pageable pageable) {
         // 책들을 최신순으로 Pagination 하여 조회
-        Page<MemberBookmark> bookmarkedBooks = memberBookmarkRepository.findAllByMemberIdOrderByCreatedAtDesc(memberId, pageable);
+        Page<MemberBookmark> bookmarkedBooks = memberBookmarkRepository.findAllByMemberId(memberId, pageable);
 
         // 조회된 책들을 AllBooksResponse 객체로 변환
         List<LikeBooksResponse> response = bookmarkedBooks.stream()

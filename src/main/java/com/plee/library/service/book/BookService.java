@@ -37,6 +37,8 @@ public interface BookService {
 
     Page<AllBooksMarkResponse> findAllBooksWithMark(Long memberId, Pageable pageable);
 
+    Page<AllBooksMarkResponse> findBySearchKeyword(SearchBookRequest request, Long memberId, Pageable pageable);
+
     SearchBookResponse findBySearchApi(String keyword);
 
     Page<LoanHistoryResponse> findLoanHistory(Long memberId, Pageable pageable);
