@@ -28,6 +28,9 @@ hs_err_pid*
 **/build/
 !src/**/build/
 
+### Querydsl
+/src/main/generated
+
 # Ignore Gradle GUI config
 gradle-app.setting
 
