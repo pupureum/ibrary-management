@@ -5,21 +5,22 @@ import com.plee.library.dto.member.request.SignUpMemberRequest;
 import com.plee.library.dto.member.response.MemberInfoResponse;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-
-import java.util.List;
+import org.springframework.validation.BindingResult;
 
 public interface MemberService {
     void saveMember(SignUpMemberRequest request);
 
-    void updateMemberByAdmin(Long memberId, UpdateMemberRequest request);
+    void validateSignupRequest(SignUpMemberRequest request, BindingResult bindingResult);
 
-    void updateMemberInfo(Long memberId, UpdateMemberRequest request);
-
-    boolean checkLoginIdDuplicate(String loginId);
-
-    boolean checkCurrentPassword(String currentPassword, String loginId);
-
-    MemberInfoResponse findMember(String loginId);
+    MemberInfoResponse findMember(Long memberId);
 
     Page<MemberInfoResponse> findAllMembers(Pageable pageable);
+
+    boolean checkCurrentPassword(String currentPassword, Long memberId);
+
+    void updateMemberByAdmin(Long memberId, UpdateMemberRequest request);
+
+    void changeMemberInfo(Long memberId, UpdateMemberRequest request);
+
+    void deleteMember(Long memberId);
 }

@@ -1,12 +1,15 @@
 package com.plee.library.service.member;
 
+import com.plee.library.domain.book.Book;
 import com.plee.library.domain.member.Member;
 import com.plee.library.config.MemberAdapter;
+import com.plee.library.domain.member.MemberLoanHistory;
 import com.plee.library.dto.admin.request.UpdateMemberRequest;
 import com.plee.library.dto.member.request.SignUpMemberRequest;
 import com.plee.library.dto.member.response.MemberInfoResponse;
-import com.plee.library.exception.CustomException;
-import com.plee.library.exception.code.MemberErrorCode;
+import com.plee.library.exception.message.MemberError;
+import com.plee.library.repository.book.BookRepository;
+import com.plee.library.repository.member.MemberLoanHistoryRepository;
 import com.plee.library.repository.member.MemberRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -19,8 +22,10 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.validation.BindingResult;
 
 import java.util.List;
+import java.util.NoSuchElementException;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -29,6 +34,8 @@ import java.util.stream.Collectors;
 public class MemberServiceImpl implements MemberService, UserDetailsService {
 
     private final MemberRepository memberRepository;
+    private final MemberLoanHistoryRepository memberLoanHisRepository;
+    private final BookRepository bookRepository;
     private final BCryptPasswordEncoder passwordEncoder;
 
     @Override
@@ -41,9 +48,22 @@ public class MemberServiceImpl implements MemberService, UserDetailsService {
                 .build());
     }
 
+    @Override
     @Transactional(readOnly = true)
-    public MemberInfoResponse findMember(String loginId) {
-        return memberRepository.findByLoginId(loginId)
+    public void validateSignupRequest(SignUpMemberRequest request, BindingResult bindingResult) {
+        // 비밀번호 입력 2개가 일치하는지 확인
+        if (!request.getPassword().equals(request.getConfirmPassword())) {
+            bindingResult.reject("passwordNotMatch", MemberError.NOT_MATCHED_PASSWORD.getMessage());
+        }
+        // 로그인 아이디가 중복되는지 확인
+        if (memberRepository.existsByLoginId(request.getLoginId())) {
+            bindingResult.reject("duplicateLoginId", MemberError.DUPLICATE_LOGIN_ID.getMessage());
+        }
+    }
+
+    @Transactional(readOnly = true)
+    public MemberInfoResponse findMember(Long memberId) {
+        return memberRepository.findById(memberId)
                 .map(m -> MemberInfoResponse.builder()
                         .id(m.getId())
                         .loginId(m.getLoginId())
@@ -51,14 +71,14 @@ public class MemberServiceImpl implements MemberService, UserDetailsService {
                         .role(m.getRole())
                         .createdAt(m.getCreatedAt().toLocalDate())
                         .build())
-                .orElseThrow(() -> new UsernameNotFoundException("계정이 존재하지 않습니다."));
+                .orElseThrow(() -> new NoSuchElementException(MemberError.NOT_FOUND_MEMBER.getMessage()));
     }
 
     @Override
     @Transactional(readOnly = true)
     public Page<MemberInfoResponse> findAllMembers(Pageable pageable) {
         // 회원들을 최신순으로 Pagination 하여 조회
-        Page<Member> members = memberRepository.findAllByOrderByCreatedAtDesc(pageable);
+        Page<Member> members = memberRepository.findAll(pageable);
 
         // 조회된 회원들을 MemberInfoResponse 객체로 변환
         List<MemberInfoResponse> response = members.stream()
@@ -74,56 +94,77 @@ public class MemberServiceImpl implements MemberService, UserDetailsService {
     }
 
     @Override
-    @Transactional
-    public void updateMemberByAdmin(Long memberId, UpdateMemberRequest request) {
-        Member member = memberRepository.findById(memberId)
-                .orElseThrow(() -> new CustomException(MemberErrorCode.NOT_FOUND_MEMBER));
-        if (!request.getName().equals(member.getName())) {
-            member.updateName(request.getName());
-        }
-        if (!request.getRole().equals(member.getRole())) {
-            member.updateRole(request.getRole());
-        }
+    @Transactional(readOnly = true)
+    public boolean checkCurrentPassword(String currentPassword, Long memberId) {
+        Member member =findMemberById(memberId);
+        return passwordEncoder.matches(currentPassword, member.getPassword());
     }
-
 
     @Override
     @Transactional
-    public void updateMemberInfo(Long memberId, UpdateMemberRequest request) {
+    public void updateMemberByAdmin(Long memberId, UpdateMemberRequest request) {
         Member member = memberRepository.findById(memberId)
-                .orElseThrow(() -> new CustomException(MemberErrorCode.NOT_FOUND_MEMBER));
+                .orElseThrow(() -> new NoSuchElementException(MemberError.NOT_FOUND_MEMBER.getMessage()));
+
+        // 이름, 권한이 변경되었다면 변경
         if (!request.getName().equals(member.getName())) {
-            member.updateName(request.getName());
+            member.changeName(request.getName());
+        }
+        if (!request.getRole().equals(member.getRole())) {
+            member.changeRole(request.getRole());
+        }
+    }
+
+    @Override
+    @Transactional
+    public void changeMemberInfo(Long memberId, UpdateMemberRequest request) {
+        Member member = findMemberById(memberId);
+        String newName = request.getName();
+        String newPassword = request.getNewPassword();
+
+        // 이름이 변경되었다면 변경
+        if (!newName.equals(member.getName())) {
+            member.changeName(newName);
         }
         // 새 비밀번호가 없다면 이름만 변경
         if (request.getNewPassword().isEmpty()) {
             return;
         }
-        if (!passwordEncoder.matches(request.getNewPassword(), member.getPassword())) {
-            member.updatePassword(passwordEncoder.encode(request.getNewPassword()));
+        // 새 비밀번호가 기존 비밀번호와 다르다면 변경
+        if (!passwordEncoder.matches(newPassword, member.getPassword())) {
+            member.changePassword(passwordEncoder.encode(newPassword));
         } else {
-            throw new CustomException(MemberErrorCode.NOT_CHANGE_PASSWORD);
+            throw new IllegalStateException(MemberError.NOT_CHANGED_PASSWORD.getMessage());
         }
     }
 
-    @Transactional(readOnly = true)
-    public boolean checkCurrentPassword(String currentPassword, String loginId) {
-        Member member = memberRepository.findByLoginId(loginId)
-                .orElseThrow(() -> new UsernameNotFoundException("계정이 존재하지 않습니다."));
-        System.out.println(passwordEncoder.encode(member.getPassword()));
-        System.out.println(currentPassword);
-        return passwordEncoder.matches(currentPassword, member.getPassword());
-    }
+    @Override
+    @Transactional
+    public void deleteMember(Long memberId) {
+        Member member = findMemberById(memberId);
 
-    @Transactional(readOnly = true)
-    public boolean checkLoginIdDuplicate(String loginId) {
-        return memberRepository.existsByLoginId(loginId);
+        // 대출중인 도서가 있는 회원의 경우 강제 반납 처리
+        List<MemberLoanHistory> notReturnedHistories = memberLoanHisRepository.findByMemberIdAndReturnedAtIsNull(memberId);
+        notReturnedHistories.forEach(history -> {
+            history.doReturn();
+            bookRepository.findByBookInfoIsbn(history.getBookInfo().getIsbn())
+                    .ifPresent(Book::increaseLoanableCnt);
+        });
+
+        memberRepository.delete(member);
+        log.info("SUCCESS delete member id : {}", memberId);
     }
 
     @Override
     public UserDetails loadUserByUsername(String loginId) throws UsernameNotFoundException {
         Member member = memberRepository.findByLoginId(loginId)
-                .orElseThrow(() -> new UsernameNotFoundException("계정이 존재하지 않습니다."));
+                .orElseThrow(() -> new UsernameNotFoundException(MemberError.NOT_FOUND_MEMBER.getMessage()));
         return new MemberAdapter(member);
+    }
+
+    @Transactional(readOnly = true)
+    public Member findMemberById(Long memberId) {
+        return memberRepository.findById(memberId)
+                .orElseThrow(() -> new NoSuchElementException(MemberError.NOT_FOUND_MEMBER.getMessage()));
     }
 }
