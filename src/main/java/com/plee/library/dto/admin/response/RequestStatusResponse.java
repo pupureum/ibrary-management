@@ -8,7 +8,7 @@ import lombok.Getter;
 import java.time.LocalDate;
 
 @Getter
-public class AllBookRequestResponse {
+public class RequestStatusResponse {
     private final Long id;
     private final Member member;
     private final BookInfo bookInfo;
@@ -17,7 +17,7 @@ public class AllBookRequestResponse {
     private final LocalDate requestedAt;
 
     @Builder
-    public AllBookRequestResponse(Long id, Member member, BookInfo bookInfo, String requestReason, boolean isApproved, LocalDate requestedAt) {
+    public RequestStatusResponse(Long id, Member member, BookInfo bookInfo, String requestReason, boolean isApproved, LocalDate requestedAt) {
         this.id = id;
         this.member = member;
         this.bookInfo = bookInfo;

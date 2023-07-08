@@ -56,14 +56,14 @@ public class Book extends BaseTimeEntity {
         if (this.loanableCnt < 1) {
             throw new IllegalStateException("더 이상 대출 가능한 도서가 없습니다.");
         }
-        this.loanableCnt--;
+        this.loanableCnt -= 1;
     }
 
     public void increaseLoanableCnt() {
         if (this.loanableCnt >= this.quantity) {
             throw new IllegalStateException("대여 가능한 수량이 올바르지 않습니다.");
         }
-        this.loanableCnt++;
+        this.loanableCnt += 1;
     }
 
 }

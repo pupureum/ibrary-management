@@ -35,9 +35,9 @@ public interface BookService {
 
     Page<AllBooksResponse> findAllBooks(Pageable pageable);
 
-    Page<AllBooksMarkResponse> findAllBooksWithMark(Long memberId, Pageable pageable);
+    Page<AllBooksMarkInfoResponse> findAllBooksWithMark(Long memberId, Pageable pageable);
 
-    Page<AllBooksMarkResponse> findBySearchKeyword(SearchBookRequest request, Long memberId, Pageable pageable);
+    Page<AllBooksMarkInfoResponse> findBySearchKeyword(SearchBookRequest request, Long memberId, Pageable pageable);
 
     SearchBookResponse findBySearchApi(String keyword);
 
@@ -51,11 +51,11 @@ public interface BookService {
 
     LoanStatusResponse calculateDailyLoanCounts();
 
-    Book findBookById(Long id);
+    Book findBookById(Long bookId);
 
-    Page<LikeBooksResponse> findLikeBooks(Long memberId, Pageable pageable);
+    Page<MarkedBooksResponse> findLikeBooks(Long memberId, Pageable pageable);
 
-    boolean isBookMarked(Long bookId, Long memberId);
+    boolean isBookMarked(Long memberId, Long bookId);
 
-    boolean isLoaned(Long bookId, Long memberId);
+    boolean isLoaned(Long memberId, Long bookId);
 }

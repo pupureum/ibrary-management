@@ -39,13 +39,13 @@ public class Member extends BaseTimeEntity {
     @Column(name = "role", nullable = false)
     private Role role;
 
-    @OneToMany(mappedBy = "member", cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "member", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<MemberLoanHistory> memberLoanHistories = new ArrayList<>();
 
-    @OneToMany(mappedBy = "member", cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "member", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<MemberRequestHistory> memberRequestHistories = new ArrayList<>();
 
-    @OneToMany(mappedBy = "member", cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "member", cascade = CascadeType.ALL, orphanRemoval = true)
     private Set<MemberBookmark> memberBookmarks = new HashSet<>();
 
     @Builder
@@ -63,27 +63,27 @@ public class Member extends BaseTimeEntity {
         this.memberBookmarks.add(new MemberBookmark(this, book));
     }
 
-    public void loanBook(BookInfo bookInfo) {
-        this.memberLoanHistories.add(new MemberLoanHistory(this, bookInfo));
+    public void loanBook(Book book) {
+        this.memberLoanHistories.add(new MemberLoanHistory(this, book.getBookInfo()));
     }
 
     public void returnBook(BookInfo bookInfo) {
         MemberLoanHistory targetHistory = this.memberLoanHistories.stream()
-                .filter(history -> history.getBookInfo().equals(bookInfo) && !history.isReturned())
+                .filter(history -> history.getBookInfo().getIsbn().equals(bookInfo.getIsbn()) && !history.isReturned())
                 .findFirst()
                 .orElseThrow(() -> new NoSuchElementException("대출 내역이 없습니다."));
         targetHistory.doReturn();
     }
 
-    public void updateRole(Role role) {
+    public void changeRole(Role role) {
         this.role = role;
     }
 
-    public void updatePassword(String password) {
+    public void changePassword(String password) {
         this.password = password;
     }
 
-    public void updateName(String name) {
+    public void changeName(String name) {
         this.name = name;
     }
 }

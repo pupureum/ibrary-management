@@ -10,6 +10,5 @@ import java.lang.annotation.Target;
 @Target({ElementType.PARAMETER})
 @Retention(RetentionPolicy.RUNTIME)
 @AuthenticationPrincipal(expression = "member")
-//@AuthenticationPrincipal(expression = "#this == 'anonymousUser' ? null : member") //TODO null checking 필요할지 고민
 public @interface CurrentMember {
 }

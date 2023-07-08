@@ -10,13 +10,15 @@ import org.springframework.util.MultiValueMap;
 
 @Setter
 @Getter
-@AllArgsConstructor
-@NoArgsConstructor
-public class SearchBookRequest {
+public class SearchApiBookRequest {
     @NotEmpty
     private String keyword = "";
     private int display = 50;
     private int start = 1;
+
+    public SearchApiBookRequest(String keyword) {
+        this.keyword = keyword;
+    }
 
     public MultiValueMap<String, String> toMultiValueMap() {
         MultiValueMap<String, String> requestMap = new LinkedMultiValueMap<>();

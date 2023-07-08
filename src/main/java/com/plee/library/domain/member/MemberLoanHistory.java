@@ -53,15 +53,13 @@ public class MemberLoanHistory extends BaseTimeEntity {
         this.returnedAt = LocalDateTime.now();
     }
 
+    public void setReturnedAt(LocalDateTime returnedAt) {
+        this.returnedAt = returnedAt;
+    }
+
     public boolean isRenewable() {
         return !isRenew;
     }
-
-//    public boolean isOverDue() {
-//        LocalDate dueDate = loanedAt.plusDays(isRenew ? RENEWAL_LIMIT : LOANABLE_DAYS);
-//        LocalDate now = LocalDate.now();
-//        return now.isAfter(dueDate);
-//    }
 
     public boolean isReturned() {
         return returnedAt != null;
