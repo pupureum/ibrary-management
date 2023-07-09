@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>현인의 서재</title>
+    <link rel="stylesheet" th:href="@{/css/bootstrap.min.css}">
+    <link rel="stylesheet" th:href="@{/css/main.css}">
+</head>
+<body>
+<div th:replace="~{fragments/header :: ~{header}}"/>
+<div class="container" style="max-width: 600px">
+    <div class="py-5 text-center" style="margin-top: 150px">
+        <h3>
+            죄송합니다.<br>
+            관리자 페이지로 접근 불가능합니다.
+        </h3>
+    </div>
+</div>
+</body>
+</html>
