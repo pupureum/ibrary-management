@@ -31,6 +31,18 @@
                 <h6>
                     <span th:text="'총 ' + ${loanHistory.totalElements} + '번의 대출 기록이 있어요!'"></span>
                 </h6>
+                <form th:unless="${status}" th:action="@{/books/on-loan}"
+                      method="get">
+                    <button type="submit" class="btn btn-sm btn-outline-secondary"
+                            style="margin-top: 70px; margin-left: 10px">대출중인 도서만 보기
+                    </button>
+                </form>
+                <form th:if="${status}" th:action="@{/books/loan}"
+                      method="get">
+                    <button type="submit" class="btn btn-sm btn-outline-secondary"
+                            style="margin-top: 70px; margin-left: 10px">전체 내역 보기
+                    </button>
+                </form>
             </div>
             <div class="table-responsive">
                 <table class="table table-hover">
@@ -72,7 +84,7 @@
                                 <input type="hidden" name="_method" value="put"/>
                                 <input type="hidden" name="historyId" th:value="${history.id}"/>
                                 <input type="hidden" name="bookInfoIsbn" th:value="${history.bookInfo.isbn}"/>
-                                <button type="submit" class="btn btn-sm btn-outline-secondary"
+                                <button type="submit" class="btn btn-sm btn-outline-primary"
                                         style="margin-top: 70px; margin-left: 10px">반납
                                 </button>
                             </form>
@@ -81,7 +93,7 @@
                                     <input type="hidden" name="_method" value="put"/>
                                     <input type="hidden" name="historyId" th:value="${history.id}"/>
                                     <input type="hidden" name="bookInfoIsbn" th:value="${history.bookInfo.isbn}"/>
-                                    <button type="submit" class="btn btn-sm btn-outline-secondary"
+                                    <button type="submit" class="btn btn-sm btn-outline-primary"
                                             style="margin-top: 70px;margin-left: 10px">반납
                                     </button>
                                 </form>
@@ -94,7 +106,7 @@
                                 </form>
                             </div>
                             <div class="btn-group me-2" th:if="${history.returnedAt != null}">
-                                <button type="button" class="btn btn-sm btn-outline-secondary"
+                                <button type="button" class="btn btn-sm btn-outline-success"
                                         style="margin-top: 70px;margin-left: 30px"
                                         disabled="disabled">반납완료
                                 </button>

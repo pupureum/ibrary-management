@@ -80,8 +80,8 @@
                                 </form>
                                 <form method="post" th:action="@{'/books/unlike/' + ${book.book.id}}">
                                     <input type="hidden" name="_method" value="delete"/>
-                                    <input type="hidden" name="pageNumber" th:value="${likedBooks.getNumber()}"/>
-                                    <input type="hidden" name="pageInfo" th:value="bookList"/>
+                                    <input type="hidden" name="page" th:value="${likedBooks.getNumber()}"/>
+                                    <input type="hidden" name="pageInfo" th:value="bookmarkList"/>
                                     <button type="submit" class="btn btn-sm unlike-book-btn btn-outline-danger"
                                             style="margin-top: 20px; margin-left: 10px; border-color: hotpink;">
                                         <span class="unlike-book-icon" style="color: hotpink">&#x2665;</span>

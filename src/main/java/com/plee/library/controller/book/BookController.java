@@ -44,32 +44,32 @@ public class BookController {
     @GetMapping("/{bookId}")
     public String bookDetail(@PathVariable("bookId") Long bookId, Model model, @CurrentMember Member member) {
         log.info("GEP bookDetail bookId = {}, member = {}", bookId, member.getLoginId());
-        // TODO DTO 로 반환!!!
-        model.addAttribute("book", bookService.findBookById(bookId));
-        model.addAttribute("bookMarked", bookService.isBookMarked(member.getId(), bookId));
-        model.addAttribute("bookLoaned", bookService.isLoaned(member.getId(), bookId));
-        model.addAttribute("selectedMenu", "none");
+        try {
+            BookDetailResponse response = bookService.getBookDetails(member.getId(), bookId);
+            model.addAttribute("response", response);
+        } catch (Exception e) {
+            log.error("bookDetail error", e);
+            model.addAttribute("errorMessage", e.getMessage());
+            return "redirect:/books";
+        }
         return "book/bookDetail";
     }
 
     @GetMapping("/search")
     public String searchBookByKeyword(@Valid @ModelAttribute("searchBookRequest") SearchBookRequest request, BindingResult bindingResult,
-                                      @RequestParam("pageNumber") int pageNumber, @CurrentMember Member member,
-                                      RedirectAttributes redirectAttributes, Model model) {
+                                      @RequestParam("page") int page, @CurrentMember Member member, RedirectAttributes redirectAttributes, Model model) {
         log.info("GET searchBookByKeyword keyword = {}", request.getKeyword());
         if (bindingResult.hasErrors()) {
             log.warn("searchBookByKeyword validation error");
             redirectAttributes.addFlashAttribute("errorMessage", bindingResult.getFieldError().getDefaultMessage());
 
-            // @Valid 검증 실패 시 검색 시도한 도서 목록 페이지로 리다이렉트하기 위해 page 정보 전달
-            redirectAttributes.addAttribute("page", pageNumber);
+            // @Valid 검증 실패 시 검색 시도한 페이지로 리다이렉트하기 위해 page 정보 전달
+            redirectAttributes.addAttribute("page", request.getBefore());
             return "redirect:/books";
         }
 
-        Page<AllBooksMarkInfoResponse> books = bookService.findBySearchKeyword(request, member.getId(), PageRequest.of(pageNumber, 5));
-
+        Page<AllBooksMarkInfoResponse> books = bookService.findBySearchKeyword(request, member.getId(), PageRequest.of(page, 5));
         model.addAttribute("books", books);
-        model.addAttribute("selectedMenu", "none");
         return "book/searchBookList";
     }
 
@@ -92,6 +92,18 @@ public class BookController {
         Page<LoanHistoryResponse> loanHistory = bookService.findLoanHistory(member.getId(), pageable);
 
         model.addAttribute("loanHistory", loanHistory);
+        model.addAttribute("status", false);
+        model.addAttribute("selectedMenu", "member-loan-history");
+        return "book/loanHistory";
+    }
+
+    @GetMapping("/on-loan")
+    public String onLoanHistory(@CurrentMember Member member, Model model) {
+        log.info("GET onLoanHistory member = {}", member.getLoginId());
+        Page<LoanHistoryResponse> loanHistory = bookService.findOnLoanHistory(member.getId());
+
+        model.addAttribute("loanHistory", loanHistory);
+        model.addAttribute("status", true);
         model.addAttribute("selectedMenu", "member-loan-history");
         return "book/loanHistory";
     }
@@ -149,7 +161,7 @@ public class BookController {
     }
 
     @GetMapping("/request/history")
-    public String requestHistory(@PageableDefault(size = 5) Pageable pageable, @CurrentMember Member member, Model model) {
+    public String requestHistory(@PageableDefault(size = 5, sort = "createdAt", direction = DESC) Pageable pageable, @CurrentMember Member member, Model model) {
         log.info("GET requestHistory member = {}", member.getLoginId());
         Page<RequestHistoryResponse> response = bookService.findMemberRequestHistory(member.getId(), pageable);
 
@@ -159,7 +171,8 @@ public class BookController {
     }
 
     @PostMapping("/like/{bookId}")
-    public String addBookMark(@PathVariable Long bookId, @RequestParam("pageNumber") int pageNumber, @CurrentMember Member member, RedirectAttributes redirectAttributes) {
+    public String addBookMark(@PathVariable Long bookId, @RequestParam("page") int page, @RequestParam("pageInfo") String pageInfo,
+                              @CurrentMember Member member, RedirectAttributes redirectAttributes) {
         log.info("POST likeBook member = {}, bookId = {}", member.getLoginId(), bookId);
         try {
             bookService.addBookmark(member.getId(), bookId);
@@ -169,12 +182,16 @@ public class BookController {
         }
 
         // 현재 페이지 번호를 쿼리 파라미터로 추가하여 리다이렉트
-        redirectAttributes.addAttribute("page", pageNumber);
+        redirectAttributes.addAttribute("page", page);
+        if (pageInfo.equals("bookDetail")) {
+            return "redirect:/books/" + bookId;
+        }
+        // 전체 도서 목록으로 리다이렉트
         return "redirect:/books";
     }
 
     @DeleteMapping("/unlike/{bookId}")
-    public String removeBookmark(@PathVariable Long bookId, @RequestParam("pageNumber") int pageNumber, @RequestParam("pageInfo") String pageInfo,
+    public String removeBookmark(@PathVariable Long bookId, @RequestParam("page") int page, @RequestParam("pageInfo") String pageInfo,
                              @CurrentMember Member member, RedirectAttributes redirectAttributes) {
         log.info("DELETE unlikeBook member = {}, bookId = {}", member.getLoginId(), bookId);
         try {
@@ -185,12 +202,17 @@ public class BookController {
         }
 
         // 현재 페이지 번호를 쿼리 파라미터로 추가
-        redirectAttributes.addAttribute("page", pageNumber);
+        redirectAttributes.addAttribute("page", page);
 
         // 찜한 도서 페이지에서 요청이 들어온경우, 찜한 도서 페이지로 리다이렉트
         if (pageInfo.equals("bookmarkList")) {
             return "redirect:/books/like";
         }
+        // 도서 상세 페이지에서 요청이 들어온경우, 도서 상세 페이지로 리다이렉트
+        if (pageInfo.equals("bookDetail")) {
+            return "redirect:/books/" + bookId;
+        }
+        // 전체 도서 목록으로 리다이렉트
         return "redirect:/books";
     }
 

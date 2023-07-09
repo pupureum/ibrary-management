@@ -20,107 +20,94 @@
             <div style="margin-top: 20px">
                 <table class="table">
                     <thead>
-                    <th scope="col" style="width: 30%"></th>
-                    <th scope="col" style="width: 60%"></th>
+                        <th scope="col" style="width: 30%; border-bottom: none"></th>
+                        <th scope="col" style="width: 60%; border-bottom: none"></th>
                     </thead>
-                    <tbody th:if="${book}">
+                    <tbody th:if="${response.book}">
+                    <tr>
+
                     <td>
-                        <img th:src="${book.bookInfo.image}" alt="Book Image"
-                             style="max-height: 320px; max-width: 700px; margin-left: 30px;"/>
+                        <img th:src="${response.book.bookInfo.image}" alt="Book Image"
+                             style="max-height: 320px; max-width: 700px; margin-left: 30px; border: none;"/>
                     </td>
                     <td>
                         <div style="margin-right: 50px;">
-                            <h4 th:text="${book.bookInfo.title}"
+                            <h4 th:text="${response.book.bookInfo.title}"
                                 style="margin-top: 20px; margin-bottom: 50px; font-family: SeoulNamsanM"></h4>
-                            <!--                                <h4 th:text="저자 ${book.bookInfo.author}" style="margin-top: 20px; margin-bottom: 20px; font-family: SeoulNamsanM"></h4>-->
                             <h5 style="margin-top: 20px; margin-bottom: 20px; font-family: SeoulNamsanM">
-                                저자: <span th:text="${book.bookInfo.author}"></span>
+                                저자: <span th:text="${response.book.bookInfo.author}"></span>
                             </h5>
                             <h5 style="margin-top: 20px; margin-bottom: 20px; font-family: SeoulNamsanM">
-                                출판사: <span th:text="${book.bookInfo.publisher}"></span>
+                                출판사: <span th:text="${response.book.bookInfo.publisher}"></span>
                             </h5>
                             <h5 style="margin-top: 20px; margin-bottom: 20px; font-family: SeoulNamsanM">
-                                출판일: <span th:text="${book.bookInfo.pubDate}"></span>
+                                출판일: <span th:text="${response.book.bookInfo.pubDate}"></span>
                             </h5>
                             <h5 style="margin-top: 20px; margin-bottom: 20px; font-family: SeoulNamsanM">
-                                ISBN: <span th:text="${book.bookInfo.isbn}"></span>
+                                ISBN: <span th:text="${response.book.bookInfo.isbn}"></span>
                             </h5>
-                            <!--                                <h5 th:text="${book.bookInfo.publisher}" style="margin-top: 20px; margin-bottom: 20px; font-family: SeoulNamsanM"></h5>-->
-                            <!--                                <h5 th:text="${book.bookInfo.isbn}" style="margin-top: 20px; margin-bottom: 20px; font-family: SeoulNamsanM"></h5>-->
-                            <!--                                <h5 th:text="${book.bookInfo.pubDate}" style="margin-top: 20px; margin-bottom: 20px; font-family: SeoulNamsanM"></h5>-->
+                            <h5 style="margin-top: 20px; margin-bottom: 20px; font-family: SeoulNamsanM">
+                                대출 가능 수량과 보유 수량:
+                                <span th:text="${response.book.loanableCnt} + ' / ' + ${response.book.quantity}"></span>
+                            </h5>
                         </div>
-                        <!--                            <div>-->
-                        <!--                                <button type="button" class="btn btn-lg btn btn-outline-info loan-book-btn"-->
-                        <!--                                        th:if="${bookLoaned}"-->
-                        <!--                                        style="margin-top: 70px;">-->
-                        <!--                                    대출중-->
-                        <!--                                </button>-->
-                        <!--                                <button type="button" class="btn btn-lg btn btn-outline-primary loan-book-btn"-->
-                        <!--                                        th:if="${book.loanableCnt > 0 and !bookLoaned}"-->
-                        <!--                                        style="margin-top: 70px;">-->
-                        <!--                                    대출하기-->
-                        <!--                                </button>-->
-                        <!--                                <button type="button" class="btn btn-lg btn-outline-dark" disabled="disabled"-->
-                        <!--                                        th:unless="${book.loanableCnt > 0 or bookLoaned}"-->
-                        <!--                                        style="margin-top: 70px;">-->
-                        <!--                                    대출불가-->
-                        <!--                                </button>-->
-                        <!--                                <button type="button" class="btn btn-lg like-book-btn" style= "margin-left: 10px; border-color: hotpink;">-->
-                        <!--                                    <span class="like-book-icon" style="color: hotpink">&#x2661;</span>-->
-                        <!--                                    <span class="like-book-text" style="color: #463f3f">찜</span>-->
-                        <!--                                </button>-->
-                        <!--                            </div>-->
                     </td>
+                    </tr>
                     </tbody>
                 </table>
             </div>
             <div>
                 <div class="btn-group" role="group">
                     <button type="button" class="btn btn-lg btn btn-outline-success loan-book-btn"
-                            th:if="${bookLoaned}">
+                            th:if="${response.isLoaned}">
                         대출중
                     </button>
-                    <form th:if="${book.loanableCnt > 0 and !bookLoaned}" method="post" action="/books/loan">
-                        <input type="hidden" name="bookId" th:value="${book.id}"/>
+                    <form th:if="${response.book.loanableCnt > 0 and !response.isLoaned}" method="post"
+                          action="/books/loan">
+                        <input type="hidden" name="bookId" th:value="${response.book.id}"/>
                         <button type="submit" class="btn btn-lg btn btn-outline-primary loan-book-btn">
                             대출하기
                         </button>
                     </form>
                     <button type="button" class="btn btn-lg btn-outline-dark" disabled="disabled"
-                            th:unless="${book.loanableCnt > 0 or bookLoaned}">
+                            th:unless="${response.book.loanableCnt > 0 or response.isLoaned}">
                         대출불가
                     </button>
-                    <button type="button" class="btn btn-lg like-book-btn"
-                            style="margin-left: 10px; border-color: hotpink; background-color: inherit;">
-                        <span class="like-book-icon" style="color: hotpink">&#x2661;</span>
-                        <span class="like-book-text" style="color: #463f3f">찜</span>
-                    </button>
+
+                    <form th:if="${response.isMarked}" method="post"
+                          th:action="@{'/books/unlike/' + ${response.book.id}}">
+                        <input type="hidden" name="_method" value="delete"/>
+                        <input type="hidden" name="page" th:value="${0}"/>
+                        <input type="hidden" name="pageInfo" th:value="bookDetail"/>
+                        <button type="submit" class="btn btn-lg like-book-btn btn-outline-danger"
+                                style="margin-left: 10px; border-color: hotpink; background-color: inherit;">
+                            <span class="unlike-book-icon" style="color: hotpink">&#x2665;</span>
+                            <span class="unlike-book-text" style="color: #463f3f">찜 해제</span>
+                        </button>
+                    </form>
+                    <form th:unless="${response.isMarked}" method="post"
+                          th:action="@{'/books/like/' + ${response.book.id}}">
+                        <input type="hidden" name="page" th:value="${0}"/>
+                        <input type="hidden" name="pageInfo" th:value="bookDetail"/>
+                        <button type="submit" class="btn btn-lg like-book-btn btn-outline-danger"
+                                style="margin-left: 10px; border-color: hotpink; background-color: inherit;">
+                            <span class="like-book-icon" style="color: hotpink">&#x2661;</span>
+                            <span class="like-book-text" style="color: #463f3f">찜</span>
+                        </button>
+                    </form>
                 </div>
             </div>
             <div style="margin-right: 50px;">
                 <h4 style="font-weight: bold; font-family: Pretendard-Regular; margin-top: 20px"> 도서 소개</h4>
-                <h4 th:if="${book.bookInfo.description}"
-                    th:text="${book.bookInfo.description}"
+                <h4 th:if="${response.book.bookInfo.description}"
+                    th:text="${response.book.bookInfo.description}"
                     style="margin-top: 20px; margin-bottom: 20px; font-family: Pretendard-Regular">
                 </h4>
-                <h4 th:unless="${book.bookInfo.description}"
+                <h4 th:unless="${response.book.bookInfo.description}"
                     style="margin-top: 20px; margin-bottom: 20px; font-family: Pretendard-Regular">
                     없음
                 </h4>
             </div>
-            <tr th:if="${bookMarked}">
-                <td colspan="7"><p>This book is bookmarked.</p></td>
-            </tr>
-            <tr th:unless="${bookMarked}">
-                <td colspan="7"><p>This book is not bookmarked.</p></td>
-            </tr>
-
-            <tr th:if="${bookLoaned}">
-                <td colspan="7"><p>This book is currently on loan.</p></td>
-            </tr>
-            <tr th:unless="${bookLoaned}">
-                <td colspan="7"><p>This book is not loaned</p></td>
-            </tr>
         </main>
     </div>
 </div>
@@ -137,6 +124,5 @@
         });
     });
 </script>
-
 </body>
 </html>
