@@ -1,5 +1,6 @@
 package com.plee.library.domain.member;
 
+import com.plee.library.domain.BaseTimeEntity;
 import com.plee.library.domain.book.BookInfo;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
@@ -9,6 +10,7 @@ import lombok.NoArgsConstructor;
 import org.hibernate.annotations.ColumnDefault;
 import org.hibernate.annotations.DynamicInsert;
 import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import java.time.LocalDateTime;
 
@@ -17,7 +19,7 @@ import java.time.LocalDateTime;
 @DynamicInsert
 @Entity
 @Table(name = "member_request_history")
-public class MemberRequestHistory {
+public class MemberRequestHistory extends BaseTimeEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -32,22 +34,18 @@ public class MemberRequestHistory {
     @JoinColumn(name = "book_info_isbn")
     private BookInfo bookInfo;
 
-    @Column(name = "req_reason", length = 200, nullable = false)
-    private String reqReason;
-
-    @CreatedDate
-    @Column(name = "req_date", updatable = false)
-    private LocalDateTime reqDate;
+    @Column(name = "request_reason", length = 200, nullable = false)
+    private String requestReason;
 
     @ColumnDefault("false")
     @Column(name = "is_approved", nullable = false)
     private boolean isApproved;
 
     @Builder
-    public MemberRequestHistory(Member member, BookInfo bookInfo, String reqReason) {
+    public MemberRequestHistory(Member member, BookInfo bookInfo, String requestReason) {
         this.member = member;
         this.bookInfo = bookInfo;
-        this.reqReason = reqReason;
+        this.requestReason = requestReason;
     }
 
     public void doApprove() {

@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>현인의 서재</title>
+    <link rel="stylesheet" th:href="@{/css/bootstrap.min.css}" href="../../static/css/bootstrap.min.css">
+    <link rel="stylesheet" th:href="@{/css/main.css}">
+    <link rel="stylesheet" th:href="@{/css/sidebar.css}">
+    <script th:src="@{/js/jquery-3.7.0.js}"></script>
+    <script th:src="@{/js/bootstrap.min.js}"></script>
+    <script th:inline="javascript">
+        let errorMessage = /*[[${errorMessage}]]*/ null;
+        let successMessage = /*[[${successMessage}]]*/ null;
+        if (errorMessage) {
+            alert(errorMessage);
+        }
+        if (successMessage) {
+            alert(successMessage);
+        }
+    </script>
+</head>
+
+<body>
+<div th:replace="~{fragments/header :: ~{header}}"/>
+<div class="container-fluid">
+    <div class="row">
+        <div th:replace="~{fragments/sidebar :: sidebar(${selectedMenu})}"/>
+        <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
+            <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+                <h3 style="margin-top: 50px; margin-bottom: 30px; margin-left: 20px; font-family: SeoulNamsanM">사용자 관리</h3>
+                <h6>
+                    <span th:text="'총 ' + ${members.totalElements} + '명의 회원이 있습니다.'"></span>
+                </h6>
+                <form th:action="@{/book/search}" method="get">
+                    <div class="btn-toolbar mb-2 mb-md-2">
+                        <div class="input-group">
+                            <input type="text" class="form-control mb-7" style="width: 400px;" id="keyword"
+                                   placeholder="권한을 변경할 사용자의 이름 또는 아이디를 입력하세요!">
+                            <div>
+                                <button type="submit" class="btn btn-outline-primary">검색</button>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                    <tr>
+                        <th scope="col" style="width: 10%; text-align: center">이름</th>
+                        <th scope="col" style="width: 15%; text-align: center">아이디</th>
+                        <th scope="col" style="width: 10%; text-align: center">권한</th>
+                        <th scope="col" style="width: 10%; text-align: center">가입 날짜</th>
+                        <th scope="col" style="width: 10%; text-align: center">수정 / 삭제</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr th:each="member : ${members}">
+                        <td th:text="${member.name}" class="text-center"></td>
+                        <td th:text="${member.loginId}" class="text-center"></td>
+                        <td class="text-center">
+                            <th:block th:if="${#strings.equals(member.role, 'MEMBER')}">사용자</th:block>
+                            <th:block th:if="${#strings.equals(member.role, 'ADMIN')}">관리자</th:block>
+                        </td>
+                        <td th:text="${member.createdAt}" class="text-center"></td>
+                        <td class="text-center">
+                            <button type="button" class="btn btn-sm btn-outline-secondary update-member-btn"
+                                    th:data-member-id="${member.id}" th:data-member-email="${member.loginId}" th:data-member-name="${member.name}" th:data-member-role="${member.role}" style="margin: 0 auto;">수정</button>
+                            <form th:action="@{/admin/members/{memberId}(memberId=${member.id})}" th:method="post"
+                                  onsubmit="return confirm('회원의 대출 이력과, 신규 도서 요청 내역 모두 삭제됩니다.\n정말로 삭제하시겠습니까?');">
+                                <input type="hidden" name="_method" value="delete"/>
+                                <button type="submit" class="btn btn-sm btn-outline-danger delete-member-btn" style="margin: 0 auto;">삭제</button>
+                            </form>
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </main>
+    </div>
+</div>
+<div class="modal fade" id="editModal" tabindex="-1" aria-labelledby="editModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="editModalLabel">정보 수정</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="닫기"></button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label for="name">이름</label>
+                    <input type="text" class="form-control" id="name">
+                </div>
+                <div class="form-group">
+                    <label for="loginId">아이디</label>
+                    <input type="text" class="form-control" id="loginId" readonly>
+                </div>
+                <div class="form-group">
+                    <label for="role">권한</label>
+                    <select class="form-control" id="role">
+                        <option value="MEMBER">사용자</option>
+                        <option value="ADMIN">관리자</option>
+                    </select>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">취소</button>
+                <button type="button" class="btn btn-primary" id="updateBtn">확인</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 페이징 처리 -->
+<nav aria-label="Page navigation">
+    <ul class="pagination justify-content-center">
+        <li th:class="${members.getNumber() == 0 ? 'page-item disabled' : 'page-item'}">
+            <a class="page-link" th:if="${members.getNumber() != 0}" th:href="@{/admin/members(page=${members.getNumber() - 1})}" aria-label="Previous">
+                <span class="sr-only">Previous</span>
+            </a>
+            <span class="page-link" th:if="${members.getNumber() == 0}" aria-disabled="true" aria-label="Previous">
+                <span class="sr-only">Previous</span>
+            </span>
+        </li>
+        <li th:each="page : ${members.getTotalPages() > 0 ? #numbers.sequence(1, members.getTotalPages()) : null}" th:class="${page - 1 == members.getNumber() ? 'page-item active' : 'page-item'}">
+            <a class="page-link" th:href="@{/admin/members(page=${page - 1})}" th:text="${page}"></a>
+        </li>
+        <li th:class="${members.getNumber() == members.getTotalPages() - 1 && members.getTotalPages() > 1 ? 'page-item disabled' : 'page-item'}">
+            <a class="page-link" th:if="${members.getNumber() != members.getTotalPages() - 1 && members.getTotalPages() > 1}" th:href="@{/admin/members(page=${members.getNumber() + 1})}" aria-label="Next">
+                <span class="sr-only">Next</span>
+            </a>
+            <span class="page-link" th:if="${members.getNumber() == members.getTotalPages() - 1 && members.getTotalPages() > 1}" aria-disabled="true" aria-label="Next">
+                <span class="sr-only">Next</span>
+            </span>
+        </li>
+    </ul>
+</nav>
+
+<script>
+    $(document).ready(function () {
+        let name = '';
+        let role = '';
+
+        $(".update-member-btn").click(function () {
+            let memberId = $(this).data('member-id');
+            let loginId = $(this).data('member-email');
+            console.log(loginId)
+            name = $(this).data('member-name');
+            role = $(this).data('member-role');
+
+            $('#name').val(name);
+            $('#loginId').val(loginId);
+            $('#role').val(role);
+            $('#updateBtn').data('member-id', memberId);
+
+            $('#editModal').modal('show');
+        });
+
+        $("#updateBtn").click(function () {
+            let memberId = $(this).data("member-id");
+            let updatedName = $('#name').val();
+            let updatedRole = $("#role").val();
+
+            if (updatedName == name && updatedRole == role) {
+                alert('수정된 정보가 없습니다.');
+                return;
+            }
+            $.ajax({
+                type: "PUT",
+                url: "/admin/members/" + memberId,
+                data: {
+                    name: updatedName,
+                    role: updatedRole
+                },
+                success: function () {
+                    alert('회원 정보가 수정되었습니다.');
+                    $('#editModal').modal('hide');
+                    location.reload();
+                },
+                error: function (xhr, status) {
+                    console.log('회원 정보 admin 수정 오류 발생:', xhr);
+                    console.log(status);
+                    alert(xhr.responseText);
+                }
+            });
+        });
+    });
+</script>
+</body>
+</html>

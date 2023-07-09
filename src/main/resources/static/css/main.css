@@ -1,0 +1,69 @@
+body {
+    background-color: white;
+}
+
+header {
+    background-color: #6abfee;
+    padding: 25px;
+}
+
+h2.header-title {
+    font-size: 30px;
+    font-weight: bold;
+    color: whitesmoke;
+    margin-left: 0px;
+    font-family: 'SeoulNamsanM';
+}
+
+.header-search {
+    width: 300px;
+}
+
+.header-buttons button {
+    margin-left: 10px;
+}
+
+@font-face {
+    font-family: 'SeoulNamsanM';
+    src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_two@1.0/SeoulNamsanM.woff') format('woff');
+    font-weight: normal;
+    font-style: normal;
+}
+
+@font-face {
+    font-family: 'Pretendard-Regular';
+    src: url('https://cdn.jsdelivr.net/gh/Project-Noonnu/noonfonts_2107@1.1/Pretendard-Regular.woff') format('woff');
+    font-weight: 400;
+    font-style: normal;
+}
+
+.h2 .h3{
+    font-family: 'SeoulNamsanM';
+}
+
+.center-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 10vh;
+    margin-top: 20px;
+}
+
+.form-group {
+    margin-bottom: 40px;
+    width: 370px;
+}
+
+.btn-lg {
+    padding: 10px 60px;
+    font-size: 18px;
+    width: 300px;
+}
+
+.label-style {
+    margin-bottom: 17px;
+}
+
+
+

@@ -1,9 +1,6 @@
 package com.plee.library.domain.book;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
@@ -24,23 +21,27 @@ public class BookInfo {
     @Column(name = "title", nullable = false)
     private String title;
 
-    @Column(name = "author", nullable = false)
+    @Column(name = "author")
     private String author;
 
-    @Column(name = "publisher", nullable = false)
+    @Column(name = "publisher")
     private String publisher;
 
     @Column(name = "image")
     private String image;
 
-    @Column(name = "description")
+    @Column(name = "description", columnDefinition = "TEXT")
     private String description;
 
-    @Column(name = "pub_date", nullable = false)
+    @Column(name = "pub_date")
     private String pubDate;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "category")
+    private BookCategory category;
+
     @Builder
-    public BookInfo(String isbn, String title, String author, String publisher, String image, String description, String pubDate) {
+    public BookInfo(String isbn, String title, String author, String publisher, String image, String description, String pubDate, BookCategory category) {
         this.isbn = isbn;
         this.title = title;
         this.author = author;
@@ -48,6 +49,7 @@ public class BookInfo {
         this.image = image;
         this.description = description;
         this.pubDate = pubDate;
+        this.category = category;
     }
 
     public void updateAuthor(String author) {

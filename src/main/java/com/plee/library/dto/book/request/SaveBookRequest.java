@@ -1,18 +1,49 @@
 package com.plee.library.dto.book.request;
 
-import jakarta.validation.constraints.Min;
+import com.plee.library.domain.book.BookInfo;
 import jakarta.validation.constraints.NotBlank;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import jakarta.validation.constraints.NotEmpty;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
+import lombok.*;
+import org.hibernate.validator.constraints.ISBN;
 import org.hibernate.validator.constraints.Range;
 
+@Setter
 @Getter
 @NoArgsConstructor
 @AllArgsConstructor
-public class AddBookRequest {
+public class SaveBookRequest {
 
     @NotBlank
-    @Range(min = 1, max = 9999)
-    private int stock_amt;
+    @ISBN
+    private String isbn;
+
+    private String title;
+
+    private String author;
+
+    private String publisher;
+
+    private String image;
+
+    private String description;
+
+    private String pubDate;
+
+    @NotNull
+    @Range(min = 1, max = 9999, message = "1 ~ 9999 까지의 수량만 입력 가능합니다.")
+    private int quantity;
+
+    public BookInfo toEntity() {
+        return BookInfo.builder()
+                .isbn(this.isbn)
+                .title(this.title)
+                .author(this.author)
+                .publisher(this.publisher)
+                .image(this.image)
+                .description(this.description)
+                .pubDate(this.pubDate)
+                .build();
+    }
 }

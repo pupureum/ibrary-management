@@ -1,30 +1,24 @@
 package com.plee.library.domain.member;
 
+import com.plee.library.domain.BaseTimeEntity;
 import com.plee.library.domain.book.BookInfo;
+import com.plee.library.domain.book.Book;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import org.springframework.security.core.GrantedAuthority;
-import org.springframework.security.core.userdetails.UserDetails;
+import org.hibernate.annotations.ColumnDefault;
+import org.hibernate.annotations.DynamicInsert;
 
-import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
+import java.util.*;
 
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Entity
+@DynamicInsert
 @Table(name = "member", uniqueConstraints = {@UniqueConstraint(name = "login_id_unique", columnNames = {"login_id"})})
-public class Member implements UserDetails {
-    @PrePersist
-    public void setDefaultRole() {
-        if (this.role == null) {
-            this.role = Role.Member;
-        }
-    }
+public class Member extends BaseTimeEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -34,25 +28,25 @@ public class Member implements UserDetails {
     @Column(name = "name", length = 25, nullable = false)
     private String name;
 
-    @Column(name = "login_id", length = 40, nullable = false, unique = true)
+    @Column(name = "login_id", length = 40, nullable = false)
     private String loginId;
 
-    @Column(name = "password", length = 20, nullable = false)
+    @Column(name = "password", nullable = false)
     private String password;
 
     @Enumerated(EnumType.STRING)
+    @ColumnDefault("'MEMBER'")
     @Column(name = "role", nullable = false)
     private Role role;
 
     @OneToMany(mappedBy = "member", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<MemberLoanHistory> memberLoanHistories = new ArrayList<MemberLoanHistory>();
+    private List<MemberLoanHistory> memberLoanHistories = new ArrayList<>();
 
     @OneToMany(mappedBy = "member", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<MemberRequestHistory> memberRequestHistories = new ArrayList<MemberRequestHistory>();
+    private List<MemberRequestHistory> memberRequestHistories = new ArrayList<>();
 
-
-    @Column(name = "penalty_end_date")
-    private LocalDateTime penaltyEndDate;
+    @OneToMany(mappedBy = "member", cascade = CascadeType.ALL, orphanRemoval = true)
+    private Set<MemberBookmark> memberBookmarks = new HashSet<>();
 
     @Builder
     public Member(String name, String loginId, String password) {
@@ -65,6 +59,22 @@ public class Member implements UserDetails {
         this.memberRequestHistories.add(new MemberRequestHistory(this, bookInfo, reqReason));
     }
 
+    public void addBookmark(Book book) {
+        this.memberBookmarks.add(new MemberBookmark(this, book));
+    }
+
+    public void loanBook(Book book) {
+        this.memberLoanHistories.add(new MemberLoanHistory(this, book.getBookInfo()));
+    }
+
+    public void returnBook(BookInfo bookInfo) {
+        MemberLoanHistory targetHistory = this.memberLoanHistories.stream()
+                .filter(history -> history.getBookInfo().getIsbn().equals(bookInfo.getIsbn()) && !history.isReturned())
+                .findFirst()
+                .orElseThrow(() -> new NoSuchElementException("대출 내역이 없습니다."));
+        targetHistory.doReturn();
+    }
+
     public void changeRole(Role role) {
         this.role = role;
     }
@@ -75,35 +85,5 @@ public class Member implements UserDetails {
 
     public void changeName(String name) {
         this.name = name;
-    }
-
-    @Override
-    public Collection<? extends GrantedAuthority> getAuthorities() {
-        return null;
-    }
-
-    @Override
-    public String getUsername() {
-        return null;
-    }
-
-    @Override
-    public boolean isAccountNonExpired() {
-        return false;
-    }
-
-    @Override
-    public boolean isAccountNonLocked() {
-        return false;
-    }
-
-    @Override
-    public boolean isCredentialsNonExpired() {
-        return false;
-    }
-
-    @Override
-    public boolean isEnabled() {
-        return false;
     }
 }

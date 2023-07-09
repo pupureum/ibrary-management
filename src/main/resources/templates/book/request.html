@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>현인의 서재</title>
+    <link rel="stylesheet" th:href="@{/css/bootstrap.min.css}">
+    <link rel="stylesheet" th:href="@{/css/main.css}">
+    <link rel="stylesheet" th:href="@{/css/sidebar.css}">
+    <link rel="stylesheet" th:href="@{/css/search.css}">
+    <script th:src="@{/js/jquery-3.7.0.js}"></script>
+    <script th:src="@{/js/bootstrap.min.js}"></script>
+    <script th:src="@{/js/search.js}"></script>
+</head>
+<body>
+<div th:replace="~{fragments/header :: ~{header}}"/>
+<div class="container-fluid">
+    <div class="row">
+        <div th:replace="~{fragments/sidebar :: sidebar(${selectedMenu})}"/>
+        <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
+            <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+                <h3 style="margin-top: 50px; margin-bottom: 30px; margin-left: 20px; font-family: SeoulNamsanM">도서
+                    신청</h3>
+            </div>
+            <form id="searchForm" class="center-content">
+                <div class="btn-toolbar mb-2 mb-md-2">
+                    <div class="input-group text-center">
+                        <input type="text" class="form-control mb-7 mx-auto" style="width: 350px;" id="keyword"
+                               placeholder="신청하고 싶은 도서의 키워드를 입력해주세요.">
+                        <div>
+                            <button class="btn btn-outline-primary mx-auto" id="btn-search-api" type="submit">검색
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </form>
+            <!--      모달 창-->
+            <div class="modal fade" id="bookModal" tabindex="-1" aria-labelledby="bookModalLabel" aria-hidden="true">
+                <div class="modal-dialog modal-dialog-centered">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="bookModalLabel">도서 선택</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- 선택한 책 정보를 담을 폼 -->
+            <div class="center-content">
+                <form id="selectedBookForm" method="post" class="form-group">
+                    <div class="form-group center-content">
+<!--                    <div class="form-group center-content" style="font-family: 'SeoulNamsanM', sans-serif">-->
+                        <div>
+                            <label for="selectedBookIsbn" class="label-style">ISBN:</label>
+                            <input type="text" id="selectedBookIsbn" name="isbn" value="${saveBookRequest.isbn}"
+                                   readonly>
+                        </div>
+                        <div>
+                            <label for="selectedBookTitle" class="label-style">제목:</label>
+                            <input type="text" id="selectedBookTitle" name="title" value="${saveBookRequest.title}"
+                                   readonly>
+                        </div>
+                        <div>
+                            <label for="selectedBookAuthor" class="label-style">저자:</label>
+                            <input type="text" id="selectedBookAuthor" name="author"
+                                   value="${saveBookRequest.author}" readonly>
+                        </div>
+                        <div>
+                            <label for="selectedBookPublisher" class="label-style">출판사:</label>
+                            <input type="text" id="selectedBookPublisher" name="publisher"
+                                   value="${saveBookRequest.publisher}" readonly>
+                        </div>
+                        <input type="hidden" id="selectedBookDescription" name="description"
+                               value="${saveBookRequest.description}">
+                        <input type="hidden" id="selectedBookImage" name="image" value="${saveBookRequest.image}">
+                        <div>
+                            <label for="selectedBookPubDate" class="label-style">출판일:</label>
+                            <input type="text" id="selectedBookPubDate" name="pubDate"
+                                   value="${saveBookRequest.pubDate}" readonly>
+                        </div>
+                        <div class="form-group">
+                            <label for="reqReason" class="mb-3 text-center"
+                                   style="margin: 40px 0 20px 50px; text-align: center;">
+                                <strong>도서 신청 사유를 200자 이내로 작성해주세요.</strong>
+                            </label>
+                            <textarea id="reqReason" name="reqReason" rows="3" class="form-control"
+                                      style="margin: 0px 20px 50px 0px;" required></textarea>
+                            <div class="text-center">
+                                <button type="submit" class="btn btn-success btn-lg">신청하기</button>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </main>
+    </div>
+</div>
+<script>
+    $(document).ready(function () {
+        $('#selectedBookForm').on('submit', function (event) {
+            event.preventDefault();
+            let formData = $(this).serialize();
+
+            $.ajax({
+                type: 'POST',
+                url: '/books/request',
+                data: formData,
+                success: function (response) {
+                    console.log('도서 신청 성공:', response);
+                    alert('도서 신청이 완료되었습니다.');
+                    window.location.href = '/books/request/history';
+                },
+                error: function (xhr, status) {
+                    console.log('도서 신청 오류 발생:', xhr);
+                    console.log(status);
+                    alert(xhr.responseText);
+                }
+            });
+        });
+    });
+</script>
+
+</body>
+</html>

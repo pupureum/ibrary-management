@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/thymeleaf-extras-springsecurity5">
+<body>
+<div th:fragment="header">
+    <header class="header">
+        <div class="container">
+            <div class="d-flex align-items-center">
+                <div class="col">
+                    <a href="/" th:href="@{/}">
+                        <img src="/images/hyundai-autoever.png" alt="hyundai-autoever-logo" th:width="100"
+                             th:height="50">
+                    </a>
+                </div>
+                <a class="col" th:href="@{/books}" style="text-decoration: none;">
+                    <h2 class="header-title">현인의 서재</h2>
+                </a>
+                <div class="col-md-auto">
+                    <div sec:authorize="isAnonymous()">
+                        <button class="btn btn-primary" type="button"
+                                th:onclick="|location.href='@{/member/login}'|">Log in
+                        </button>
+                        <button class="btn btn-primary" type="button"
+                                th:onclick="|location.href='@{/member/signup}'|">Sign up
+                        </button>
+                    </div>
+                    <div sec:authorize="isAuthenticated()">
+                        <button type="button" class="btn btn-primary"
+                                th:onclick="|location.href='@{/member/logout}'|"> Logout
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+</div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.1.0/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
