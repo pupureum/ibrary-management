@@ -6,6 +6,7 @@ import com.plee.library.config.MemberAdapter;
 import com.plee.library.domain.member.MemberLoanHistory;
 import com.plee.library.dto.admin.request.UpdateMemberRequest;
 import com.plee.library.dto.member.request.SignUpMemberRequest;
+import com.plee.library.dto.admin.response.AllMemberInfoResponse;
 import com.plee.library.dto.member.response.MemberInfoResponse;
 import com.plee.library.exception.message.MemberError;
 import com.plee.library.repository.book.BookRepository;
@@ -26,7 +27,6 @@ import org.springframework.validation.BindingResult;
 
 import java.util.List;
 import java.util.NoSuchElementException;
-import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -38,16 +38,51 @@ public class MemberServiceImpl implements MemberService, UserDetailsService {
     private final BookRepository bookRepository;
     private final BCryptPasswordEncoder passwordEncoder;
 
+    /**
+     * 회원 정보를 저장하는 메서드입니다.
+     * 입력받은 회원 정보를 암호화하여 데이터베이스에 저장합니다.
+     *
+     * @param request 회원가입 요청 객체 (SignUpMemberRequest)
+     */
     @Override
+    @Transactional
     public void saveMember(SignUpMemberRequest request) {
+        // 비밀번호 암호화
         BCryptPasswordEncoder encoder = new BCryptPasswordEncoder();
-        memberRepository.save(Member.builder()
+
+        // 회원 정보 생성
+        Member member = Member.builder()
                 .loginId(request.getLoginId())
                 .password(encoder.encode(request.getPassword()))
                 .name(request.getName())
-                .build());
+                .build();
+        memberRepository.save(member);
     }
 
+    /**
+     * 스프링 시큐리티에서 사용자 정보를 가져오는 메서드입니다.
+     * 로그인 아이디로 회원인지 판별합니다.
+     *
+     * @param loginId 로그인 ID
+     * @return 사용자를 나타내는 UserDetails 객체
+     * @throws UsernameNotFoundException 회원 정보를 찾을 수 없는 경우
+     */
+    @Override
+    @Transactional(readOnly = true)
+    public UserDetails loadUserByUsername(String loginId) throws UsernameNotFoundException {
+        Member member = memberRepository.findByLoginId(loginId)
+                .orElseThrow(() -> new UsernameNotFoundException(MemberError.NOT_FOUND_MEMBER.getMessage()));
+        return new MemberAdapter(member);
+    }
+
+
+    /**
+     * 회원가입 요청 객체의 유효성을 검증하는 메서드입니다.
+     * 비밀번호와 확인 비밀번호가 일치하는지, 로그인 아이디가 중복되는지를 확인하여 BindingResult에 오류를 추가합니다.
+     *
+     * @param request       회원가입 요청 객체 (SignUpMemberRequest)
+     * @param bindingResult 검증 결과를 담는 BindingResult 객체
+     */
     @Override
     @Transactional(readOnly = true)
     public void validateSignupRequest(SignUpMemberRequest request, BindingResult bindingResult) {
@@ -61,45 +96,59 @@ public class MemberServiceImpl implements MemberService, UserDetailsService {
         }
     }
 
-    @Transactional(readOnly = true)
-    public MemberInfoResponse findMember(Long memberId) {
-        return memberRepository.findById(memberId)
-                .map(m -> MemberInfoResponse.builder()
-                        .id(m.getId())
-                        .loginId(m.getLoginId())
-                        .name(m.getName())
-                        .role(m.getRole())
-                        .createdAt(m.getCreatedAt().toLocalDate())
-                        .build())
-                .orElseThrow(() -> new NoSuchElementException(MemberError.NOT_FOUND_MEMBER.getMessage()));
-    }
-
+    /**
+     * 특정 회원의 정보를 조회하는 메서드입니다.
+     *
+     * @param memberId 회원 ID
+     * @return 조회된 회원의 정보 (MemberInfoResponse 객체)
+     * @throws NoSuchElementException 요청한 회원이 존재하지 않을 경우 예외 발생
+     */
     @Override
     @Transactional(readOnly = true)
-    public Page<MemberInfoResponse> findAllMembers(Pageable pageable) {
+    public MemberInfoResponse findMember(Long memberId) {
+        Member foundMember = findMemberById(memberId);
+
+        // 회원 정보를 MemberInfoResponse 객체로 변환
+        return MemberInfoResponse.from(foundMember);
+    }
+
+    /**
+     * 모든 회원을 페이지네이션하여 조회합니다.
+     *
+     * @param pageable 페이지 정보
+     * @return 회원 정보를 담은 Page 객체
+     */
+    @Override
+    @Transactional(readOnly = true)
+    public Page<AllMemberInfoResponse> findAllMembers(Pageable pageable) {
         // 회원들을 최신순으로 Pagination 하여 조회
         Page<Member> members = memberRepository.findAll(pageable);
 
-        // 조회된 회원들을 MemberInfoResponse 객체로 변환
-        List<MemberInfoResponse> response = members.stream()
-                .map(m -> MemberInfoResponse.builder()
-                        .id(m.getId())
-                        .loginId(m.getLoginId())
-                        .name(m.getName())
-                        .role(m.getRole())
-                        .createdAt(m.getCreatedAt().toLocalDate())
-                        .build())
-                .collect(Collectors.toList());
+        // 조회된 회원들을 MemberInfoResponse 객체 리스트로 변환
+        List<AllMemberInfoResponse> response = AllMemberInfoResponse.from(members);
         return new PageImpl<>(response, pageable, members.getTotalElements());
     }
 
+    /**
+     * 현재 비밀번호와 일치 여부를 판별합니다.
+     *
+     * @param currentPassword 입력된 현재 비밀번호
+     * @param member 회원 객체
+     * @return 비밀번호가 일치하면 true, 일치하지 않으면 false
+     */
     @Override
     @Transactional(readOnly = true)
-    public boolean checkCurrentPassword(String currentPassword, Long memberId) {
-        Member member =findMemberById(memberId);
+    public boolean checkCurrentPassword(String currentPassword, Member member) {
         return passwordEncoder.matches(currentPassword, member.getPassword());
     }
 
+    /**
+     * 관리자에 의해 회원 정보를 변경합니다.
+     *
+     * @param memberId 회원 ID
+     * @param request  변경할 회원 정보
+     * @throws NoSuchElementException 요청한 회원이 존재하지 않을 경우 발생하는 예외
+     */
     @Override
     @Transactional
     public void updateMemberByAdmin(Long memberId, UpdateMemberRequest request) {
@@ -115,10 +164,19 @@ public class MemberServiceImpl implements MemberService, UserDetailsService {
         }
     }
 
+    /**
+     * 회원 정보를 변경합니다.
+     *
+     * @param memberId 회원 ID
+     * @param request  변경할 회원 정보
+     * @throws NoSuchElementException    요청한 회원이 존재하지 않을 경우 발생하는 예외
+     * @throws IllegalStateException    새 비밀번호가 기존 비밀번호와 동일한 경우 발생하는 예외
+     */
     @Override
     @Transactional
     public void changeMemberInfo(Long memberId, UpdateMemberRequest request) {
-        Member member = findMemberById(memberId);
+        Member member = memberRepository.findById(memberId)
+                .orElseThrow(() -> new NoSuchElementException(MemberError.NOT_FOUND_MEMBER.getMessage()));
         String newName = request.getName();
         String newPassword = request.getNewPassword();
 
@@ -138,6 +196,14 @@ public class MemberServiceImpl implements MemberService, UserDetailsService {
         }
     }
 
+    /**
+     * 특정 회원을 삭제합니다.
+     * 대출중인 도서가 있다면 강제 반납 처리합니다.
+     *
+     * @param memberId 회원 ID
+     * @throws NoSuchElementException 요청한 회원이 존재하지 않을 경우 발생하는 예외
+     * @throws IllegalStateException  대출 가능한 수량이 올바르지 않은 경우 발생하는 예외
+     */
     @Override
     @Transactional
     public void deleteMember(Long memberId) {
@@ -155,13 +221,13 @@ public class MemberServiceImpl implements MemberService, UserDetailsService {
         log.info("SUCCESS delete member id : {}", memberId);
     }
 
-    @Override
-    public UserDetails loadUserByUsername(String loginId) throws UsernameNotFoundException {
-        Member member = memberRepository.findByLoginId(loginId)
-                .orElseThrow(() -> new UsernameNotFoundException(MemberError.NOT_FOUND_MEMBER.getMessage()));
-        return new MemberAdapter(member);
-    }
-
+    /**
+     * 특정 회원을 ID로 조회합니다.
+     *
+     * @param memberId 회원 ID
+     * @return 조회된 Member 객체
+     * @throws NoSuchElementException 요청한 회원이 존재하지 않을 경우 발생하는 예외
+     */
     @Transactional(readOnly = true)
     public Member findMemberById(Long memberId) {
         return memberRepository.findById(memberId)

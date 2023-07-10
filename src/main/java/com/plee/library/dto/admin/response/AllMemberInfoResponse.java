@@ -2,9 +2,9 @@ package com.plee.library.dto.member.response;
 
 import com.plee.library.domain.member.Member;
 import com.plee.library.domain.member.Role;
-import com.plee.library.dto.admin.response.AllMemberInfoResponse;
 import lombok.Builder;
 import lombok.Getter;
+import org.springframework.data.domain.Page;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -30,14 +30,16 @@ public class MemberInfoResponse {
         this.createdAt = createdAt;
     }
 
-    public static MemberInfoResponse from(Member member) {
-        return MemberInfoResponse.builder()
+    public static List<MemberInfoResponse> from(Page<Member> members) {
+        return members.stream()
+                .map(member -> MemberInfoResponse.builder()
                         .id(member.getId())
                         .name(member.getName())
                         .loginId(member.getLoginId())
                         .password(member.getPassword())
                         .role(member.getRole())
                         .createdAt(member.getCreatedAt().toLocalDate())
-                        .build();
+                        .build())
+                .collect(Collectors.toList());
     }
 }
