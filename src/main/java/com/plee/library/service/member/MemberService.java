@@ -10,7 +10,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.validation.BindingResult;
 
 public interface MemberService {
-    void saveMember(SignUpMemberRequest request);
+    Member saveMember(SignUpMemberRequest request);
 
     void validateSignupRequest(SignUpMemberRequest request, BindingResult bindingResult);
 
@@ -18,7 +18,7 @@ public interface MemberService {
 
     Page<AllMemberInfoResponse> findAllMembers(Pageable pageable);
 
-    boolean checkCurrentPassword(String currentPassword, Member member);
+    boolean checkCurrentPassword(String currentPassword, Long memberId);
 
     void updateMemberByAdmin(Long memberId, UpdateMemberRequest request);
 

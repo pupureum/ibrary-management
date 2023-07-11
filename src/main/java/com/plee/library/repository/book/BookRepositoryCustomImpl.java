@@ -1,8 +1,6 @@
 package com.plee.library.repository.book;
 
 import com.plee.library.domain.book.Book;
-import com.plee.library.domain.book.QBook;
-import com.plee.library.domain.book.QBookInfo;
 import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.jpa.impl.JPAQuery;
 import com.querydsl.jpa.impl.JPAQueryFactory;
@@ -10,16 +8,18 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.support.PageableExecutionUtils;
+import org.springframework.stereotype.Repository;
 
 import java.util.List;
 
+import static com.plee.library.domain.book.QBook.book;
+import static com.plee.library.domain.book.QBookInfo.bookInfo;
+
 @RequiredArgsConstructor
+@Repository
 public class BookRepositoryImpl implements BookRepositoryCustom{
 
     private final JPAQueryFactory queryFactory;
-
-    private final QBook book = QBook.book;
-    private final QBookInfo bookInfo = QBookInfo.bookInfo;
 
     @Override
     public Page<Book> findBooksWithSearchValue(String searchValue, Pageable pageable) {

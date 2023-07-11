@@ -11,6 +11,7 @@ import lombok.NoArgsConstructor;
 import org.hibernate.annotations.ColumnDefault;
 import org.hibernate.annotations.DynamicInsert;
 
+import java.time.LocalDateTime;
 import java.util.*;
 
 @Getter
@@ -49,10 +50,13 @@ public class Member extends BaseTimeEntity {
     private Set<MemberBookmark> memberBookmarks = new HashSet<>();
 
     @Builder
-    public Member(String name, String loginId, String password) {
+    public Member(Long id, String name, String loginId, String password, Role role) {
+        this.id = id;
         this.name = name;
         this.loginId = loginId;
         this.password = password;
+        this.role = role;
+        this.createdAt = LocalDateTime.now();
     }
 
     public void addBookRequest(BookInfo bookInfo, String reqReason) {

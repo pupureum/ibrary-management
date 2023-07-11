@@ -13,7 +13,7 @@ import lombok.NoArgsConstructor;
 @Entity
 @Table(name = "member_bookmark",
         uniqueConstraints = {
-                @UniqueConstraint(name = "member_book_info_unique", columnNames = {"member_seq", "book_seq"})
+                @UniqueConstraint(name = "member_book_unique", columnNames = {"member_seq", "book_seq"})
         })
 public class MemberBookmark extends BaseTimeEntity {
     @Id

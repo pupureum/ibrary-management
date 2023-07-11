@@ -7,6 +7,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.querydsl.QuerydslPredicateExecutor;
 import org.springframework.data.repository.query.Param;
 
 import java.time.LocalDate;
@@ -14,24 +15,19 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
-public interface MemberLoanHistoryRepository extends JpaRepository<MemberLoanHistory, Long> {
-
-    @Query("SELECT Date(h.createdAt), COUNT(h) FROM MemberLoanHistory h WHERE Date(h.createdAt) >= :startDate AND Date(h.createdAt) <= :endDate GROUP BY Date(h.createdAt)")
-    List<Object[]> countGroupByCreatedAtRange(@Param("startDate") LocalDate startDate, @Param("endDate") LocalDate endDate);
-
-    long countByMemberIdAndReturnedAtIsNull(Long memberId);
-
+public interface MemberLoanHistoryRepository extends JpaRepository<MemberLoanHistory, Long>, QuerydslPredicateExecutor<MemberLoanHistoryRepository>, MemberLoanHistoryCustom {
     boolean existsByMemberIdAndBookInfoIsbnAndReturnedAtIsNull(Long memberId, String bookInfoId);
 
     boolean existsByBookInfoIsbnAndReturnedAtIsNull(String bookInfoId);
 
-    List<MemberLoanHistory> findAllByMemberId(Long memberId);
+    long countByMemberIdAndReturnedAtIsNull(Long memberId);
+
+    @Query("SELECT Date(h.createdAt), COUNT(h) FROM MemberLoanHistory h WHERE Date(h.createdAt) >= :startDate AND Date(h.createdAt) <= :endDate GROUP BY Date(h.createdAt)")
+    List<Object[]> countGroupByCreatedAtRange(@Param("startDate") LocalDate startDate, @Param("endDate") LocalDate endDate);
 
     Page<MemberLoanHistory> findAllByMemberId(Long memberId, Pageable pageable);
 
-    List<MemberLoanHistory> findByMemberIdAndReturnedAtIsNull(Long memberId);
+//    MemberLoanHistory findByMemberIdAndBookInfoIsbnAndReturnedAtIsNull(Long memberId, String bookInfoId);
 
-    Optional<MemberLoanHistory> findByIdAndReturnedAtIsNull(Long historyId);
-
-    List<MemberLoanHistory> findByReturnedAtIsNullAndCreatedAtBefore(LocalDateTime time);
+//    List<MemberLoanHistory> findByReturnedAtIsNullAndCreatedAtBefore(LocalDateTime time);
 }
