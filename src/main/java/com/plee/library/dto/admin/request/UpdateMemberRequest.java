@@ -14,7 +14,7 @@ import lombok.Setter;
 public class UpdateMemberRequest {
     private String name;
 
-    private String newPassword;
+    private String password;
 
     private Role role;
 }

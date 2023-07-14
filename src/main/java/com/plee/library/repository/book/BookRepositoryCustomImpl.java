@@ -1,7 +1,10 @@
 package com.plee.library.repository.book;
 
 import com.plee.library.domain.book.Book;
+import com.plee.library.dto.book.condition.BookSearchCondition;
+import com.querydsl.core.BooleanBuilder;
 import com.querydsl.core.types.dsl.BooleanExpression;
+import com.querydsl.core.types.dsl.Expressions;
 import com.querydsl.jpa.impl.JPAQuery;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import lombok.RequiredArgsConstructor;
@@ -17,20 +20,19 @@ import static com.plee.library.domain.book.QBookInfo.bookInfo;
 
 @RequiredArgsConstructor
 @Repository
-public class BookRepositoryImpl implements BookRepositoryCustom{
+public class BookRepositoryCustomImpl implements BookRepositoryCustom {
 
     private final JPAQueryFactory queryFactory;
 
     @Override
-    public Page<Book> findBooksWithSearchValue(String searchValue, Pageable pageable) {
-        BooleanExpression titleOrAuthorContains = book.bookInfo.title.containsIgnoreCase(searchValue)
-                .or(book.bookInfo.author.containsIgnoreCase(searchValue));
-
+    public Page<Book> search(BookSearchCondition condition, Pageable pageable) {
         List<Book> results = queryFactory
                 .select(book)
                 .from(book)
                 .leftJoin(book.bookInfo, bookInfo)
-                .where(titleOrAuthorContains)
+                .where(
+                        searchExpression(condition)
+                )
                 .offset(pageable.getOffset())
                 .limit(pageable.getPageSize())
                 .fetch();
@@ -39,9 +41,27 @@ public class BookRepositoryImpl implements BookRepositoryCustom{
                 .select(book.count())
                 .from(book)
                 .leftJoin(book.bookInfo, bookInfo)
-                .where(titleOrAuthorContains);
+                .where(
+                        searchExpression(condition)
+                );
 
         // pageable과 results를 확인하여 상황에 따라 count 쿼리를 호출
         return PageableExecutionUtils.getPage(results, pageable, countQuery::fetchOne);
+    }
+
+    private BooleanBuilder searchExpression(BookSearchCondition condition) {
+        BooleanBuilder builder = new BooleanBuilder();
+
+        return builder
+                .or(titleLike(condition.isTitle(), condition.getKeyword()))
+                .or(authorLike(condition.isAuthor(), condition.getKeyword()));
+    }
+
+    private BooleanExpression titleLike(boolean title, String keyword) {
+        return title ? book.bookInfo.title.containsIgnoreCase(keyword) : null;
+    }
+
+    private BooleanExpression authorLike(boolean author, String keyword) {
+        return author ? book.bookInfo.author.containsIgnoreCase(keyword) : null;
     }
 }

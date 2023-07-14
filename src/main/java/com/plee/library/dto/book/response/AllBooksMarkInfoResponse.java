@@ -1,8 +1,12 @@
 package com.plee.library.dto.book.response;
 
+import com.plee.library.domain.book.Book;
 import com.plee.library.domain.book.BookInfo;
 import lombok.Builder;
 import lombok.Getter;
+import org.springframework.data.domain.Page;
+
+import java.util.List;
 
 @Getter
 public class AllBooksMarkInfoResponse {

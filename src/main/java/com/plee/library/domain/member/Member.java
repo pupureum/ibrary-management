@@ -3,6 +3,7 @@ package com.plee.library.domain.member;
 import com.plee.library.domain.BaseTimeEntity;
 import com.plee.library.domain.book.BookInfo;
 import com.plee.library.domain.book.Book;
+import com.plee.library.message.BookMsg;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Builder;
@@ -75,7 +76,7 @@ public class Member extends BaseTimeEntity {
         MemberLoanHistory targetHistory = this.memberLoanHistories.stream()
                 .filter(history -> history.getBookInfo().getIsbn().equals(bookInfo.getIsbn()) && !history.isReturned())
                 .findFirst()
-                .orElseThrow(() -> new NoSuchElementException("대출 내역이 없습니다."));
+                .orElseThrow(() -> new NoSuchElementException(BookMsg.NOT_FOUND_LOAN_HISTORY.getMessage()));
         targetHistory.doReturn();
     }
 

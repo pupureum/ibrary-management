@@ -1,6 +1,6 @@
 package com.plee.library.config;
 
-import com.plee.library.dto.book.request.SearchBookRequest;
+import com.plee.library.dto.book.request.SearchApiBookRequest;
 import com.plee.library.dto.book.response.SearchBookResponse;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.ParameterizedTypeReference;
@@ -24,7 +24,7 @@ public class NaverBookSearchConfig {
     @Value("${naver.url}")
     private String bookSearchUrl;
 
-    public SearchBookResponse searchBook(SearchBookRequest searchBookRequest) {
+    public SearchBookResponse searchBook(SearchApiBookRequest searchBookRequest) {
         var uri = UriComponentsBuilder.fromUriString(bookSearchUrl)
                 .queryParams(searchBookRequest.toMultiValueMap())
                 .build()

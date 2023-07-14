@@ -1,5 +1,5 @@
-package com.plee.library.exception.message;
+package com.plee.library.message;
 
-public interface Error {
+public interface Msg {
         String getMessage();
 }

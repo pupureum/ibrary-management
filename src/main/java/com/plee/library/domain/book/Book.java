@@ -1,13 +1,12 @@
 package com.plee.library.domain.book;
 
 import com.plee.library.domain.BaseTimeEntity;
+import com.plee.library.message.BookMsg;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import org.springframework.data.annotation.CreatedDate;
-import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import java.time.LocalDateTime;
 
@@ -36,10 +35,12 @@ public class Book extends BaseTimeEntity {
     private Long version;
 
     @Builder
-    public Book(BookInfo bookInfo, int quantity) {
+    public Book(Long id, BookInfo bookInfo, int quantity) {
+        this.id = id;
         this.bookInfo = bookInfo;
         this.quantity = quantity;
         this.loanableCnt = quantity;
+        this.createdAt = LocalDateTime.now();
     }
 
     public void setQuantity(int quantity) {
@@ -54,14 +55,14 @@ public class Book extends BaseTimeEntity {
 
     public void decreaseLoanableCnt() {
         if (this.loanableCnt < 1) {
-            throw new IllegalStateException("더 이상 대출 가능한 도서가 없습니다.");
+            throw new IllegalStateException(BookMsg.CANNOT_LOAN_BOOK.getMessage());
         }
         this.loanableCnt -= 1;
     }
 
     public void increaseLoanableCnt() {
         if (this.loanableCnt >= this.quantity) {
-            throw new IllegalStateException("대여 가능한 수량이 올바르지 않습니다.");
+            throw new IllegalStateException(BookMsg.INVALID_LOANABLE_CNT.getMessage());
         }
         this.loanableCnt += 1;
     }

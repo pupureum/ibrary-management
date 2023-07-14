@@ -39,7 +39,7 @@ public class MemberRequestHistory extends BaseTimeEntity {
 
     @ColumnDefault("false")
     @Column(name = "is_approved", nullable = false)
-    private boolean isApproved;
+    private boolean isApproved = false;
 
     @Builder
     public MemberRequestHistory(Member member, BookInfo bookInfo, String requestReason) {

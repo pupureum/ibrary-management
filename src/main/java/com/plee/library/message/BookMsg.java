@@ -1,11 +1,16 @@
-package com.plee.library.exception.message;
+package com.plee.library.message;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
 @Getter
 @AllArgsConstructor
-public enum BookError implements Error {
+public enum BookMsg implements Msg {
+    SUCCESS_LOAN_BOOK("대출이 성공적으로 처리되었습니다."),
+    SUCCESS_RETURN_BOOK("반납이 성공적으로 처리되었습니다."),
+    SUCCESS_RENEW_BOOK("연장이 성공적으로 처리되었습니다."),
+    SUCCESS_UPDATE_QUANTITY("수량이 변경되었습니다."),
+    SUCCESS_DELETE_BOOK("도서가 삭제되었습니다."),
     NOT_FOUND_BOOK_INFO("책 정보를 찾을 수 없습니다."),
     NOT_FOUND_BOOK("해당 도서를 찾을 수 없습니다."),
     NOT_FOUND_LOAN_HISTORY("대출 내역이 없습니다."),

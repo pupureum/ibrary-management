@@ -11,6 +11,7 @@ import org.hibernate.validator.constraints.Range;
 
 @Setter
 @Getter
+@Builder
 @NoArgsConstructor
 @AllArgsConstructor
 public class SaveBookRequest {
@@ -36,10 +37,11 @@ public class SaveBookRequest {
     private int quantity;
 
     public BookInfo toEntity() {
+        String modifiedAuthor = this.author.replace("^", ", ");
         return BookInfo.builder()
                 .isbn(this.isbn)
                 .title(this.title)
-                .author(this.author)
+                .author(modifiedAuthor)
                 .publisher(this.publisher)
                 .image(this.image)
                 .description(this.description)

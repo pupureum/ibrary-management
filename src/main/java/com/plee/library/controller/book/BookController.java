@@ -161,19 +161,18 @@ public class BookController {
         return "redirect:/books/loan";
     }
 
-    // 도서 검색 api를 사용하여 도서 검색 결과를 반환합니다.
     @GetMapping("/api/book")
     @ResponseBody
-    public SearchBookResponse searchBooksByApi(@RequestParam("keyword") String keyword) {
+    public ResponseEntity<Object> searchBooksByApi(@RequestParam("keyword") String keyword) {
         log.info("GET searchBooksByApi keyword = {}", keyword);
         try {
             // 네이버 검색 api를 사용하여 키워드로 도서 검색
             SearchBookResponse response = bookService.findBySearchApi(keyword);
-            return response;
+            return ResponseEntity.ok(response);
         } catch (Exception e) {
             // 네이버 서버 에러가 발생한 경우
             log.error("searchBooksByApi error", e.getMessage());
-            throw new RuntimeException(BookMsg.API_ERROR.getMessage());
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
         }
     }
 
@@ -199,7 +198,7 @@ public class BookController {
             bookService.addNewBookRequest(request, member.getId());
         } catch (Exception e) {
             log.warn("POST requestNewBook error", e.getMessage());
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
         }
         return ResponseEntity.status(HttpStatus.OK).build();
     }
@@ -271,7 +270,7 @@ public class BookController {
     public String bookmarkList(@PageableDefault(size = 5, sort = "createdAt", direction = DESC) Pageable pageable,
                                @CurrentMember Member member, Model model) {
         log.info("GET likeBookList member = {}", member.getLoginId());
-        Page<MarkedBooksResponse> response = bookService.findLikeBooks(member.getId(), pageable);
+        Page<MarkedBooksResponse> response = bookService.findBookmarked(member.getId(), pageable);
 
         model.addAttribute("likedBooks", response);
         model.addAttribute("selectedMenu", "liked-books");

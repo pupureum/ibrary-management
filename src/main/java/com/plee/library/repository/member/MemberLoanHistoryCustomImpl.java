@@ -5,19 +5,17 @@ import com.plee.library.dto.member.condition.LoanHistorySearchCondition;
 import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.jpa.impl.JPAQuery;
 import com.querydsl.jpa.impl.JPAQueryFactory;
+import lombok.RequiredArgsConstructor;
 
 import java.time.LocalDateTime;
 import java.util.List;
 
 import static com.plee.library.domain.member.QMemberLoanHistory.memberLoanHistory;
 
+@RequiredArgsConstructor
 public class MemberLoanHistoryCustomImpl implements MemberLoanHistoryCustom{
 
     private final JPAQueryFactory queryFactory;
-
-    public MemberLoanHistoryCustomImpl(JPAQueryFactory queryFactory) {
-        this.queryFactory = queryFactory;
-    }
 
     @Override
     public List<MemberLoanHistory> search(LoanHistorySearchCondition condition) {

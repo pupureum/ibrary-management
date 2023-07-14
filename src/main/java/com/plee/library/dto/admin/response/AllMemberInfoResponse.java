@@ -1,4 +1,4 @@
-package com.plee.library.dto.member.response;
+package com.plee.library.dto.admin.response;
 
 import com.plee.library.domain.member.Member;
 import com.plee.library.domain.member.Role;
@@ -11,17 +11,16 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 @Getter
-public class MemberInfoResponse {
+public class AllMemberInfoResponse {
     private final Long id;
     private final String name;
     private final String loginId;
     private final String password;
     private final Role role;
-
     private final LocalDate createdAt;
 
     @Builder
-    public MemberInfoResponse(Long id, String name, String loginId, String password, Role role, LocalDate createdAt) {
+    public AllMemberInfoResponse(Long id, String name, String loginId, String password, Role role, LocalDate createdAt) {
         this.id = id;
         this.name = name;
         this.loginId = loginId;
@@ -30,9 +29,9 @@ public class MemberInfoResponse {
         this.createdAt = createdAt;
     }
 
-    public static List<MemberInfoResponse> from(Page<Member> members) {
+    public static List<AllMemberInfoResponse> from(Page<Member> members) {
         return members.stream()
-                .map(member -> MemberInfoResponse.builder()
+                .map(member -> AllMemberInfoResponse.builder()
                         .id(member.getId())
                         .name(member.getName())
                         .loginId(member.getLoginId())

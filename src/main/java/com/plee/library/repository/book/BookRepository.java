@@ -12,8 +12,6 @@ import java.util.Optional;
 public interface BookRepository extends JpaRepository<Book, Long>, QuerydslPredicateExecutor<Book>, BookRepositoryCustom {
      Optional<Book> findByBookInfoIsbn(String isbn);
 
-     Page<Book> findAllByOrderByCreatedAtDesc(Pageable pageable);
-
      List<Book> findTop4ByOrderByCreatedAtDesc();
 
      boolean existsByBookInfoIsbn(String isbn);

@@ -8,13 +8,14 @@ import com.plee.library.dto.admin.request.UpdateMemberRequest;
 import com.plee.library.dto.member.request.SignUpMemberRequest;
 import com.plee.library.dto.admin.response.AllMemberInfoResponse;
 import com.plee.library.dto.member.response.MemberInfoResponse;
-import com.plee.library.exception.message.MemberError;
+import com.plee.library.message.MemberMsg;
 import com.plee.library.repository.book.BookRepository;
 import com.plee.library.repository.member.MemberLoanHistoryRepository;
 import com.plee.library.repository.member.MemberRepository;
 import com.plee.library.dto.member.condition.LoanHistorySearchCondition;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.annotation.Primary;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
@@ -30,8 +31,8 @@ import java.util.List;
 import java.util.NoSuchElementException;
 
 @Slf4j
-@Service
 @RequiredArgsConstructor
+@Service
 public class MemberServiceImpl implements MemberService, UserDetailsService {
 
     private final MemberRepository memberRepository;
@@ -40,7 +41,7 @@ public class MemberServiceImpl implements MemberService, UserDetailsService {
     private final BCryptPasswordEncoder passwordEncoder;
 
     /**
-     * 회원가입 요청의 유효성을 검증하는 메서드입니다.
+     * 회원가입 요청의 유효성을 검증합니다.
      * 비밀번호와 확인 비밀번호가 일치하는지, 로그인 아이디가 중복되는지를 확인하여 BindingResult에 오류를 추가합니다.
      *
      * @param request       회원가입 요청 객체 (SignUpMemberRequest)
@@ -51,17 +52,16 @@ public class MemberServiceImpl implements MemberService, UserDetailsService {
     public void validateSignupRequest(SignUpMemberRequest request, BindingResult bindingResult) {
         // 비밀번호 입력 2개가 일치하는지 확인
         if (!request.getPassword().equals(request.getConfirmPassword())) {
-            bindingResult.rejectValue("confirmPassword", "passwordNotMatch", MemberError.NOT_MATCHED_PASSWORD.getMessage());
+            bindingResult.rejectValue("confirmPassword", "passwordNotMatch", MemberMsg.NOT_MATCHED_PASSWORD.getMessage());
         }
         // 로그인 아이디가 중복되는지 확인
         if (memberRepository.existsByLoginId(request.getLoginId())) {
-            bindingResult.rejectValue("loginId", "duplicateLoginId", MemberError.DUPLICATE_LOGIN_ID.getMessage());
+            bindingResult.rejectValue("loginId", "duplicateLoginId", MemberMsg.DUPLICATE_LOGIN_ID.getMessage());
         }
     }
 
     /**
-     * 회원 정보를 저장하는 메서드입니다.
-     * 입력받은 회원 정보를 암호화하여 데이터베이스에 저장합니다.
+     * 회원 정보를 저장합니다.
      *
      * @param request 회원가입 요청 객체 (SignUpMemberRequest)
      * @return 저장된 회원 정보 (Member 객체)
@@ -82,7 +82,7 @@ public class MemberServiceImpl implements MemberService, UserDetailsService {
     }
 
     /**
-     * 스프링 시큐리티에서 사용자 정보를 가져오는 메서드입니다.
+     * 스프링 시큐리티에서 사용자 정보를 가져옵니다.
      * 로그인 아이디로 회원인지 판별합니다.
      *
      * @param loginId 로그인 ID
@@ -91,14 +91,15 @@ public class MemberServiceImpl implements MemberService, UserDetailsService {
      */
     @Override
     @Transactional(readOnly = true)
+    @Primary
     public UserDetails loadUserByUsername(String loginId) throws UsernameNotFoundException {
         Member member = memberRepository.findByLoginId(loginId)
-                .orElseThrow(() -> new UsernameNotFoundException(MemberError.NOT_FOUND_MEMBER.getMessage()));
+                .orElseThrow(() -> new UsernameNotFoundException(MemberMsg.NOT_FOUND_MEMBER.getMessage()));
         return new MemberAdapter(member);
     }
 
     /**
-     * 특정 회원의 정보를 조회하는 메서드입니다.
+     * 특정 회원의 정보를 조회합니다.
      *
      * @param memberId 회원 ID
      * @return 조회된 회원의 정보 (MemberInfoResponse 객체)
@@ -123,7 +124,7 @@ public class MemberServiceImpl implements MemberService, UserDetailsService {
     @Transactional(readOnly = true)
     public Member findMemberById(Long memberId) {
         return memberRepository.findById(memberId)
-                .orElseThrow(() -> new NoSuchElementException(MemberError.NOT_FOUND_MEMBER.getMessage()));
+                .orElseThrow(() -> new NoSuchElementException(MemberMsg.NOT_FOUND_MEMBER.getMessage()));
     }
 
     /**
@@ -160,6 +161,7 @@ public class MemberServiceImpl implements MemberService, UserDetailsService {
 
     /**
      * 관리자에 의해 회원 정보를 변경합니다.
+     * 이름과 권한을 변경할 수 있습니다.
      *
      * @param memberId 회원 ID
      * @param request  변경할 회원 정보
@@ -169,7 +171,7 @@ public class MemberServiceImpl implements MemberService, UserDetailsService {
     @Transactional
     public void updateMemberByAdmin(Long memberId, UpdateMemberRequest request) {
         Member member = memberRepository.findById(memberId)
-                .orElseThrow(() -> new NoSuchElementException(MemberError.NOT_FOUND_MEMBER.getMessage()));
+                .orElseThrow(() -> new NoSuchElementException(MemberMsg.NOT_FOUND_MEMBER.getMessage()));
 
         // 이름이 변경되었다면 변경
         if (!request.getName().equals(member.getName())) {
@@ -183,6 +185,7 @@ public class MemberServiceImpl implements MemberService, UserDetailsService {
 
     /**
      * 회원 정보를 변경합니다.
+     * 이름과 비밀번호를 변경할 수 있습니다.
      *
      * @param memberId 회원 ID
      * @param request  변경할 회원 정보
@@ -193,10 +196,12 @@ public class MemberServiceImpl implements MemberService, UserDetailsService {
     @Transactional
     public void changeMemberInfo(Long memberId, UpdateMemberRequest request) {
         Member member = memberRepository.findById(memberId)
-                .orElseThrow(() -> new NoSuchElementException(MemberError.NOT_FOUND_MEMBER.getMessage()));
+                .orElseThrow(() -> new NoSuchElementException(MemberMsg.NOT_FOUND_MEMBER.getMessage()));
         String newName = request.getName();
         String newPassword = request.getPassword();
 
+        System.out.println("newName = " + newName);
+        System.out.println("newPassword = " + newPassword);
         // 이름이 변경되었다면 변경
         if (!newName.equals(member.getName())) {
             member.changeName(newName);
@@ -209,7 +214,7 @@ public class MemberServiceImpl implements MemberService, UserDetailsService {
         if (!passwordEncoder.matches(newPassword, member.getPassword())) {
             member.changePassword(passwordEncoder.encode(newPassword));
         } else {
-            throw new IllegalStateException(MemberError.NOT_CHANGED_PASSWORD.getMessage());
+            throw new IllegalStateException(MemberMsg.NOT_CHANGED_PASSWORD.getMessage());
         }
     }
 
@@ -219,7 +224,6 @@ public class MemberServiceImpl implements MemberService, UserDetailsService {
      *
      * @param memberId 회원 ID
      * @throws NoSuchElementException 요청한 회원이 존재하지 않을 경우
-     * @throws IllegalStateException  대출 가능한 수량이 올바르지 않은 경우
      */
     @Override
     @Transactional

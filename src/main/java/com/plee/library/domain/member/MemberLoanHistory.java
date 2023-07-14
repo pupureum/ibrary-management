@@ -32,9 +32,9 @@ public class MemberLoanHistory extends BaseTimeEntity {
     @JoinColumn(name = "book_info_isbn")
     private BookInfo bookInfo;
 
-    @Column(name = "is_renew")
     @ColumnDefault("false")
-    private boolean isRenew;
+    @Column(name = "is_renew")
+    private boolean isRenew = false;
 
     @Column(name = "returned_at")
     private LocalDateTime returnedAt;
@@ -43,6 +43,7 @@ public class MemberLoanHistory extends BaseTimeEntity {
     public MemberLoanHistory(Member member, BookInfo bookInfo) {
         this.member = member;
         this.bookInfo = bookInfo;
+        this.createdAt = LocalDateTime.now();
     }
 
     public void doRenew() {

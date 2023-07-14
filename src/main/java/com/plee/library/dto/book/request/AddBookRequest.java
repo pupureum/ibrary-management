@@ -3,18 +3,13 @@ package com.plee.library.dto.book.request;
 import com.plee.library.domain.book.BookInfo;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotEmpty;
-import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 import org.hibernate.validator.constraints.ISBN;
 
 @Getter
 @Setter
 @NoArgsConstructor
-@AllArgsConstructor
 public class AddBookRequest {
 
     @NotBlank
@@ -38,11 +33,24 @@ public class AddBookRequest {
     @Size(min = 10, max = 200, message = "요청 사유를 최소 10자 이상 입력해주세요.")
     private String reqReason;
 
+    @Builder
+    public AddBookRequest(String isbn, String title, String author, String publisher, String image, String description, String pubDate, String reqReason) {
+        this.isbn = isbn;
+        this.title = title;
+        this.author = author;
+        this.publisher = publisher;
+        this.image = image;
+        this.description = description;
+        this.pubDate = pubDate;
+        this.reqReason = reqReason;
+    }
+
     public BookInfo toEntity() {
+        String modifiedAuthor = this.author.replace("^", ", ");
         return BookInfo.builder()
                 .isbn(this.isbn)
                 .title(this.title)
-                .author(this.author)
+                .author(modifiedAuthor)
                 .publisher(this.publisher)
                 .image(this.image)
                 .description(this.description)

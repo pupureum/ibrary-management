@@ -2,10 +2,16 @@ package com.plee.library.dto.admin.response;
 
 import com.plee.library.domain.book.BookInfo;
 import com.plee.library.domain.member.Member;
+import com.plee.library.domain.member.MemberLoanHistory;
 import lombok.Builder;
 import lombok.Getter;
+import org.springframework.data.domain.Page;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Getter
 public class AllLoanHistoryResponse {
@@ -25,5 +31,18 @@ public class AllLoanHistoryResponse {
         this.isRenew = isRenew;
         this.loanedAt = loanedAt;
         this.returnedAt = returnedAt;
+    }
+
+    public static List<AllLoanHistoryResponse> from(Page<MemberLoanHistory> histories) {
+        return histories.stream()
+                .map(h -> AllLoanHistoryResponse.builder()
+                        .id(h.getId())
+                        .member(h.getMember())
+                        .bookInfo(h.getBookInfo())
+                        .isRenew(h.isRenew())
+                        .loanedAt(h.getCreatedAt().toLocalDate())
+                        .returnedAt(Optional.ofNullable(h.getReturnedAt()).map(LocalDateTime::toLocalDate).orElse(null))
+                        .build())
+                .collect(Collectors.toList());
     }
 }

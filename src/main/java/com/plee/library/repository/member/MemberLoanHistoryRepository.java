@@ -26,8 +26,4 @@ public interface MemberLoanHistoryRepository extends JpaRepository<MemberLoanHis
     List<Object[]> countGroupByCreatedAtRange(@Param("startDate") LocalDate startDate, @Param("endDate") LocalDate endDate);
 
     Page<MemberLoanHistory> findAllByMemberId(Long memberId, Pageable pageable);
-
-//    MemberLoanHistory findByMemberIdAndBookInfoIsbnAndReturnedAtIsNull(Long memberId, String bookInfoId);
-
-//    List<MemberLoanHistory> findByReturnedAtIsNullAndCreatedAtBefore(LocalDateTime time);
 }
