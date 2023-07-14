@@ -152,7 +152,7 @@ public class BookServiceImpl implements BookService {
         }
 
         // 이미 대출한 도서인 경우
-        if (memberLoanHisRepository.existsByMemberIdAndBookInfoIsbnAndReturnedAtIsNull(member.getId(), book.getBookInfo().getIsbn())) {
+        if (memberLoanHisRepository.findByMemberIdAndBookInfoIsbnAndReturnedAtIsNull(member.getId(), book.getBookInfo().getIsbn()).isPresent()) {
             throw new IllegalStateException(BookMsg.ALREADY_LOAN_BOOK.getMessage());
         }
 
@@ -179,17 +179,10 @@ public class BookServiceImpl implements BookService {
         // 대출 기록 정보로부터 도서 조회
         Book book = bookRepository.findByBookInfoIsbn(request.getBookInfoIsbn())
                 .orElseThrow(() -> new NoSuchElementException(BookMsg.NOT_FOUND_BOOK.getMessage()));
+        MemberLoanHistory history = memberLoanHisRepository.findByMemberIdAndBookInfoIsbnAndReturnedAtIsNull(member.getId(), book.getBookInfo().getId())
+                .orElseThrow(() -> new NoSuchElementException(BookMsg.NOT_FOUND_LOAN_HISTORY.getMessage()));
 
-//        List<MemberLoanHistory> history = memberLoanHisRepository.search(
-//                LoanHistorySearchCondition.builder()
-//                        .bookInfoId(book.getBookInfo().getId())
-//                        .memberId(member.getId())
-//                        .build()
-//        );
-//        history.get(0).doReturn();
-
-//        MemberLoanHistory history = memberLoanHisRepository.findByMemberIdAndBookInfoIsbnAndReturnedAtIsNull(member.getId(), book.getBookInfo().getId());
-        member.returnBook(book.getBookInfo());
+        history.doReturn();
         book.increaseLoanableCnt();
         log.info("SUCCESS returnBook historyId = {}", request.getHistoryId());
     }
@@ -651,7 +644,8 @@ public class BookServiceImpl implements BookService {
      */
     private boolean isLoaned(Long memberId, Long bookId) {
         Book book = findBookById(bookId);
-        return memberLoanHisRepository.existsByMemberIdAndBookInfoIsbnAndReturnedAtIsNull(memberId, book.getBookInfo().getIsbn());
+        return memberLoanHisRepository.findByMemberIdAndBookInfoIsbnAndReturnedAtIsNull(memberId, book.getBookInfo().getIsbn())
+                .isPresent();
     }
 
     /**

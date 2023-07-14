@@ -29,8 +29,8 @@ public class MemberLoanHistoryCustomImpl implements MemberLoanHistoryCustom{
                 .where(
                         memberIdEq(condition.getMemberId()),
                         bookInfoIdEq(condition.getBookInfoId()),
-                        timeEq(condition.getTime()),
-                        notReturnedEq(condition.isNotReturned())
+                        time(condition.getTime()),
+                        notReturned(condition.isNotReturned())
                 );
     }
 
@@ -42,11 +42,11 @@ public class MemberLoanHistoryCustomImpl implements MemberLoanHistoryCustom{
         return bookInfoId != null ? memberLoanHistory.bookInfo.isbn.eq(bookInfoId) : null;
     }
 
-    private BooleanExpression timeEq(LocalDateTime time) {
+    private BooleanExpression time(LocalDateTime time) {
         return time != null ? memberLoanHistory.createdAt.before(time) : null;
     }
 
-    private BooleanExpression notReturnedEq(boolean notReturned) {
+    private BooleanExpression notReturned(boolean notReturned) {
         return notReturned ? memberLoanHistory.returnedAt.isNull() : null;
     }
 }

@@ -16,8 +16,6 @@ import java.util.List;
 import java.util.Optional;
 
 public interface MemberLoanHistoryRepository extends JpaRepository<MemberLoanHistory, Long>, QuerydslPredicateExecutor<MemberLoanHistoryRepository>, MemberLoanHistoryCustom {
-    boolean existsByMemberIdAndBookInfoIsbnAndReturnedAtIsNull(Long memberId, String bookInfoId);
-
     boolean existsByBookInfoIsbnAndReturnedAtIsNull(String bookInfoId);
 
     long countByMemberIdAndReturnedAtIsNull(Long memberId);
@@ -26,4 +24,5 @@ public interface MemberLoanHistoryRepository extends JpaRepository<MemberLoanHis
     List<Object[]> countGroupByCreatedAtRange(@Param("startDate") LocalDate startDate, @Param("endDate") LocalDate endDate);
 
     Page<MemberLoanHistory> findAllByMemberId(Long memberId, Pageable pageable);
+    Optional<MemberLoanHistory> findByMemberIdAndBookInfoIsbnAndReturnedAtIsNull(Long memberId, String bookInfoId);
 }

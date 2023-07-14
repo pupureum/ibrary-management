@@ -73,45 +73,42 @@ class MemberLoanHistoryRepositoryTest {
         assertThat(savedLoanHistory.getReturnedAt()).isEqualTo(loanHistory.getReturnedAt());
     }
 
-    @Nested
-    @DisplayName("특정 기록 존재 여부 확인 테스트")
-    public class isExistNotReturnedTest {
-        @Test
-        @DisplayName("회원과 도서 정보로 대출중인 기록 확인")
-        void existsByMemberIdAndBookInfoIsbnAndReturnedAtIsNull() {
-            // given
-            MemberLoanHistory loanHistory = MemberLoanHistory.builder()
-                    .member(member)
-                    .bookInfo(bookInfo)
-                    .build();
-            loanHistory.doReturn();
-            memberLoanHisRepository.save(loanHistory);
+    @Test
+    @DisplayName("도서 정보로 대출중인 도서 존재 여부 확인")
+    void existsByBookInfoIsbnAndReturnedAtIsNull() {
+        // given
+        MemberLoanHistory loanHistory = MemberLoanHistory.builder()
+                .member(member)
+                .bookInfo(bookInfo)
+                .build();
+        loanHistory.doReturn();
+        memberLoanHisRepository.save(loanHistory);
 
-            // when
-            boolean result = memberLoanHisRepository.existsByMemberIdAndBookInfoIsbnAndReturnedAtIsNull(member.getId(), bookInfo.getIsbn());
+        // when
+        boolean result = memberLoanHisRepository.existsByBookInfoIsbnAndReturnedAtIsNull(bookInfo.getIsbn());
 
-            // then
-            assertThat(result).isFalse();
+        // then
+        assertThat(result).isFalse();
+    }
 
-        }
+    @Test
+    @DisplayName("회원과 도서 정보로 대출중인 기록 확인")
+    void findByMemberIdAndBookInfoIsbnAndReturnedAtIsNull() {
+        // given
+        MemberLoanHistory loanHistory = MemberLoanHistory.builder()
+                .member(member)
+                .bookInfo(bookInfo)
+                .build();
+        loanHistory.doReturn();
+        memberLoanHisRepository.save(loanHistory);
 
-        @Test
-        @DisplayName("도서 정보로 대출중인 도서 존재 여부 확인")
-        void existsByBookInfoIsbnAndReturnedAtIsNull() {
-            // given
-            MemberLoanHistory loanHistory = MemberLoanHistory.builder()
-                    .member(member)
-                    .bookInfo(bookInfo)
-                    .build();
-            loanHistory.doReturn();
-            memberLoanHisRepository.save(loanHistory);
+        // when
+        boolean result = memberLoanHisRepository.findByMemberIdAndBookInfoIsbnAndReturnedAtIsNull(member.getId(), bookInfo.getIsbn())
+                .isPresent();
 
-            // when
-            boolean result = memberLoanHisRepository.existsByBookInfoIsbnAndReturnedAtIsNull(bookInfo.getIsbn());
+        // then
+        assertThat(result).isFalse();
 
-            // then
-            assertThat(result).isFalse();
-        }
     }
 
     @Test

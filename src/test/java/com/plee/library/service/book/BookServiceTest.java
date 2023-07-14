@@ -59,8 +59,6 @@ class BookServiceTest {
     private MemberLoanHistoryRepository memberLoanHisRepository;
     @Mock
     private MemberRepository memberRepository;
-    @Mock
-    private NaverBookSearchConfig naverBookSearchConfig;
     @InjectMocks
     private BookServiceImpl bookService;
 
@@ -241,7 +239,7 @@ class BookServiceTest {
             // given
             given(memberRepository.findById(anyLong())).willReturn(Optional.of(member));
             given(bookRepository.findById(anyLong())).willReturn(Optional.of(book));
-            given(memberLoanHisRepository.existsByMemberIdAndBookInfoIsbnAndReturnedAtIsNull(member.getId(), bookInfo.getIsbn())).willReturn(false);
+            given(memberLoanHisRepository.findByMemberIdAndBookInfoIsbnAndReturnedAtIsNull(member.getId(), bookInfo.getIsbn())).willReturn(Optional.empty());
             given(memberLoanHisRepository.countByMemberIdAndReturnedAtIsNull(member.getId())).willReturn(1L);
 
             // when
@@ -274,7 +272,11 @@ class BookServiceTest {
             // given
             given(memberRepository.findById(anyLong())).willReturn(Optional.of(member));
             given(bookRepository.findById(anyLong())).willReturn(Optional.of(book));
-            given(memberLoanHisRepository.existsByMemberIdAndBookInfoIsbnAndReturnedAtIsNull(member.getId(), bookInfo.getIsbn())).willReturn(true);
+            MemberLoanHistory history = MemberLoanHistory.builder()
+                    .member(member)
+                    .bookInfo(bookInfo)
+                    .build();
+            given(memberLoanHisRepository.findByMemberIdAndBookInfoIsbnAndReturnedAtIsNull(eq(member.getId()), eq(bookInfo.getIsbn()))).willReturn(Optional.of(history));
 
             // when, then
             assertThatThrownBy(() -> bookService.loanBook(1L, 1L))
@@ -283,12 +285,16 @@ class BookServiceTest {
         }
 
         @Test
-        @DisplayName("실패: 대출 가능한 도서 수량이 없는 경우")
+        @DisplayName("실패: 최대 대출 수량인 3권을 대출중인 경우")
         void loanBook_failExceedMax() {
             // given
             given(memberRepository.findById(member.getId())).willReturn(Optional.of(member));
             given(bookRepository.findById(book.getId())).willReturn(Optional.of(book));
-            given(memberLoanHisRepository.existsByMemberIdAndBookInfoIsbnAndReturnedAtIsNull(member.getId(), bookInfo.getIsbn())).willReturn(false);
+            MemberLoanHistory history = MemberLoanHistory.builder()
+                    .member(member)
+                    .bookInfo(bookInfo)
+                    .build();
+            given(memberLoanHisRepository.findByMemberIdAndBookInfoIsbnAndReturnedAtIsNull(eq(member.getId()), eq(bookInfo.getIsbn()))).willReturn(Optional.of(history));
             given(memberLoanHisRepository.countByMemberIdAndReturnedAtIsNull(member.getId())).willReturn(3L);
 
             // when, then

@@ -72,13 +72,13 @@ public class Member extends BaseTimeEntity {
         this.memberLoanHistories.add(new MemberLoanHistory(this, book.getBookInfo()));
     }
 
-    public void returnBook(BookInfo bookInfo) {
-        MemberLoanHistory targetHistory = this.memberLoanHistories.stream()
-                .filter(history -> history.getBookInfo().getIsbn().equals(bookInfo.getIsbn()) && !history.isReturned())
-                .findFirst()
-                .orElseThrow(() -> new NoSuchElementException(BookMsg.NOT_FOUND_LOAN_HISTORY.getMessage()));
-        targetHistory.doReturn();
-    }
+//    public void returnBook(BookInfo bookInfo) {
+//        MemberLoanHistory targetHistory = this.memberLoanHistories.stream()
+//                .filter(history -> history.getBookInfo().getIsbn().equals(bookInfo.getIsbn()) && !history.isReturned())
+//                .findFirst()
+//                .orElseThrow(() -> new NoSuchElementException(BookMsg.NOT_FOUND_LOAN_HISTORY.getMessage()));
+//        targetHistory.doReturn();
+//    }
 
     public void changeRole(Role role) {
         this.role = role;
