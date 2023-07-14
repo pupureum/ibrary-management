@@ -1,5 +1,5 @@
 package com.plee.library.util.message;
 
-public interface Msg {
+public interface Message {
         String getMessage();
 }
