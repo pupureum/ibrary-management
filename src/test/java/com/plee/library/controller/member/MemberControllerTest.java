@@ -8,7 +8,7 @@ import com.plee.library.domain.member.Member;
 import com.plee.library.dto.admin.request.UpdateMemberRequest;
 import com.plee.library.dto.member.request.SignUpMemberRequest;
 import com.plee.library.dto.member.response.MemberInfoResponse;
-import com.plee.library.exception.message.MemberError;
+import com.plee.library.message.MemberMsg;
 import com.plee.library.service.member.MemberService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -37,7 +37,6 @@ import java.nio.charset.StandardCharsets;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.BDDMockito.*;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
-import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -65,6 +64,15 @@ class MemberControllerTest {
     @WithAnonymousUser
     @DisplayName("GET 로그인 페이지 반환 (익명의 사용자)")
     class GetLoginFormTest {
+        @Test
+        @DisplayName("에러 없는 경우")
+        void loginForm() throws Exception {
+            // when, then
+            mockMvc.perform(get("/member/login"))
+                    .andExpect(status().isOk())
+                    .andExpect(view().name("member/login"))
+                    .andExpect(model().attributeDoesNotExist("error"));
+        }
 
         @Test
         @DisplayName("에러 있는 경우")
@@ -78,16 +86,6 @@ class MemberControllerTest {
                     .andExpect(status().isOk())
                     .andExpect(view().name("member/login"))
                     .andExpect(model().attribute("error", error));
-        }
-
-        @Test
-        @DisplayName("에러 없는 경우")
-        void loginForm() throws Exception {
-            // when, then
-            mockMvc.perform(get("/member/login"))
-                    .andExpect(status().isOk())
-                    .andExpect(view().name("member/login"))
-                    .andExpect(model().attributeDoesNotExist("error"));
         }
     }
 
@@ -115,7 +113,6 @@ class MemberControllerTest {
     @WithAnonymousUser
     @DisplayName("POST 회원가입 요청")
     class SignupTest {
-
         @Test
         @DisplayName("회원가입 성공")
         void signupSuccess() throws Exception {
@@ -127,7 +124,6 @@ class MemberControllerTest {
                     .password("password123")
                     .confirmPassword("password123")
                     .build();
-
 
             // when, then
             mockMvc.perform(post("/member/signup")
@@ -177,8 +173,7 @@ class MemberControllerTest {
 
         // when, then
         mockMvc.perform(get("/member/edit")
-                        .with(csrf())
-                        .with(user(new MemberAdapter(member))))
+                        .with(csrf()))
                 .andExpect(status().isOk())
                 .andExpect(view().name("member/editInfo"))
                 // 모델에 담긴 member 객체의 타입이 MemberInfoResponse인지 검증
@@ -204,7 +199,6 @@ class MemberControllerTest {
     @WithUserDetails
     @DisplayName("GET 회원 정보 변경 요청 처리")
     class EditInfoTest {
-
         @Test
         @DisplayName("정보 변경 성공")
         void editInfo_success() throws Exception {
@@ -220,7 +214,7 @@ class MemberControllerTest {
         }
 
         @Test
-        @DisplayName("현재 접속된 회원과, 수정하려는 회원이 다른 경우")
+        @DisplayName("실패: 현재 접속된 회원과, 수정하려는 회원이 다른 경우")
         void editInfo_fail() throws Exception {
             // given
             UpdateMemberRequest req = new UpdateMemberRequest();
@@ -230,7 +224,7 @@ class MemberControllerTest {
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(asJsonString(req)))
                     .andExpect(status().isBadRequest())
-                    .andExpect(content().string(MemberError.INVALID_ACCESS.getMessage()));
+                    .andExpect(content().string(MemberMsg.INVALID_ACCESS.getMessage()));
         }
     }
 

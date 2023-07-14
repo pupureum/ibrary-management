@@ -9,7 +9,7 @@ import com.plee.library.dto.admin.request.UpdateMemberRequest;
 import com.plee.library.dto.admin.response.AllMemberInfoResponse;
 import com.plee.library.dto.member.request.SignUpMemberRequest;
 import com.plee.library.dto.member.response.MemberInfoResponse;
-import com.plee.library.exception.message.MemberError;
+import com.plee.library.message.MemberMsg;
 import com.plee.library.repository.book.BookRepository;
 import com.plee.library.repository.member.MemberLoanHistoryRepository;
 import com.plee.library.repository.member.MemberRepository;
@@ -21,7 +21,6 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.*;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -39,6 +38,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.*;
 
 @ExtendWith(MockitoExtension.class)
+@DisplayName("MemberService 테스트")
 class MemberServiceImplTest {
 
     @Mock
@@ -56,7 +56,7 @@ class MemberServiceImplTest {
     @DisplayName("회원가입 요청의 유효성 검증 테스트")
     class ValidateSignupRequest {
         @Test
-        @DisplayName("성공 테스트")
+        @DisplayName("회원가입 성공")
         void successReq() {
             // given
             SignUpMemberRequest req = SignUpMemberRequest.builder()
@@ -66,7 +66,7 @@ class MemberServiceImplTest {
                     .name("이푸름")
                     .build();
 
-            BindingResult bindingResult = Mockito.mock(BindingResult.class);
+            BindingResult bindingResult = mock(BindingResult.class);
 
             // when
             memberService.validateSignupRequest(req, bindingResult);
@@ -92,7 +92,7 @@ class MemberServiceImplTest {
 
             // then
             assertThat(bindingResult.hasErrors()).isTrue();
-            String expectedMessage = MemberError.NOT_MATCHED_PASSWORD.getMessage();
+            String expectedMessage = MemberMsg.NOT_MATCHED_PASSWORD.getMessage();
             assertThat(bindingResult.getFieldError("confirmPassword").getDefaultMessage()).isEqualTo(expectedMessage);
         }
 
@@ -115,7 +115,7 @@ class MemberServiceImplTest {
 
             // then
             assertThat(bindingResult.hasErrors()).isTrue();
-            String expectedMessage = MemberError.DUPLICATE_LOGIN_ID.getMessage();
+            String expectedMessage = MemberMsg.DUPLICATE_LOGIN_ID.getMessage();
             assertThat(bindingResult.getFieldError("loginId").getDefaultMessage()).isEqualTo(expectedMessage);
         }
     }
@@ -153,25 +153,25 @@ class MemberServiceImplTest {
     void findMember() {
         // given
         Member member = Member.builder()
-                .id(1L)
                 .loginId("plee@gmail.com")
                 .password("test")
                 .name("이푸름")
                 .role(Role.MEMBER)
                 .build();
 
-        given(memberRepository.findById(any(Long.class))).willReturn(Optional.of(member));
-        MemberInfoResponse expectedMemberRep = MemberInfoResponse.from(member);
+        given(memberRepository.findById(anyLong())).willReturn(Optional.of(member));
 
         // when
         MemberInfoResponse foundMemberResponse = memberService.findMember(1L);
 
         // then
+        MemberInfoResponse expectedMemberRep = MemberInfoResponse.from(member);
+
         assertThat(foundMemberResponse).isNotNull();
         assertThat(foundMemberResponse).isInstanceOf(MemberInfoResponse.class);
         assertThat(foundMemberResponse).usingRecursiveComparison().isEqualTo(expectedMemberRep);
-        then(memberRepository).should().findById(any(Long.class));
-        then(memberRepository).should(times(1)).findById(any(Long.class));
+        then(memberRepository).should().findById(anyLong());
+        then(memberRepository).should(times(1)).findById(anyLong());
     }
 
     @Test
@@ -180,7 +180,6 @@ class MemberServiceImplTest {
         // given
         Pageable pageable = PageRequest.of(0, 10, Sort.by("createdAt").descending());
         List<Member> members = createMembers();
-        Page<AllMemberInfoResponse> expectedResponse = createAllMemberInfoResponsePage(members, pageable);
 
         given(memberRepository.findAll(pageable)).willReturn(new PageImpl<>(members, pageable, members.size()));
 
@@ -188,6 +187,8 @@ class MemberServiceImplTest {
         Page<AllMemberInfoResponse> foundMembers = memberService.findAllMembers(pageable);
 
         // then
+        Page<AllMemberInfoResponse> expectedResponse = createAllMemberInfoResponsePage(members, pageable);
+
         assertThat(foundMembers).isNotNull();
         assertThat(foundMembers.getTotalElements()).isEqualTo(5);
         assertThat(foundMembers).usingRecursiveComparison().isEqualTo(expectedResponse);
@@ -198,7 +199,6 @@ class MemberServiceImplTest {
     private Page<AllMemberInfoResponse> createAllMemberInfoResponsePage(List<Member> members, Pageable pageable) {
         List<AllMemberInfoResponse> response = members.stream()
                 .map(member -> AllMemberInfoResponse.builder()
-                        .id(member.getId())
                         .name(member.getName())
                         .loginId(member.getLoginId())
                         .password(member.getPassword())
@@ -213,7 +213,6 @@ class MemberServiceImplTest {
         List<Member> members = new ArrayList<>();
         for (int i = 0; i < 5; i++) {
             Member member = Member.builder()
-                    .id(1L)
                     .loginId("plee@gmail.com")
                     .password("test")
                     .name("이푸름")
@@ -230,7 +229,6 @@ class MemberServiceImplTest {
         // given
         String password = "password";
         Member member = Member.builder()
-                .id(1L)
                 .loginId("plee@gmail.com")
                 .password(password)
                 .name("이푸름")
@@ -238,7 +236,7 @@ class MemberServiceImplTest {
                 .build();
 
         given(passwordEncoder.matches(anyString(), anyString())).willReturn(true);
-        given(memberRepository.findById(any(Long.class))).willReturn(Optional.of(member));
+        given(memberRepository.findById(anyLong())).willReturn(Optional.of(member));
 
         // when
         boolean isMatched = memberService.checkCurrentPassword(password, 1L);
@@ -247,8 +245,8 @@ class MemberServiceImplTest {
         assertThat(isMatched).isTrue();
         then(passwordEncoder).should().matches(anyString(), anyString());
         then(passwordEncoder).should(times(1)).matches(anyString(), anyString());
-        then(memberRepository).should().findById(any(Long.class));
-        then(memberRepository).should(times(1)).findById(any(Long.class));
+        then(memberRepository).should().findById(anyLong());
+        then(memberRepository).should(times(1)).findById(anyLong());
     }
 
     @Nested
@@ -259,7 +257,6 @@ class MemberServiceImplTest {
         @BeforeEach
         void setUp() {
             member = Member.builder()
-                    .id(1L)
                     .loginId("plee@gmail.com")
                     .password("password")
                     .name("이푸름")
@@ -272,7 +269,7 @@ class MemberServiceImplTest {
         void updateMember_name() {
             // given
             UpdateMemberRequest req = new UpdateMemberRequest("newName", member.getPassword(), member.getRole());
-            given(memberRepository.findById(any(Long.class))).willReturn(Optional.of(member));
+            given(memberRepository.findById(anyLong())).willReturn(Optional.of(member));
 
             // when
             memberService.updateMemberByAdmin(1L, req);
@@ -288,7 +285,7 @@ class MemberServiceImplTest {
         void updateMember_password() {
             // given
             UpdateMemberRequest req = new UpdateMemberRequest(member.getName(), member.getPassword(), Role.ADMIN);
-            given(memberRepository.findById(any(Long.class))).willReturn(Optional.of(member));
+            given(memberRepository.findById(anyLong())).willReturn(Optional.of(member));
 
             // when
             memberService.updateMemberByAdmin(1L, req);
@@ -304,7 +301,7 @@ class MemberServiceImplTest {
         void updateMember_password_role() {
             // given
             UpdateMemberRequest req = new UpdateMemberRequest("newName", member.getPassword(), Role.ADMIN);
-            given(memberRepository.findById(any(Long.class))).willReturn(Optional.of(member));
+            given(memberRepository.findById(anyLong())).willReturn(Optional.of(member));
 
             // when
             memberService.updateMemberByAdmin(1L, req);
@@ -324,7 +321,6 @@ class MemberServiceImplTest {
         @BeforeEach
         void setUp() {
             member = Member.builder()
-                    .id(1L)
                     .loginId("plee@gmail.com")
                     .password("password")
                     .name("이푸름")
@@ -337,7 +333,7 @@ class MemberServiceImplTest {
         void changeMember_name() {
             // given
             UpdateMemberRequest req = new UpdateMemberRequest("newName", "", member.getRole());
-            given(memberRepository.findById(any(Long.class))).willReturn(Optional.of(member));
+            given(memberRepository.findById(anyLong())).willReturn(Optional.of(member));
 
             // when
             memberService.changeMemberInfo(1L, req);
@@ -354,7 +350,7 @@ class MemberServiceImplTest {
             String newPassword = "newPassword";
             UpdateMemberRequest req = new UpdateMemberRequest(member.getName(), newPassword, member.getRole());
 
-            given(memberRepository.findById(any(Long.class))).willReturn(Optional.of(member));
+            given(memberRepository.findById(anyLong())).willReturn(Optional.of(member));
             given(passwordEncoder.matches(newPassword, member.getPassword())).willReturn(false);
             given(passwordEncoder.encode(anyString())).willReturn(newPassword);
 
@@ -374,7 +370,7 @@ class MemberServiceImplTest {
             // given
             String newPassword = "newPassword";
             UpdateMemberRequest req = new UpdateMemberRequest("newName", newPassword, member.getRole());
-            given(memberRepository.findById(any(Long.class))).willReturn(Optional.of(member));
+            given(memberRepository.findById(anyLong())).willReturn(Optional.of(member));
             given(passwordEncoder.matches(newPassword, member.getPassword())).willReturn(false);
             given(passwordEncoder.encode(anyString())).willReturn(newPassword);
 
@@ -391,13 +387,13 @@ class MemberServiceImplTest {
         void updateMember_samePassword() {
             // given
             UpdateMemberRequest req = new UpdateMemberRequest(member.getName(), member.getPassword(), member.getRole());
-            given(memberRepository.findById(any(Long.class))).willReturn(Optional.of(member));
+            given(memberRepository.findById(anyLong())).willReturn(Optional.of(member));
             given(passwordEncoder.matches(member.getPassword(), member.getPassword())).willReturn(true);
 
             // when, then
             assertThatThrownBy(() -> memberService.changeMemberInfo(1L, req))
                     .isInstanceOf(IllegalStateException.class)
-                    .hasMessageContaining(MemberError.NOT_CHANGED_PASSWORD.getMessage());
+                    .hasMessageContaining(MemberMsg.NOT_CHANGED_PASSWORD.getMessage());
         }
     }
 
@@ -409,7 +405,6 @@ class MemberServiceImplTest {
         @BeforeEach
         void setUp() {
             member = Member.builder()
-                    .id(1L)
                     .loginId("plee@gmail.com")
                     .password("password")
                     .name("이푸름")
@@ -421,7 +416,7 @@ class MemberServiceImplTest {
         @DisplayName("대출중인 도서가 없는 경우")
         void deleteMember_notLoanedBook() {
             // given
-            given(memberRepository.findById(any(Long.class))).willReturn(Optional.of(member));
+            given(memberRepository.findById(anyLong())).willReturn(Optional.of(member));
             // 대출 기록을 빈 리스트로 반환
             given(memberLoanHisRepository.search(
                     LoanHistorySearchCondition
@@ -434,7 +429,7 @@ class MemberServiceImplTest {
             memberService.deleteMember(1L);
 
             // then
-            then(bookRepository).should(Mockito.never()).findByBookInfoIsbn(any(String.class));
+            then(bookRepository).should(never()).findByBookInfoIsbn(anyString());
             then(memberRepository).should(times(1)).delete(any(Member.class));
         }
 
@@ -457,21 +452,21 @@ class MemberServiceImplTest {
                     .build());
             book.decreaseLoanableCnt();
 
-            given(memberRepository.findById(any(Long.class))).willReturn(Optional.of(member));
+            given(memberRepository.findById(anyLong())).willReturn(Optional.of(member));
             given(memberLoanHisRepository.search(
                     LoanHistorySearchCondition
                             .builder()
                             .memberId(any())
                             .notReturned(true)
                             .build())).willReturn(memberLoanHistoryList);
-            given(bookRepository.findByBookInfoIsbn(any(String.class))).willReturn(Optional.of(book));
+            given(bookRepository.findByBookInfoIsbn(anyString())).willReturn(Optional.of(book));
 
             // when
             memberService.deleteMember(1L);
 
             // then
-            then(bookRepository).should().findByBookInfoIsbn(any(String.class));
-            then(bookRepository).should(times(1)).findByBookInfoIsbn(any(String.class));
+            then(bookRepository).should().findByBookInfoIsbn(anyString());
+            then(bookRepository).should(times(1)).findByBookInfoIsbn(anyString());
             then(memberRepository).should(times(1)).delete(any(Member.class));
             assertThat(book.getLoanableCnt()).isEqualTo(2);
         }

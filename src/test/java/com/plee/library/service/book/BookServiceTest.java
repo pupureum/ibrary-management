@@ -19,7 +19,7 @@ import com.plee.library.dto.book.response.AllBooksMarkInfoResponse;
 import com.plee.library.dto.book.response.BookInfoResponse;
 import com.plee.library.dto.book.response.LoanHistoryResponse;
 import com.plee.library.dto.member.condition.LoanHistorySearchCondition;
-import com.plee.library.exception.message.BookError;
+import com.plee.library.message.BookMsg;
 import com.plee.library.repository.book.BookInfoRepository;
 import com.plee.library.repository.book.BookRepository;
 import com.plee.library.repository.member.MemberBookmarkRepository;
@@ -44,6 +44,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.*;
 
 @ExtendWith(MockitoExtension.class)
+@DisplayName("BookService 테스트")
 class BookServiceImplTest {
 
     @Mock
@@ -182,7 +183,7 @@ class BookServiceImplTest {
         }
 
         @Test
-        @DisplayName("실패 테스트: 이미 존재하는 도서인 경우")
+        @DisplayName("실패: 이미 존재하는 도서인 경우")
         void saveBook_fail() {
             // given
             given(bookRepository.existsByBookInfoIsbn(req.getIsbn())).willReturn(true);
@@ -190,7 +191,7 @@ class BookServiceImplTest {
             // when
             assertThatThrownBy(() -> bookService.saveBook(req))
                     .isInstanceOf(IllegalStateException.class)
-                    .hasMessageContaining(BookError.ALREADY_EXIST_BOOK.getMessage());
+                    .hasMessageContaining(BookMsg.ALREADY_EXIST_BOOK.getMessage());
         }
     }
 
@@ -248,7 +249,7 @@ class BookServiceImplTest {
         }
 
         @Test
-        @DisplayName("실패 테스트: 이미 보유한 도서인 경우")
+        @DisplayName("실패: 이미 보유한 도서인 경우")
         void addNewBookRequest_failAlreadyBookExist() {
             // given
             given(memberRepository.findById(anyLong())).willReturn(Optional.of(member));
@@ -257,11 +258,11 @@ class BookServiceImplTest {
             // when
             assertThatThrownBy(() -> bookService.addNewBookRequest(req, 1L))
                     .isInstanceOf(IllegalStateException.class)
-                    .hasMessageContaining(BookError.ALREADY_EXIST_BOOK.getMessage());
+                    .hasMessageContaining(BookMsg.ALREADY_EXIST_BOOK.getMessage());
         }
 
         @Test
-        @DisplayName("실패 테스트: 이미 추가 요청한 도서인 경우")
+        @DisplayName("실패: 이미 추가 요청한 도서인 경우")
         void addNewBookRequest_failAlreadyReqExist() {
             // given
             given(memberRepository.findById(anyLong())).willReturn(Optional.of(member));
@@ -271,15 +272,15 @@ class BookServiceImplTest {
             // when
             assertThatThrownBy(() -> bookService.addNewBookRequest(req, 1L))
                     .isInstanceOf(IllegalStateException.class)
-                    .hasMessageContaining(BookError.ALREADY_BOOK_REQUEST.getMessage());
+                    .hasMessageContaining(BookMsg.ALREADY_BOOK_REQUEST.getMessage());
         }
     }
 
     @Nested
-    @DisplayName("도서 대여 테스트")
+    @DisplayName("도서 대출 테스트")
     class LoanBookTest {
         @Test
-        @DisplayName("성공 테스트")
+        @DisplayName("도서 대출 성공")
         void loanBook() {
             // given
             given(memberRepository.findById(anyLong())).willReturn(Optional.of(member));
@@ -297,7 +298,7 @@ class BookServiceImplTest {
         }
 
         @Test
-        @DisplayName("실패 테스트: 대출 가능한 도서 수량이 없는 경우")
+        @DisplayName("실패: 대출 가능한 도서 수량이 없는 경우")
         void loanBook_failLoanableCnt() {
             // given
             given(memberRepository.findById(anyLong())).willReturn(Optional.of(member));
@@ -308,11 +309,11 @@ class BookServiceImplTest {
             // when, then
             assertThatThrownBy(() -> bookService.loanBook(1L, 1L))
                     .isInstanceOf(IllegalStateException.class)
-                    .hasMessageContaining(BookError.CANNOT_LOAN_BOOK.getMessage());
+                    .hasMessageContaining(BookMsg.CANNOT_LOAN_BOOK.getMessage());
         }
 
         @Test
-        @DisplayName("실패 테스트: 대출 가능한 도서 수량이 없는 경우")
+        @DisplayName("실패: 이미 대출한 도서인 경우")
         void loanBook_failAlreadyLoan() {
             // given
             given(memberRepository.findById(anyLong())).willReturn(Optional.of(member));
@@ -322,11 +323,11 @@ class BookServiceImplTest {
             // when, then
             assertThatThrownBy(() -> bookService.loanBook(1L, 1L))
                     .isInstanceOf(IllegalStateException.class)
-                    .hasMessageContaining(BookError.ALREADY_LOAN_BOOK.getMessage());
+                    .hasMessageContaining(BookMsg.ALREADY_LOAN_BOOK.getMessage());
         }
 
         @Test
-        @DisplayName("실패 테스트: 대출 가능한 도서 수량이 없는 경우")
+        @DisplayName("실패: 대출 가능한 도서 수량이 없는 경우")
         void loanBook_failExceedMax() {
             // given
             given(memberRepository.findById(member.getId())).willReturn(Optional.of(member));
@@ -337,7 +338,7 @@ class BookServiceImplTest {
             // when, then
             assertThatThrownBy(() -> bookService.loanBook(book.getId(), member.getId()))
                     .isInstanceOf(IllegalStateException.class)
-                    .hasMessageContaining(BookError.MAX_LOAN_BOOK.getMessage());
+                    .hasMessageContaining(BookMsg.MAX_LOAN_BOOK.getMessage());
         }
     }
 
@@ -355,7 +356,7 @@ class BookServiceImplTest {
         }
 
         @Test
-        @DisplayName("성공 테스트")
+        @DisplayName("도서 반납 성공")
         void returnBook() {
             // given
             given(memberRepository.findById(anyLong())).willReturn(Optional.of(member));
@@ -373,7 +374,7 @@ class BookServiceImplTest {
         }
 
         @Test
-        @DisplayName("실패 테스트: 도서가 없는 경우")
+        @DisplayName("실패: 도서가 없는 경우")
         void returnBook_failNotExistBook() {
             // given
             given(memberRepository.findById(anyLong())).willReturn(Optional.of(member));
@@ -382,11 +383,11 @@ class BookServiceImplTest {
             // when, then
             assertThatThrownBy(() -> bookService.returnBook(req, 1L))
                     .isInstanceOf(NoSuchElementException.class)
-                    .hasMessageContaining(BookError.NOT_FOUND_BOOK.getMessage());
+                    .hasMessageContaining(BookMsg.NOT_FOUND_BOOK.getMessage());
         }
 
         @Test
-        @DisplayName("실패 테스트: 대출 기록이 없는 경우")
+        @DisplayName("실패: 대출 기록이 없는 경우")
         void returnBook_failNotLoaned() {
             // given
             given(memberRepository.findById(anyLong())).willReturn(Optional.of(member));
@@ -395,7 +396,7 @@ class BookServiceImplTest {
             // when, then
             assertThatThrownBy(() -> bookService.returnBook(req, 1L))
                     .isInstanceOf(NoSuchElementException.class)
-                    .hasMessageContaining(BookError.NOT_FOUND_LOAN_HISTORY.getMessage());
+                    .hasMessageContaining(BookMsg.NOT_FOUND_LOAN_HISTORY.getMessage());
         }
     }
 
@@ -413,7 +414,7 @@ class BookServiceImplTest {
         }
 
         @Test
-        @DisplayName("성공 테스트")
+        @DisplayName("도서 연장 성공")
         void renewBook() {
             // given
             given(memberLoanHisRepository.findById(anyLong())).willReturn(Optional.of(history));
@@ -426,7 +427,7 @@ class BookServiceImplTest {
         }
 
         @Test
-        @DisplayName("실패 테스트: 대출내역이 없는 경우")
+        @DisplayName("실패: 대출내역이 없는 경우")
         void renewBook_failNotFountHistory() {
             // given
             given(memberLoanHisRepository.findById(anyLong())).willReturn(Optional.ofNullable(null));
@@ -434,11 +435,11 @@ class BookServiceImplTest {
             // when, then
             assertThatThrownBy(() -> bookService.renewBook(1L))
                     .isInstanceOf(NoSuchElementException.class)
-                    .hasMessageContaining(BookError.NOT_FOUND_LOAN_HISTORY.getMessage());
+                    .hasMessageContaining(BookMsg.NOT_FOUND_LOAN_HISTORY.getMessage());
         }
 
         @Test
-        @DisplayName("실패 테스트: 대출중이 아닌 경우")
+        @DisplayName("실패: 대출중이 아닌 경우")
         void renewBook_failAlreadyReturn() {
             // given
             given(memberLoanHisRepository.findById(anyLong())).willReturn(Optional.of(history));
@@ -447,11 +448,11 @@ class BookServiceImplTest {
             // when, then
             assertThatThrownBy(() -> bookService.renewBook(1L))
                     .isInstanceOf(IllegalStateException.class)
-                    .hasMessageContaining(BookError.ALREADY_RETURN_BOOK.getMessage());
+                    .hasMessageContaining(BookMsg.ALREADY_RETURN_BOOK.getMessage());
         }
 
         @Test
-        @DisplayName("실패 테스트: 이미 연장한 경우")
+        @DisplayName("실패: 이미 연장한 경우")
         void renewBook_failAlreadyRenew() {
             // given
             given(memberLoanHisRepository.findById(anyLong())).willReturn(Optional.of(history));
@@ -460,7 +461,7 @@ class BookServiceImplTest {
             // when, then
             assertThatThrownBy(() -> bookService.renewBook(1L))
                     .isInstanceOf(IllegalStateException.class)
-                    .hasMessageContaining(BookError.ALREADY_RENEW_BOOK.getMessage());
+                    .hasMessageContaining(BookMsg.ALREADY_RENEW_BOOK.getMessage());
         }
     }
 
@@ -469,7 +470,7 @@ class BookServiceImplTest {
     class UpdateBookQuantityTest {
 
         @Test
-        @DisplayName("성공 테스트")
+        @DisplayName("도서 수량 수정 성공")
         void updateBookQuantity() {
             // given
             UpdateBookRequest req = new UpdateBookRequest(3);
@@ -483,7 +484,7 @@ class BookServiceImplTest {
         }
 
         @Test
-        @DisplayName("실패 테스트: 현재 수량과 같은 수량으로 수정하려는 경우")
+        @DisplayName("실패: 현재 수량과 같은 수량으로 수정하려는 경우")
         void updateBookQuantity_failSameQuantity() {
             // given
             UpdateBookRequest req = new UpdateBookRequest(2);
@@ -492,11 +493,11 @@ class BookServiceImplTest {
             // when, then
             assertThatThrownBy(() -> bookService.updateBookQuantity(1L, req))
                     .isInstanceOf(IllegalArgumentException.class)
-                    .hasMessageContaining(BookError.CANNOT_UPDATE_SAME_QUANTITY.getMessage());
+                    .hasMessageContaining(BookMsg.CANNOT_UPDATE_SAME_QUANTITY.getMessage());
         }
 
         @Test
-        @DisplayName("실패 테스트: 대출중인 도서 수보다 적은 수량으로 수정하려는 경우")
+        @DisplayName("실패: 대출중인 도서 수보다 적은 수량으로 수정하려는 경우")
         void updateBookQuantity_failQuantity() {
             // given
             UpdateBookRequest req = new UpdateBookRequest(1);
@@ -507,7 +508,7 @@ class BookServiceImplTest {
             // when, then
             assertThatThrownBy(() -> bookService.updateBookQuantity(1L, req))
                     .isInstanceOf(IllegalArgumentException.class)
-                    .hasMessageContaining(BookError.CANNOT_UPDATE_QUANTITY.getMessage());
+                    .hasMessageContaining(BookMsg.CANNOT_UPDATE_QUANTITY.getMessage());
         }
     }
 
@@ -646,7 +647,7 @@ class BookServiceImplTest {
         @DisplayName("찜 추가 테스트")
         class AddBookMarkTest {
             @Test
-            @DisplayName("성공 테스트")
+            @DisplayName("찜 추가 성공")
             void addBookMark() {
                 // given
                 given(memberRepository.findById(anyLong())).willReturn(Optional.of(member));
@@ -661,7 +662,7 @@ class BookServiceImplTest {
             }
 
             @Test
-            @DisplayName("실패 테스트: 도서가 없는 경우")
+            @DisplayName("실패: 도서가 없는 경우")
             void addBookMark_failNotExistBook() {
                 // given
                 given(memberRepository.findById(anyLong())).willReturn(Optional.of(member));
@@ -670,11 +671,11 @@ class BookServiceImplTest {
                 // when, then
                 assertThatThrownBy(() -> bookService.addBookmark(1L, 1L))
                         .isInstanceOf(NoSuchElementException.class)
-                        .hasMessageContaining(BookError.NOT_FOUND_BOOK.getMessage());
+                        .hasMessageContaining(BookMsg.NOT_FOUND_BOOK.getMessage());
             }
 
             @Test
-            @DisplayName("실패 테스트: 이미 찜한 경우")
+            @DisplayName("실패: 이미 찜한 경우")
             void addBookMark_failAlreadyBookMark() {
                 // given
                 given(memberRepository.findById(anyLong())).willReturn(Optional.of(member));
@@ -684,7 +685,7 @@ class BookServiceImplTest {
                 // when, then
                 assertThatThrownBy(() -> bookService.addBookmark(1L, 1L))
                         .isInstanceOf(IllegalStateException.class)
-                        .hasMessageContaining(BookError.ALREADY_BOOKMARK.getMessage());
+                        .hasMessageContaining(BookMsg.ALREADY_BOOKMARK.getMessage());
             }
         }
 
@@ -692,7 +693,7 @@ class BookServiceImplTest {
         @DisplayName("찜 해제 테스트")
         class RemoveBookmarkTest {
             @Test
-            @DisplayName("성공 테스트")
+            @DisplayName("찜 해제 성공")
             void removeBookmark() {
                 // given
                 given(bookRepository.existsById(anyLong())).willReturn(true);
@@ -708,7 +709,7 @@ class BookServiceImplTest {
             }
 
             @Test
-            @DisplayName("실패 테스트: 도서가 없는 경우")
+            @DisplayName("실패: 도서가 없는 경우")
             void removeBookmark_failNotExistBook() {
                 // given
                 given(bookRepository.existsById(anyLong())).willReturn(false);
@@ -716,11 +717,11 @@ class BookServiceImplTest {
                 // when, then
                 assertThatThrownBy(() -> bookService.removeBookmark(1L, 1L))
                         .isInstanceOf(NoSuchElementException.class)
-                        .hasMessageContaining(BookError.NOT_FOUND_BOOK.getMessage());
+                        .hasMessageContaining(BookMsg.NOT_FOUND_BOOK.getMessage());
             }
 
             @Test
-            @DisplayName("실패 테스트: 찜하지 않은 경우")
+            @DisplayName("실패: 찜하지 않은 경우")
             void removeBookmark_failNotExistBookMark() {
                 // given
                 given(bookRepository.existsById(anyLong())).willReturn(true);
@@ -729,7 +730,7 @@ class BookServiceImplTest {
                 // when, then
                 assertThatThrownBy(() -> bookService.removeBookmark(1L, 1L))
                         .isInstanceOf(IllegalStateException.class)
-                        .hasMessageContaining(BookError.NOT_FOUND_BOOKMARK.getMessage());
+                        .hasMessageContaining(BookMsg.NOT_FOUND_BOOKMARK.getMessage());
             }
         }
     }

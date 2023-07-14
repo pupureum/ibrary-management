@@ -25,7 +25,6 @@ import org.springframework.data.domain.*;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithUserDetails;
 import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.web.context.WebApplicationContext;
 import org.springframework.web.filter.CharacterEncodingFilter;
@@ -93,6 +92,7 @@ class BookControllerTest {
                 .andExpect(view().name("book/bookList"))
                 .andExpect(model().attribute("books", pageRes))
                 .andExpect(model().attribute("selectedMenu", "book-list"));
+        then(bookService).should(times(1)).findAllBooksWithMark(1L, pageable);
     }
 
     @Nested
@@ -127,6 +127,7 @@ class BookControllerTest {
                     .andExpect(status().isOk())
                     .andExpect(view().name("book/bookDetail"))
                     .andExpect(model().attribute("response", res));
+            then(bookService).should(times(1)).getBookDetails(anyLong(), anyLong());
         }
 
         @Test
@@ -142,6 +143,7 @@ class BookControllerTest {
                     .andExpect(status().is3xxRedirection())
                     .andExpect(redirectedUrl("/books"))
                     .andExpect(flash().attribute("errorMessage", errorMessage));
+            then(bookService).should(times(1)).getBookDetails(anyLong(), anyLong());
         }
     }
 
@@ -163,6 +165,7 @@ class BookControllerTest {
                     .andExpect(status().isOk())
                     .andExpect(view().name("book/searchBookList"))
                     .andExpect(model().attributeExists("books"));
+            then(bookService).should(times(1)).findBySearchKeyword(any(SearchBookRequest.class), anyLong(), any(Pageable.class));
         }
 
         @Test
@@ -176,7 +179,7 @@ class BookControllerTest {
                     .build();
 
             // when, then
-            MvcResult result = mockMvc.perform(get("/books/search")
+            mockMvc.perform(get("/books/search")
                             .param("page", "0")
                             .flashAttr("searchBookRequest", failReq))
                     .andExpect(status().is3xxRedirection())
@@ -194,6 +197,9 @@ class BookControllerTest {
         @Test
         @DisplayName("대출 성공")
         void loanBook_success() throws Exception {
+            // given
+            willDoNothing().given(bookService).loanBook(anyLong(), anyLong());
+
             // when, then
             mockMvc.perform(post("/books/loan")
                             .param("bookId", "1")
@@ -233,6 +239,7 @@ class BookControllerTest {
                     .historyId(1L)
                     .status(true) // 대출중인 도서만 보기 페이지로 리다이렉트 되도록 true로 설정
                     .build();
+            willDoNothing().given(bookService).returnBook(req, 1L);
 
             // when, then
             mockMvc.perform(put("/books/return")
@@ -272,6 +279,9 @@ class BookControllerTest {
         @Test
         @DisplayName("연장 성공")
         void renewBook_success() throws Exception {
+            // given
+            willDoNothing().given(bookService).renewBook(1L);
+
             // when, then
             mockMvc.perform(put("/books/renewal")
                             .param("historyId", "1")
@@ -281,7 +291,6 @@ class BookControllerTest {
                     .andExpect(redirectedUrl("/books/on-loan"))
                     .andExpect(flash().attributeExists("successMessage"))
                     .andExpect(flash().attribute("successMessage", BookMsg.SUCCESS_RENEW_BOOK.getMessage()));
-
         }
 
         @Test
@@ -314,6 +323,8 @@ class BookControllerTest {
                     .isbn("9791169210027")
                     .reqReason("test reason")
                     .build();
+            willDoNothing().given(bookService).addNewBookRequest(request, 1L);
+
             // when, then
             mockMvc.perform(post("/books/request")
                             .with(csrf())
@@ -338,6 +349,7 @@ class BookControllerTest {
         void addBookmark() throws Exception {
             // given
             Long bookId = 1L;
+            willDoNothing().given(bookService).addBookmark(anyLong(), anyLong());
 
             // when, then
             mockMvc.perform(post("/books/like/{bookId}", bookId)
@@ -377,6 +389,7 @@ class BookControllerTest {
         void removeBookmark() throws Exception {
             // given
             Long bookId = 1L;
+            willDoNothing().given(bookService).removeBookmark(anyLong(), anyLong());
 
             // when, then
             mockMvc.perform(delete("/books/unlike/{bookId}", bookId)
@@ -405,4 +418,6 @@ class BookControllerTest {
                     .andExpect(flash().attribute("errorMessage", BookMsg.NOT_FOUND_BOOKMARK.getMessage()));
         }
     }
+
+
 }
