@@ -1,125 +1,221 @@
 package com.plee.library.repository.book;
 
+import com.plee.library.config.TestJPAConfig;
 import com.plee.library.domain.book.BookInfo;
-import com.plee.library.domain.member.Member;
-import com.plee.library.dto.book.request.AddBookRequest;
+import jakarta.persistence.EntityManager;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
+import org.springframework.boot.test.autoconfigure.orm.jpa.TestEntityManager;
+import org.springframework.context.annotation.Import;
+import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.orm.jpa.JpaSystemException;
 
 import java.util.List;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.assertj.core.api.Assertions.*;
 
 @DataJpaTest
-@AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
+@Import(TestJPAConfig.class)
 @DisplayName("BookInfoRepository 테스트")
 class BookInfoRepositoryTest {
     @Autowired
     private BookInfoRepository bookInfoRepository;
 
-    @Test
+    @Nested
     @DisplayName("도서 정보 생성 테스트")
-    void createBookInfo() {
-        // given
-//        BookInfo bookInfo = new AddBookRequest("9788994492032", "Java의 정석", "남궁성", "도우출판",
-//                "https://shopping-phinf.pstatic.net/main_3246668/32466681076.20230622071100.jpg", "책 소개입니다", "20160201", "reason").toEntity();
-        BookInfo bookInfo = BookInfo.builder()
-                .isbn("9788994492032")
-                .title("Java의 정석")
-                .author("남궁성")
-                .publisher("도우출판")
-                .image("https://shopping-phinf.pstatic.net/main_3246668/32466681076.20230622071100.jpg")
-                .description("책 소개입니다")
-                .pubDate("20160201")
-                .build();
+    public class saveBookInfoTest {
+        @Test
+        @DisplayName("도서 정보 생성 성공")
+        void save() {
+            // given
+            BookInfo bookInfo = BookInfo.builder()
+                    .isbn("9788994492032")
+                    .title("Java의 정석")
+                    .author("남궁성")
+                    .publisher("도우출판")
+                    .image("https://shopping-phinf.pstatic.net/main_3246668/32466681076.20230622071100.jpg")
+                    .description("책 소개입니다")
+                    .pubDate("20160201")
+                    .build();
 
-        // when
-        BookInfo savedBookInfo = bookInfoRepository.save(bookInfo);
+            // when
+            BookInfo savedBookInfo = bookInfoRepository.save(bookInfo);
 
-        // then
-        assertNotNull(savedBookInfo);
-        assertEquals(bookInfo, savedBookInfo);
-        assertEquals(bookInfo.getIsbn(), savedBookInfo.getIsbn());
-        assertEquals(bookInfo.getTitle(), savedBookInfo.getTitle());
-        assertEquals(bookInfo.getAuthor(), savedBookInfo.getAuthor());
-        assertEquals(bookInfo.getPublisher(), savedBookInfo.getPublisher());
-        assertEquals(bookInfo.getImage(), savedBookInfo.getImage());
-        assertEquals(bookInfo.getDescription(), savedBookInfo.getDescription());
-        assertEquals(bookInfo.getPubDate(), savedBookInfo.getPubDate());
+            // then
+            assertThat(savedBookInfo).isNotNull();
+            assertThat(savedBookInfo).isEqualTo(bookInfo);
+            assertThat(savedBookInfo.getIsbn()).isEqualTo(bookInfo.getIsbn());
+            assertThat(savedBookInfo.getTitle()).isEqualTo(bookInfo.getTitle());
+            assertThat(savedBookInfo.getAuthor()).isEqualTo(bookInfo.getAuthor());
+            assertThat(savedBookInfo.getPublisher()).isEqualTo(bookInfo.getPublisher());
+            assertThat(savedBookInfo.getImage()).isEqualTo(bookInfo.getImage());
+            assertThat(savedBookInfo.getDescription()).isEqualTo(bookInfo.getDescription());
+            assertThat(savedBookInfo.getPubDate()).isEqualTo(bookInfo.getPubDate());
+        }
+
+        @Test
+        @DisplayName("실패: 중복된 ISBN 값이 존재하는 경우")
+        void saveFailWithNotUniqueIsbn() {
+            // given
+            BookInfo bookInfo = BookInfo.builder()
+                    .isbn("9788994492032")
+                    .title("Java의 정석")
+                    .author("남궁성")
+                    .publisher("도우출판")
+                    .image("https://shopping-phinf.pstatic.net/main_3246668/32466681076.20230622071100.jpg")
+                    .description("책 소개입니다")
+                    .pubDate("20160201")
+                    .build();
+            bookInfoRepository.save(bookInfo);
+
+            BookInfo dupBookInfo = BookInfo.builder()
+                    .isbn("9788994492032")
+                    .title("HTTP 완벽 가이드")
+                    .author("안슈 아가왈")
+                    .publisher("인사이트")
+                    .image("https://shopping-phinf.pstatic.net/main_3246114/32461143685.20230606105115.jpg")
+                    .description("책 소개입니다")
+                    .pubDate("20141215")
+                    .build();
+
+            // when, then
+            assertThatThrownBy(() -> bookInfoRepository.save(dupBookInfo))
+                    .isInstanceOf(DataIntegrityViolationException.class);
+        }
+
+        @Test
+        @DisplayName("실패: ISBN 값이 null인 경우")
+        void saveFailWithNullIsbn() {
+            // given
+            BookInfo bookInfo = BookInfo.builder()
+                    .isbn(null)
+                    .title("Java의 정석")
+                    .build();
+
+            // when, then
+            assertThatThrownBy(() -> bookInfoRepository.save(bookInfo))
+                    .isInstanceOf(JpaSystemException.class);
+        }
+
+        @Test
+        @DisplayName("실패: title 값이 null인 경우")
+        void saveFailWithNullTitle() {
+            // given
+            BookInfo bookInfo = BookInfo.builder()
+                    .isbn("9788994492032")
+                    .title(null)
+                    .build();
+
+            // when, then
+            assertThatThrownBy(() -> bookInfoRepository.saveAndFlush(bookInfo))
+                    .isInstanceOf(DataIntegrityViolationException.class);
+        }
     }
 
-    @Test
-    @DisplayName("isbn으로 도서 정보 조회 테스트")
-    void findBookInfoByIsbn() {
-        // given
-        BookInfo bookInfo = BookInfo.builder()
-                .isbn("9788994492032")
-                .title("Java의 정석")
-                .author("남궁성")
-                .publisher("도우출판")
-                .image("https://shopping-phinf.pstatic.net/main_3246668/32466681076.20230622071100.jpg")
-                .description("책 소개입니다")
-                .pubDate("20160201")
-                .build();
-        bookInfoRepository.save(bookInfo);
+    @Nested
+    @DisplayName("ISBN 값으로 도서 정보 조회 테스트")
+    public class findBookInfoByIsbnTest {
+        @Test
+        @DisplayName("조회 성공")
+        void findBookInfoByIsbn() {
+            // given
+            BookInfo bookInfo = BookInfo.builder()
+                    .isbn("9788994492032")
+                    .title("Java의 정석")
+                    .author("남궁성")
+                    .publisher("도우출판")
+                    .image("https://shopping-phinf.pstatic.net/main_3246668/32466681076.20230622071100.jpg")
+                    .description("책 소개입니다")
+                    .pubDate("20160201")
+                    .build();
+            bookInfoRepository.save(bookInfo);
 
-        // when
-        BookInfo foundBookInfo = bookInfoRepository.findById(bookInfo.getIsbn())
-                .orElse(null);
+            // when
+            BookInfo foundBookInfo = bookInfoRepository.findById(bookInfo.getIsbn())
+                    .orElse(null);
 
-        // then
-        assertNotNull(foundBookInfo);
-        assertEquals(bookInfo, foundBookInfo);
-        assertEquals(bookInfo.getIsbn(), foundBookInfo.getIsbn());
-        assertEquals(bookInfo.getTitle(), foundBookInfo.getTitle());
-        assertEquals(bookInfo.getAuthor(), foundBookInfo.getAuthor());
-        assertEquals(bookInfo.getPublisher(), foundBookInfo.getPublisher());
-        assertEquals(bookInfo.getImage(), foundBookInfo.getImage());
-        assertEquals(bookInfo.getDescription(), foundBookInfo.getDescription());
-        assertEquals(bookInfo.getPubDate(), foundBookInfo.getPubDate());
+            // then
+            assertThat(foundBookInfo).isNotNull();
+            assertThat(foundBookInfo).isEqualTo(bookInfo);
+            assertThat(foundBookInfo.getIsbn()).isEqualTo(bookInfo.getIsbn());
+            assertThat(foundBookInfo.getTitle()).isEqualTo(bookInfo.getTitle());
+            assertThat(foundBookInfo.getAuthor()).isEqualTo(bookInfo.getAuthor());
+            assertThat(foundBookInfo.getPublisher()).isEqualTo(bookInfo.getPublisher());
+            assertThat(foundBookInfo.getImage()).isEqualTo(bookInfo.getImage());
+            assertThat(foundBookInfo.getDescription()).isEqualTo(bookInfo.getDescription());
+            assertThat(foundBookInfo.getPubDate()).isEqualTo(bookInfo.getPubDate());
+        }
+
+        @Test
+        @DisplayName("없는 ISBN 값으로 조회하는 경우")
+        void findWithNotExistIsbn() {
+            // given
+            String isbn = "9788994492032";
+
+            // when
+            BookInfo foundBookInfo = bookInfoRepository.findById(isbn)
+                    .orElse(null);
+
+            // then
+            assertThat(foundBookInfo).isNull();
+        }
+
     }
 
-    @Test
-    @DisplayName("저장된 도서 정보 전체 조회 테스트")
-    void findAllBooksInfo() {
-        // given
-        BookInfo bookInfo1 = BookInfo.builder()
-                .isbn("9788994492032")
-                .title("Java의 정석")
-                .author("남궁성")
-                .publisher("도우출판")
-                .image("https://shopping-phinf.pstatic.net/main_3246668/32466681076.20230622071100.jpg")
-                .description("책 소개입니다")
-                .pubDate("20160201")
-                .build();
-        bookInfoRepository.save(bookInfo1);
+    @Nested
+    @DisplayName("도서 정보 전체 조회 테스트")
+    public class FindAllTest {
+        @Test
+        @DisplayName("전체 조회 성공")
+        void findAllBooksInfo() {
+            // given
+            BookInfo bookInfo1 = BookInfo.builder()
+                    .isbn("9788994492032")
+                    .title("Java의 정석")
+                    .author("남궁성")
+                    .publisher("도우출판")
+                    .image("https://shopping-phinf.pstatic.net/main_3246668/32466681076.20230622071100.jpg")
+                    .description("책 소개입니다")
+                    .pubDate("20160201")
+                    .build();
+            bookInfoRepository.save(bookInfo1);
 
-        BookInfo bookInfo2 = BookInfo.builder()
-                .isbn("9788966261208")
-                .title("HTTP 완벽 가이드")
-                .author("안슈 아가왈")
-                .publisher("인사이트")
-                .image("https://shopping-phinf.pstatic.net/main_3246114/32461143685.20230606105115.jpg")
-                .description("책 소개입니다")
-                .pubDate("20141215")
-                .build();
-        bookInfoRepository.save(bookInfo2);
+            BookInfo bookInfo2 = BookInfo.builder()
+                    .isbn("9788966261208")
+                    .title("HTTP 완벽 가이드")
+                    .author("안슈 아가왈")
+                    .publisher("인사이트")
+                    .image("https://shopping-phinf.pstatic.net/main_3246114/32461143685.20230606105115.jpg")
+                    .description("책 소개입니다")
+                    .pubDate("20141215")
+                    .build();
+            bookInfoRepository.save(bookInfo2);
 
-        // when
-        List<BookInfo> bookInfos = bookInfoRepository.findAll();
+            // when
+            List<BookInfo> bookInfos = bookInfoRepository.findAll();
 
-        // then
-        assertEquals(2, bookInfos.size());
-        assertTrue(bookInfos.contains(bookInfo1));
-        assertTrue(bookInfos.contains(bookInfo2));
+            // then
+            assertThat(bookInfos.size()).isEqualTo(2);
+            assertThat(bookInfos).contains(bookInfo1, bookInfo2);
+        }
+
+        @Test
+        @DisplayName("도서 정보가 없는 경우")
+        void findAllBookInfoWhenNoBookInfo() {
+            // when
+            List<BookInfo> bookInfos = bookInfoRepository.findAll();
+
+            // then
+            assertThat(bookInfos).isEmpty();
+        }
     }
 
     @Test
     @DisplayName("특정 도서 저자 수정 테스트")
-    void updateBookInfo() {
+    void updateTest() {
         // given
         BookInfo bookInfo = BookInfo.builder()
                 .isbn("9788966261208")
@@ -138,12 +234,13 @@ class BookInfoRepositoryTest {
         BookInfo updatedBookInfo = bookInfoRepository.save(bookInfo);
 
         // then
-        assertEquals(newAuthor, updatedBookInfo.getAuthor());
+        assertThat(updatedBookInfo).isNotNull();
+        assertThat(updatedBookInfo.getAuthor()).isEqualTo(newAuthor);
     }
 
     @Test
-    @DisplayName("특정 도서 정보 삭제 테스트")
-    void deleteBookInfo() {
+    @DisplayName("도서 정보 삭제 테스트")
+    void deleteBookInfoTest() {
         // given
         BookInfo bookInfo = BookInfo.builder()
                 .isbn("9788966261208")
@@ -157,9 +254,9 @@ class BookInfoRepositoryTest {
         bookInfoRepository.save(bookInfo);
 
         // when
-        bookInfoRepository.delete(bookInfo);
+        bookInfoRepository.deleteById(bookInfo.getIsbn());
 
         // then
-        assertFalse(bookInfoRepository.existsById(bookInfo.getIsbn()));
+        assertThat(bookInfoRepository.existsById(bookInfo.getIsbn())).isFalse();
     }
 }
