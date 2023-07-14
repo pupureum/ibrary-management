@@ -148,8 +148,7 @@
                 error: function (xhr, status) {
                     console.log('도서 추가 오류 발생:', xhr);
                     console.log(status);
-                    console.log(xhr.responseText);
-                    alert("도서를 추가할 수 없습니다.");
+                    alert(xhr.responseText);
                 }
             });
         });

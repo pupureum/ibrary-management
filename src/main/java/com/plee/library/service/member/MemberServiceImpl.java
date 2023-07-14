@@ -8,7 +8,7 @@ import com.plee.library.dto.admin.request.UpdateMemberRequest;
 import com.plee.library.dto.member.request.SignUpMemberRequest;
 import com.plee.library.dto.admin.response.AllMemberInfoResponse;
 import com.plee.library.dto.member.response.MemberInfoResponse;
-import com.plee.library.message.MemberMsg;
+import com.plee.library.util.message.MemberMsg;
 import com.plee.library.repository.book.BookRepository;
 import com.plee.library.repository.member.MemberLoanHistoryRepository;
 import com.plee.library.repository.member.MemberRepository;
@@ -230,7 +230,7 @@ public class MemberServiceImpl implements MemberService, UserDetailsService {
     public void deleteMember(Long memberId) {
         Member member = findMemberById(memberId);
         // 대출중인 도서가 있는 회원의 경우 강제 반납 처리
-        List<MemberLoanHistory> notReturnedHistories = memberLoanHisRepository.search(
+        List<MemberLoanHistory> notReturnedHistories = memberLoanHisRepository.searchHistory(
                 LoanHistorySearchCondition
                         .builder()
                         .memberId(memberId)

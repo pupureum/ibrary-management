@@ -11,6 +11,7 @@ import com.plee.library.dto.book.response.*;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 public interface BookService {
@@ -23,6 +24,8 @@ public interface BookService {
     void renewBook(Long historyId);
 
     void returnBook(ReturnBookRequest request, Long memberId);
+
+    int processDailyBookReturn(LocalDateTime scheduledDateTime);
 
     void updateBookQuantity(Long bookId, UpdateBookRequest request);
 

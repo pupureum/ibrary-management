@@ -5,7 +5,7 @@ import com.plee.library.domain.member.Member;
 import com.plee.library.dto.member.request.SignUpMemberRequest;
 import com.plee.library.dto.admin.request.UpdateMemberRequest;
 import com.plee.library.dto.member.response.MemberInfoResponse;
-import com.plee.library.message.MemberMsg;
+import com.plee.library.util.message.MemberMsg;
 import com.plee.library.service.member.MemberService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;

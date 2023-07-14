@@ -3,7 +3,6 @@ package com.plee.library.domain.member;
 import com.plee.library.domain.BaseTimeEntity;
 import com.plee.library.domain.book.BookInfo;
 import com.plee.library.domain.book.Book;
-import com.plee.library.message.BookMsg;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Builder;

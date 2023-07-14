@@ -7,12 +7,12 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
 import org.springframework.scheduling.config.ScheduledTaskRegistrar;
 
-@Configuration
-@EnableScheduling
-public class SchedulingConfig {
 
-    @Bean
-    public TaskScheduler taskScheduler() {
-        return new ThreadPoolTaskScheduler();
-    }
-}
+//@Configuration
+//public class SchedulingConfig {
+//
+//    @Bean
+//    public TaskScheduler taskScheduler() {
+//        return new ThreadPoolTaskScheduler();
+//    }
+//}

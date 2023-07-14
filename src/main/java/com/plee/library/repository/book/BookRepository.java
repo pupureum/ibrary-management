@@ -8,9 +8,12 @@ import org.springframework.data.querydsl.QuerydslPredicateExecutor;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 public interface BookRepository extends JpaRepository<Book, Long>, QuerydslPredicateExecutor<Book>, BookRepositoryCustom {
      Optional<Book> findByBookInfoIsbn(String isbn);
+
+     List<Book> findByBookInfoIsbnIn(Set<String> isbns);
 
      List<Book> findTop4ByOrderByCreatedAtDesc();
 

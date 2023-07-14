@@ -1,4 +1,4 @@
-package com.plee.library.message;
+package com.plee.library.util.message;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;

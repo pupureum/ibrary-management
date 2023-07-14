@@ -6,7 +6,7 @@ import com.plee.library.dto.book.request.AddBookRequest;
 import com.plee.library.dto.book.request.ReturnBookRequest;
 import com.plee.library.dto.book.request.SearchBookRequest;
 import com.plee.library.dto.book.response.*;
-import com.plee.library.message.BookMsg;
+import com.plee.library.util.message.BookMsg;
 import com.plee.library.service.book.BookService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;

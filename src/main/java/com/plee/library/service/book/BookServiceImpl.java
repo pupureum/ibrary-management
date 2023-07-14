@@ -15,8 +15,8 @@ import com.plee.library.dto.admin.response.RequestStatusResponse;
 import com.plee.library.dto.book.condition.BookSearchCondition;
 import com.plee.library.dto.book.request.*;
 import com.plee.library.dto.book.response.*;
-import com.plee.library.message.BookMsg;
-import com.plee.library.message.MemberMsg;
+import com.plee.library.util.message.BookMsg;
+import com.plee.library.util.message.MemberMsg;
 import com.plee.library.repository.book.BookInfoRepository;
 import com.plee.library.repository.book.BookRepository;
 import com.plee.library.repository.member.MemberBookmarkRepository;
@@ -31,7 +31,11 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.*;
+import java.util.stream.Collectors;
+
+import static com.plee.library.util.constant.Constants.LOANABLE_BOOK_LIMIT;
 
 @Slf4j
 @Service
@@ -45,7 +49,6 @@ public class BookServiceImpl implements BookService {
     private final MemberLoanHistoryRepository memberLoanHisRepository;
     private final MemberRepository memberRepository;
     private final NaverBookSearchConfig naverBookSearchConfig;
-    private final int LOANABLE_BOOK_LIMIT = 3;
 
     /**
      * 도서 입고처리를 위해 저장합니다.
@@ -101,7 +104,7 @@ public class BookServiceImpl implements BookService {
     }
 
     /**
-     * 새로운 도서 추가 요청을 처리합니다.
+     * 회원의 신규 도서 추가 요청을 등록합니다.
      * 이미 등록된 도서거나, 회원이 추가 요청을 한 도서라면 예외 처리합니다.
      *
      * @param request  추가 요청 정보
@@ -175,16 +178,111 @@ public class BookServiceImpl implements BookService {
     @Override
     @Transactional
     public void returnBook(ReturnBookRequest request, Long memberId) {
-        Member member = findMemberById(memberId);
-        // 대출 기록 정보로부터 도서 조회
+        // 도서가 없는 경우 예외 처리
         Book book = bookRepository.findByBookInfoIsbn(request.getBookInfoIsbn())
                 .orElseThrow(() -> new NoSuchElementException(BookMsg.NOT_FOUND_BOOK.getMessage()));
-        MemberLoanHistory history = memberLoanHisRepository.findByMemberIdAndBookInfoIsbnAndReturnedAtIsNull(member.getId(), book.getBookInfo().getId())
+
+        // 대출 내역이 없는 경우 예외 처리
+        MemberLoanHistory history = memberLoanHisRepository.findByMemberIdAndBookInfoIsbnAndReturnedAtIsNull(memberId, book.getBookInfo().getId())
                 .orElseThrow(() -> new NoSuchElementException(BookMsg.NOT_FOUND_LOAN_HISTORY.getMessage()));
 
+        // 반납 처리 및 대출 가능한 도서 수량 증가
         history.doReturn();
         book.increaseLoanableCnt();
-        log.info("SUCCESS returnBook historyId = {}", request.getHistoryId());
+        log.info("SUCCESS returnBook historyId = {}", history.getId());
+    }
+
+    /**
+     * 스케줄러를 통해 매일 자정 대출 기간이 끝난 도서 반납을 처리합니다.
+     *
+     * @param scheduledAt 일정 시간
+     * @return 처리된 연체된 대출 기록의 수
+     * @throws NoSuchElementException 대출 기록에 해당하는 도서가 존재하지 않는경우
+     * @throws IllegalStateException  도서의 대출 가능한 수가 올바르지 않은 경우
+     */
+    @Override
+    @Transactional
+    public int processDailyBookReturn(LocalDateTime scheduledAt) {
+        // 요청된 시간 기준으로 연체된 대출 기록 조회
+        List<MemberLoanHistory> overDueHis = memberLoanHisRepository.searchOverDueHistory(LoanHistorySearchCondition.builder()
+                .time(scheduledAt)
+                .build());
+
+        // 연체된 기록이 있는 경우
+        if (!overDueHis.isEmpty()) {
+            log.info("overDueHis exist");
+
+            // 중복 도서를 그룹화하여 수량 계산 및 해당 기록 반납 처리
+            Map<String, Integer> bookInfoCount = processLoanHistory(overDueHis, scheduledAt);
+
+            // 도서 정보로 반납 처리한 도서 조회
+            List<Book> booksToUpdate = bookRepository.findByBookInfoIsbnIn(bookInfoCount.keySet());
+
+            // 반납 처리한 대출 기록에 존재하지 않는 도서가 있는 경우 예외 처리
+            validateBookInfoCount(booksToUpdate, bookInfoCount);
+
+            // 반납 처리한 도서의 대출 가능한 수량 증가
+            increaseLoanableCnt(booksToUpdate, bookInfoCount);
+
+            memberLoanHisRepository.saveAll(overDueHis);
+            bookRepository.saveAll(booksToUpdate);
+        }
+        return overDueHis.size();
+    }
+
+    /**
+     * 반납 처리된 도서의 대출 가능한 수량을 증가시킵니다.
+     *
+     * @param booksToUpdate 반납 처리된 도서 목록
+     * @param bookInfoCount 각 도서별 증가시킬 수량
+     */
+    private void increaseLoanableCnt(List<Book> booksToUpdate, Map<String, Integer> bookInfoCount) {
+        for (Book book : booksToUpdate) {
+            int loanableCountIncrease = bookInfoCount.getOrDefault(book.getBookInfo().getIsbn(), 0);
+            book.increaseLoanableCnt(loanableCountIncrease);
+        }
+    }
+
+    /**
+     * 대출 기록에서의 도서 수와 반납 처리된 도서의 수가 일치하는지 유효성을 검사합니다.
+     *
+     * @param booksToUpdate 반납 처리된 도서 목록
+     * @param bookInfoCount 각 도서별 증가시킬 수량
+     * @throws NoSuchElementException 반납 처리된 도서 중 존재하지 않는 도서가 있는 경우
+     */
+    private void validateBookInfoCount(List<Book> booksToUpdate, Map<String, Integer> bookInfoCount) {
+        // 대출 기록에서 가져온 도서 정보와 반납 처리한 도서 정보의 수가 일치하지 않는 경우
+        if (bookInfoCount.size() != booksToUpdate.size()) {
+            Set<String> foundBooks = booksToUpdate.stream()
+                    .map(book -> book.getBookInfo().getIsbn())
+                    .collect(Collectors.toSet());
+
+            Set<String> notFoundBooks = bookInfoCount.keySet().stream()
+                    .filter(isbn -> !foundBooks.contains(isbn))
+                    .collect(Collectors.toSet());
+            // book이 존재 하지 않는 isbn값만을 추출하여 메세지에 추가
+            throw new NoSuchElementException(notFoundBooks + BookMsg.NOT_FOUND_BOOK.getMessage());
+        }
+    }
+
+    /**
+     * 도서 별 그룹화 및 대출 기록 반납 처리를 수행합니다.
+     *
+     * @param overDueHis   연체된 대출 기록
+     * @param scheduledAt 일정 시간
+     * @return 그룹화 한 반납 도서 별 수량
+     */
+    private Map<String, Integer> processLoanHistory(List<MemberLoanHistory> overDueHis, LocalDateTime scheduledAt) {
+        Map<String, Integer> bookInfoCount = new HashMap<>();
+
+        for (MemberLoanHistory history : overDueHis) {
+            String bookIsbn = history.getBookInfo().getIsbn();
+            bookInfoCount.put(bookIsbn, bookInfoCount.getOrDefault(bookIsbn, 0) + 1);
+
+            // 대출 기록 반납 처리
+            history.setReturnedAt(scheduledAt);
+        }
+        return bookInfoCount;
     }
 
     /**
@@ -276,7 +374,7 @@ public class BookServiceImpl implements BookService {
 
         // 현재 대출중인 도서가 있다면 반납 처리
         if (book.getLoanableCnt() != book.getQuantity()) {
-            List<MemberLoanHistory> notReturnedHis = memberLoanHisRepository.search(LoanHistorySearchCondition.builder()
+            List<MemberLoanHistory> notReturnedHis = memberLoanHisRepository.searchHistory(LoanHistorySearchCondition.builder()
                     .bookInfoId(book.getBookInfo().getId())
                     .build());
 
@@ -303,9 +401,9 @@ public class BookServiceImpl implements BookService {
      * 회원의 도서 찜을 추가합니다.
      *
      * @param memberId 회원 ID
-     * @param bookId 도서 ID
+     * @param bookId   도서 ID
      * @throws NoSuchElementException 회원 정보를 찾을 수 없는 경우, 존재하지 않는 도서인 경우,
-     * @throws IllegalStateException 이미 찜한 경우
+     * @throws IllegalStateException  이미 찜한 경우
      */
     @Override
     @Transactional
@@ -326,7 +424,7 @@ public class BookServiceImpl implements BookService {
      * 이미 찜이 되어있는지 확인합니다.
      *
      * @param memberId 회원 ID
-     * @param bookId 도서 ID
+     * @param bookId   도서 ID
      */
     private boolean isAlreadyBookmark(Long memberId, Long bookId) {
         return memberBookmarkRepository.existsByMemberIdAndBookId(memberId, bookId);
@@ -336,9 +434,9 @@ public class BookServiceImpl implements BookService {
      * 회원의 도서 찜을 해제합니다.
      *
      * @param memberId 회원 ID
-     * @param bookId 도서 ID
+     * @param bookId   도서 ID
      * @throws NoSuchElementException 회원 정보를 찾을 수 없는 경우, 존재하지 않는 도서인 경우,
-     * @throws IllegalStateException 이미 찜한 경우
+     * @throws IllegalStateException  이미 찜한 경우
      */
     @Override
     @Transactional
@@ -522,7 +620,8 @@ public class BookServiceImpl implements BookService {
     @Transactional(readOnly = true)
     public Page<LoanHistoryResponse> findOnLoanHistory(Long memberId) {
         //대출중인 기록 조회
-        List<MemberLoanHistory> histories = memberLoanHisRepository.search(LoanHistorySearchCondition.builder().memberId(memberId).notReturned(true).build());
+        List<MemberLoanHistory> histories = memberLoanHisRepository.searchHistory(LoanHistorySearchCondition.builder()
+                .memberId(memberId).notReturned(true).build());
         Collections.sort(histories, Comparator.comparing(MemberLoanHistory::getCreatedAt).reversed());
 
         // 대출 기록을 LoanHistoryResponse 객체의 리스트로 변환
