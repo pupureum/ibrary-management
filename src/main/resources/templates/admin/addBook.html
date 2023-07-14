@@ -2,6 +2,8 @@
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
+    <meta name="_csrf" th:content="${_csrf.token}"/>
+    <meta name="_csrf_header" th:content="${_csrf.headerName}"/>
     <title>현인의 서재</title>
     <link rel="stylesheet" th:href="@{/css/bootstrap.min.css}">
     <link rel="stylesheet" th:href="@{/css/main.css}">
@@ -18,7 +20,8 @@
         <div th:replace="~{fragments/sidebar :: sidebar(${selectedMenu})}"/>
         <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
             <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
-                <h3 style="margin-top: 50px; margin-bottom: 30px; margin-left: 20px; font-family: SeoulNamsanM">신규 도서 추가</h3>
+                <h3 style="margin-top: 50px; margin-bottom: 30px; margin-left: 20px; font-family: SeoulNamsanM">신규 도서
+                    추가</h3>
             </div>
             <form id="searchForm" class="center-content">
                 <div class="btn-toolbar mb-2 mb-md-2">
@@ -41,36 +44,6 @@
                             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                         </div>
                         <div class="modal-body">
-                            <!-- 도서 정보 출력을 위한 반복문 -->
-<!--                                                        <div th:each="book : ${books}" class="book-item">-->
-<!--                            <h5 class="book-title" text="book.title"></h5>-->
-<!--                            <img class="book-image" src="" alt="Book Image">-->
-<!--                            <p class="book-isbn" text="book.isbn"></p>-->
-<!--                            <p class="book-author" text="book.author"></p>-->
-<!--                            <p class="book-publisher" text="book.publisher"></p>-->
-<!--                            <p class="book-description" text="book.description" type="hidden"></p>-->
-<!--                            <p class="book-pubDate" text="book.pubDate"></p>-->
-<!--                            <button type="button" class="btn btn-primary btn-select-book">선택</button>-->
-
-
-                            <!--                            </div>-->
-                            <!--                            </div>-->
-<!--                            <div th:each="book : ${books}" class="book-item">-->
-<!--                                <h5 class="book-title" th:text="${book.title}"></h5>-->
-<!--                                <p class="book-isbn" th:text="'isbn: ' + ${book.isbn}"></p>-->
-<!--                                <p class="book-author" th:text="'저자: ' + ${book.author}"></p>-->
-<!--                                <p class="book-publisher" th:text="'출판사: ' + ${book.publisher}"></p>-->
-<!--                                <p class="book-image" th:text="'이미지: ' + ${book.image}"></p>-->
-<!--                                <p class="book-description" th:text="'설명: ' + ${book.description}"></p>-->
-<!--                                <p class="book-pubDate" th:text="'설명: ' + ${book.pubDate}"></p>-->
-<!--                                <button type="button" class="btn btn-primary btn-select-book">선택</button>-->
-<!--                                &lt;!&ndash;                            </div>&ndash;&gt;-->
-<!--                                                        </div>-->
-<!--                            <div class="modal-footer">-->
-<!--                                <button type="button" class="btn btn-primary btn-cancel-selection"-->
-<!--                                        data-bs-dismiss="modal">닫기-->
-<!--                                </button>-->
-<!--                            </div>-->
                         </div>
                     </div>
                 </div>
@@ -79,7 +52,6 @@
             <!-- 선택한 책 정보를 담을 폼 -->
             <div class="center-content">
                 <form id="selectedBookForm" method="post" class="form-group">
-<!--                <form id="selectedBookForm" th:action="@{/admin/new-book}" method="post" class="form-group">-->
                     <div class="form-group center-content">
                         <div>
                             <label for="selectedBookIsbn" class="label-style">ISBN:</label>
@@ -114,7 +86,9 @@
                             <input class="label-style" type="number" id="quantity" name="quantity" min="1" max="9999"
                                    required>
                         </div>
+<!--                        TODO 타임리프로 바꾸자-->
                         <div class="form-group">
+                            <label for="selectedBookCategory" class="label-style">카테고리:</label>
                             <label for="selectedBookCategory" class="label-style">카테고리:</label>
                             <select class="form-control" id="selectedBookCategory" name="category">
                                 <option value="">카테고리 선택</option>
@@ -146,26 +120,40 @@
     </div>
 </div>
 <script>
-    $('#selectedBookForm').on('submit', function (event) {
-        event.preventDefault();
-        let formData = $(this).serialize();
+    const token = $("meta[name='_csrf']").attr("content")
+    const header = $("meta[name='_csrf_header']").attr("content");
+    const name = $("#userName").val();
 
-        $.ajax({
-            type: 'POST',
-            url: '/admin/new-book',
-            data: formData,
-            success: function (response) {
-                alert('도서가 추가되었습니다.');
-                window.location.href = '/admin/books';
-            },
-            error: function (xhr, status) {
-                console.log('도서 추가 오류 발생:', xhr);
-                console.log(status);
-                alert(xhr.responseText);
-            }
+    $(document).ready(function() {
+        $('#selectedBookForm').on('submit', function (event) {
+            event.preventDefault();
+            let formData = $(this).serializeArray();
+            let jsonData = {}
+            $(formData).each(function(index, obj){
+                jsonData[obj.name] = obj.value;
+            });
+
+            $.ajax({
+                type: 'POST',
+                url: '/admin/new-book',
+                data: JSON.stringify(jsonData),
+                contentType : 'application/json; charset=utf-8',
+                beforeSend : function(xhr) {
+                    xhr.setRequestHeader(header, token);
+                },
+                success: function (response) {
+                    alert('도서가 추가되었습니다.');
+                    location.reload();
+                },
+                error: function (xhr, status) {
+                    console.log('도서 추가 오류 발생:', xhr);
+                    console.log(status);
+                    console.log(xhr.responseText);
+                    alert("도서를 추가할 수 없습니다.");
+                }
+            });
         });
     });
 </script>
-
 </body>
 </html>

@@ -2,6 +2,8 @@
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
+    <meta name="_csrf" th:content="${_csrf.token}"/>
+    <meta name="_csrf_header" th:content="${_csrf.headerName}"/>
     <title>현인의 서재</title>
     <link rel="stylesheet" th:href="@{/css/bootstrap.min.css}">
     <link rel="stylesheet" th:href="@{/css/main.css}">
@@ -96,6 +98,7 @@
                                 <form th:if="${book.isMarked}" method="post"
                                       th:action="@{'/books/unlike/' + ${book.id}}">
                                     <input type="hidden" name="_method" value="delete"/>
+                                    <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
                                     <input type="hidden" name="page" th:value="${books.getNumber()}"/>
                                     <input type="hidden" name="pageInfo" th:value="bookList"/>
                                     <button type="submit" class="btn btn-sm unlike-book-btn btn-outline-danger"
@@ -107,6 +110,7 @@
                                 </form>
                                 <form th:unless="${book.isMarked}" method="post"
                                       th:action="@{'/books/like/' + ${book.id}}">
+                                    <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
                                     <input type="hidden" name="page" th:value="${books.getNumber()}"/>
                                     <input type="hidden" name="pageInfo" th:value="bookList"/>
                                     <button type="submit" class="btn btn-sm like-book-btn btn-outline-danger"
@@ -114,7 +118,6 @@
                                             th:unless="${book.isMarked}">
                                         <span class="like-book-icon" style="color: hotpink">&#x2661;</span>
                                         <span class="like-book-text" style="color: #463f3f">찜</span>
-                                        <!--                                    <img src="/images/heart.svg" alt="Heart Icon" class="like-book-icon" style="width: 16px; height: 16px;">-->
                                     </button>
                                 </form>
                             </div>

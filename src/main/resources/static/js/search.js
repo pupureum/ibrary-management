@@ -2,7 +2,7 @@ $(function () {
     $('#btn-search-api').on('click', function (event) {
         event.preventDefault();
         let keyword = $('#keyword').val();
-        if (keyword.trim() === "") {
+        if (!keyword || keyword.trim() === "") {
             alert("키워드를 입력해주세요.");
             return;
         }
@@ -59,8 +59,9 @@ $(function () {
                     $('.modal-body').append(bookItem);
                 });
             },
-            error: function (error) {
+            error: function (xhr, status, error) {
                 console.log('search 오류 발생:', error);
+                alert(xhr.responseText);
             }
         });
     });

@@ -2,6 +2,8 @@
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
+    <meta name="_csrf" th:content="${_csrf.token}"/>
+    <meta name="_csrf_header" th:content="${_csrf.headerName}"/>
     <title>현인의 서재</title>
     <link rel="stylesheet" th:href="@{/css/bootstrap.min.css}" href="../../static/css/bootstrap.min.css">
     <link rel="stylesheet" th:href="@{/css/main.css}">
@@ -40,10 +42,10 @@
                         <td class="text-center">
                             <div class="btn-group me-2" style="margin-top: 15px;">
                                 <div th:if="${!request.isApproved}">
-                                    <button type="button" class="btn btn-sm btn-outline-primary" disabled>요청중</button>
+                                    <button type="button" class="btn btn-sm btn-primary" disabled>요청중</button>
                                 </div>
                                 <div th:if="${request.isApproved}">
-                                    <button type="button" class="btn btn-sm btn-outline-success" disabled>입고완료
+                                    <button type="button" class="btn btn-sm btn-success" disabled>입고완료
                                     </button>
                                 </div>
                                 <button type="button" class="btn btn-sm btn-outline-secondary view-details-btn"
@@ -93,7 +95,6 @@
             </div>
             <div class="modal-body">
                 <form id="stockForm" method="post">
-<!--                    <input type="hidden" id="addRequestId">-->
                     <input type="hidden" id="addBookIsbn" , name="isbn">
                     <div class="mb-3">
                         <label for="quantity" class="form-label">수량: </label>
@@ -170,6 +171,10 @@
 </nav>
 
 <script>
+    const token = $("meta[name='_csrf']").attr("content")
+    const header = $("meta[name='_csrf_header']").attr("content");
+    const name = $("#userName").val();
+
     $(document).ready(function () {
         $('.view-details-btn').click(function () {
             let memberName = $(this).data('member-name');
@@ -199,18 +204,12 @@
             }
         });
         $('.stock-modal-trigger').click(function () {
-            // let addRequestId = $(this).data('request-id');
             let addBookIsbn = $(this).data('book-isbn');
 
-            // $('#addRequestId').val(addRequestId);
             $('#addBookIsbn').val(addBookIsbn);
             $('#quantity').val('');
             $('#stockModal').modal('show');
         });
-        // $('#stockModal').modal({
-        //     backdrop: true,
-        //     keyboard: true
-        // });
         $('#stockModal').on('hidden.bs.modal', function () {
             $('#addBookIsbn').val('');
             $('#quantity').val('');
@@ -221,32 +220,37 @@
         function hideModal() {
             $('#stockModal').modal('hide');
         }
-        $('#stockModal').on('click', '#confirmButton', function () {
-            let quantity = $('#quantity').val();
-            if (quantity === '') {
-                alert('입고 수량을 입력해주세요.');
-                return;
-            }
-
-            $.ajax({
-                type: 'POST',
-                url: '/admin/new-book',
-                data: {
-                    isbn: $('#addBookIsbn').val(),
-                    quantity: quantity
-                },
-                success: function (response) {
-                    alert('도서가 추가되었습니다.');
-                    hideModal();
-                    location.reload();
-                },
-                error: function (xhr, status) {
-                    console.log('도서 추가 오류 발생:', xhr);
-                    console.log(status);
-                    alert(xhr.responseText);
-                }
-            });
-        });
+       $('#stockModal').on('click', '#confirmButton', function () {
+           let quantity = $('#quantity').val();
+           if (quantity === '') {
+               alert('입고 수량을 입력해주세요.');
+               return;
+           }
+           let formData = {
+               isbn: $('#addBookIsbn').val(),
+               quantity: quantity
+           };
+           $.ajax({
+               type: 'POST',
+               url: '/admin/new-book',
+               data: JSON.stringify(formData),
+               contentType : 'application/json; charset=utf-8',
+               beforeSend : function(xhr) {
+                   xhr.setRequestHeader(header, token);
+               },
+               success: function (response) {
+                   alert('도서가 추가되었습니다.');
+                   hideModal();
+                   location.reload();
+               },
+               error: function (xhr, status) {
+                   console.log('도서 추가 오류 발생:', xhr);
+                   console.log(xhr.responseText);
+                   console.log(status);
+                   alert("도서를 추가할 수 없습니다.");
+               }
+           });
+       });
     });
 </script>
 </body>

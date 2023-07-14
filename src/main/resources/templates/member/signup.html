@@ -26,7 +26,6 @@
 
                 <div class="mb-4 col-12">
                     <form th:action="@{/member/signup}" th:object="${signUpMemberRequest}" method="post">
-                        <!-- 토큰을 추가하여 CSRF 공격 방지 -->
                         <div th:if="${#fields.hasGlobalErrors()}">
                             <p class="field-error" th:each="err : ${#fields.globalErrors()}" th:text="${err}">글로벌 오류
                                 메시지</p>
