@@ -8,8 +8,8 @@ import com.plee.library.dto.admin.response.RequestStatusResponse;
 import com.plee.library.dto.book.request.SaveBookRequest;
 import com.plee.library.dto.admin.response.AllBooksResponse;
 import com.plee.library.dto.admin.response.AllMemberInfoResponse;
-import com.plee.library.util.message.BookMsg;
-import com.plee.library.util.message.MemberMsg;
+import com.plee.library.util.message.BookMessage;
+import com.plee.library.util.message.MemberMessage;
 import com.plee.library.service.book.BookService;
 import com.plee.library.service.member.MemberService;
 import jakarta.validation.Valid;
@@ -94,7 +94,7 @@ public class AdminController {
 
         try {
             bookService.updateBookQuantity(bookId, request);
-            redirectAttributes.addFlashAttribute("successMessage", BookMsg.SUCCESS_UPDATE_QUANTITY.getMessage());
+            redirectAttributes.addFlashAttribute("successMessage", BookMessage.SUCCESS_UPDATE_QUANTITY.getMessage());
         } catch (Exception e) {
             log.warn("ADMIN PUT updateBookQuantity failed", e.getMessage());
             redirectAttributes.addFlashAttribute("errorMessage", e.getMessage());
@@ -108,7 +108,7 @@ public class AdminController {
         try {
             log.info("ADMIN DELETE deleteBook request");
             bookService.deleteBook(bookId);
-            redirectAttributes.addFlashAttribute("successMessage", BookMsg.SUCCESS_DELETE_BOOK.getMessage());
+            redirectAttributes.addFlashAttribute("successMessage", BookMessage.SUCCESS_DELETE_BOOK.getMessage());
         } catch (NoSuchElementException e) {
             log.warn("ADMIN DELETE deleteBook failed", e.getMessage());
             redirectAttributes.addFlashAttribute("errorMessage", e.getMessage());
@@ -173,7 +173,7 @@ public class AdminController {
         log.info("ADMIN DELETE deleteMember request, memberId = {}", memberId);
         try {
             memberService.deleteMember(memberId);
-            redirectAttributes.addFlashAttribute("successMessage", MemberMsg.SUCCESS_DELETE_MEMBER.getMessage());
+            redirectAttributes.addFlashAttribute("successMessage", MemberMessage.SUCCESS_DELETE_MEMBER.getMessage());
         } catch (Exception e) {
             log.warn("ADMIN DELETE deleteMember failed", e.getMessage());
             redirectAttributes.addFlashAttribute("errorMessage", e.getMessage());

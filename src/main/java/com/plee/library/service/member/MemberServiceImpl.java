@@ -8,7 +8,7 @@ import com.plee.library.dto.admin.request.UpdateMemberRequest;
 import com.plee.library.dto.member.request.SignUpMemberRequest;
 import com.plee.library.dto.admin.response.AllMemberInfoResponse;
 import com.plee.library.dto.member.response.MemberInfoResponse;
-import com.plee.library.util.message.MemberMsg;
+import com.plee.library.util.message.MemberMessage;
 import com.plee.library.repository.book.BookRepository;
 import com.plee.library.repository.member.MemberLoanHistoryRepository;
 import com.plee.library.repository.member.MemberRepository;
@@ -52,11 +52,11 @@ public class MemberServiceImpl implements MemberService, UserDetailsService {
     public void validateSignupRequest(SignUpMemberRequest request, BindingResult bindingResult) {
         // 비밀번호 입력 2개가 일치하는지 확인
         if (!request.getPassword().equals(request.getConfirmPassword())) {
-            bindingResult.rejectValue("confirmPassword", "passwordNotMatch", MemberMsg.NOT_MATCHED_PASSWORD.getMessage());
+            bindingResult.rejectValue("confirmPassword", "passwordNotMatch", MemberMessage.NOT_MATCHED_PASSWORD.getMessage());
         }
         // 로그인 아이디가 중복되는지 확인
         if (memberRepository.existsByLoginId(request.getLoginId())) {
-            bindingResult.rejectValue("loginId", "duplicateLoginId", MemberMsg.DUPLICATE_LOGIN_ID.getMessage());
+            bindingResult.rejectValue("loginId", "duplicateLoginId", MemberMessage.DUPLICATE_LOGIN_ID.getMessage());
         }
     }
 
@@ -94,7 +94,7 @@ public class MemberServiceImpl implements MemberService, UserDetailsService {
     @Primary
     public UserDetails loadUserByUsername(String loginId) throws UsernameNotFoundException {
         Member member = memberRepository.findByLoginId(loginId)
-                .orElseThrow(() -> new UsernameNotFoundException(MemberMsg.NOT_FOUND_MEMBER.getMessage()));
+                .orElseThrow(() -> new UsernameNotFoundException(MemberMessage.NOT_FOUND_MEMBER.getMessage()));
         return new MemberAdapter(member);
     }
 
@@ -124,7 +124,7 @@ public class MemberServiceImpl implements MemberService, UserDetailsService {
     @Transactional(readOnly = true)
     public Member findMemberById(Long memberId) {
         return memberRepository.findById(memberId)
-                .orElseThrow(() -> new NoSuchElementException(MemberMsg.NOT_FOUND_MEMBER.getMessage()));
+                .orElseThrow(() -> new NoSuchElementException(MemberMessage.NOT_FOUND_MEMBER.getMessage()));
     }
 
     /**
@@ -171,7 +171,7 @@ public class MemberServiceImpl implements MemberService, UserDetailsService {
     @Transactional
     public void updateMemberByAdmin(Long memberId, UpdateMemberRequest request) {
         Member member = memberRepository.findById(memberId)
-                .orElseThrow(() -> new NoSuchElementException(MemberMsg.NOT_FOUND_MEMBER.getMessage()));
+                .orElseThrow(() -> new NoSuchElementException(MemberMessage.NOT_FOUND_MEMBER.getMessage()));
 
         // 이름이 변경되었다면 변경
         if (!request.getName().equals(member.getName())) {
@@ -196,7 +196,7 @@ public class MemberServiceImpl implements MemberService, UserDetailsService {
     @Transactional
     public void changeMemberInfo(Long memberId, UpdateMemberRequest request) {
         Member member = memberRepository.findById(memberId)
-                .orElseThrow(() -> new NoSuchElementException(MemberMsg.NOT_FOUND_MEMBER.getMessage()));
+                .orElseThrow(() -> new NoSuchElementException(MemberMessage.NOT_FOUND_MEMBER.getMessage()));
         String newName = request.getName();
         String newPassword = request.getPassword();
 
@@ -214,7 +214,7 @@ public class MemberServiceImpl implements MemberService, UserDetailsService {
         if (!passwordEncoder.matches(newPassword, member.getPassword())) {
             member.changePassword(passwordEncoder.encode(newPassword));
         } else {
-            throw new IllegalStateException(MemberMsg.NOT_CHANGED_PASSWORD.getMessage());
+            throw new IllegalStateException(MemberMessage.NOT_CHANGED_PASSWORD.getMessage());
         }
     }
 

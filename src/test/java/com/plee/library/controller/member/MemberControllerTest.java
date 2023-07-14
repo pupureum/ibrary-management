@@ -8,7 +8,7 @@ import com.plee.library.domain.member.Member;
 import com.plee.library.dto.admin.request.UpdateMemberRequest;
 import com.plee.library.dto.member.request.SignUpMemberRequest;
 import com.plee.library.dto.member.response.MemberInfoResponse;
-import com.plee.library.message.MemberMsg;
+import com.plee.library.util.message.MemberMessage;
 import com.plee.library.service.member.MemberService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -224,7 +224,7 @@ class MemberControllerTest {
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(asJsonString(req)))
                     .andExpect(status().isBadRequest())
-                    .andExpect(content().string(MemberMsg.INVALID_ACCESS.getMessage()));
+                    .andExpect(content().string(MemberMessage.INVALID_ACCESS.getMessage()));
         }
     }
 

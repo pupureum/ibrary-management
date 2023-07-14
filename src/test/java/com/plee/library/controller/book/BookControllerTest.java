@@ -10,7 +10,7 @@ import com.plee.library.dto.book.request.ReturnBookRequest;
 import com.plee.library.dto.book.request.SearchBookRequest;
 import com.plee.library.dto.book.response.AllBooksMarkInfoResponse;
 import com.plee.library.dto.book.response.BookDetailResponse;
-import com.plee.library.message.BookMsg;
+import com.plee.library.util.message.BookMessage;
 import com.plee.library.service.book.BookService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -134,7 +134,7 @@ class BookControllerTest {
         @DisplayName("실패: 없는 도서인 경우")
         void bookDetail_notFound() throws Exception {
             // given
-            String errorMessage = BookMsg.NOT_FOUND_BOOK.getMessage();
+            String errorMessage = BookMessage.NOT_FOUND_BOOK.getMessage();
             BookDetailResponse res = BookDetailResponse.of(book, true, true);
             given(bookService.getBookDetails(anyLong(), anyLong())).willThrow(new NoSuchElementException(errorMessage));
 
@@ -207,14 +207,14 @@ class BookControllerTest {
                     .andExpect(status().is3xxRedirection())
                     .andExpect(redirectedUrl("/books/loan"))
                     .andExpect(flash().attributeExists("successMessage"))
-                    .andExpect(flash().attribute("successMessage", BookMsg.SUCCESS_LOAN_BOOK.getMessage()));
+                    .andExpect(flash().attribute("successMessage", BookMessage.SUCCESS_LOAN_BOOK.getMessage()));
         }
 
         @Test
         @DisplayName("실패: 대출 불가능한 경우")
         void loanBook_fail() throws Exception {
             // given
-            willThrow(new NoSuchElementException(BookMsg.NOT_FOUND_BOOK.getMessage())).given(bookService).loanBook(anyLong(), anyLong());
+            willThrow(new NoSuchElementException(BookMessage.NOT_FOUND_BOOK.getMessage())).given(bookService).loanBook(anyLong(), anyLong());
 
             // when, then
             mockMvc.perform(post("/books/loan")
@@ -223,7 +223,7 @@ class BookControllerTest {
                     .andExpect(status().is3xxRedirection())
                     .andExpect(redirectedUrl("/books/loan"))
                     .andExpect(flash().attributeExists("errorMessage"))
-                    .andExpect(flash().attribute("errorMessage", BookMsg.NOT_FOUND_BOOK.getMessage()));
+                    .andExpect(flash().attribute("errorMessage", BookMessage.NOT_FOUND_BOOK.getMessage()));
         }
     }
 
@@ -248,7 +248,7 @@ class BookControllerTest {
                     .andExpect(status().is3xxRedirection())
                     .andExpect(redirectedUrl("/books/on-loan"))
                     .andExpect(flash().attributeExists("successMessage"))
-                    .andExpect(flash().attribute("successMessage", BookMsg.SUCCESS_RETURN_BOOK.getMessage()));
+                    .andExpect(flash().attribute("successMessage", BookMessage.SUCCESS_RETURN_BOOK.getMessage()));
         }
 
         @Test
@@ -259,7 +259,7 @@ class BookControllerTest {
                     .historyId(1L)
                     .status(false)
                     .build();
-            willThrow(new NoSuchElementException(BookMsg.NOT_FOUND_LOAN_HISTORY.getMessage())).given(bookService).returnBook(eq(req), anyLong());
+            willThrow(new NoSuchElementException(BookMessage.NOT_FOUND_LOAN_HISTORY.getMessage())).given(bookService).returnBook(eq(req), anyLong());
 
             // when, then
             mockMvc.perform(put("/books/return")
@@ -268,7 +268,7 @@ class BookControllerTest {
                     .andExpect(status().is3xxRedirection())
                     .andExpect(redirectedUrl("/books/loan"))
                     .andExpect(flash().attributeExists("errorMessage"))
-                    .andExpect(flash().attribute("errorMessage", BookMsg.NOT_FOUND_LOAN_HISTORY.getMessage()));
+                    .andExpect(flash().attribute("errorMessage", BookMessage.NOT_FOUND_LOAN_HISTORY.getMessage()));
         }
     }
 
@@ -290,14 +290,14 @@ class BookControllerTest {
                     .andExpect(status().is3xxRedirection())
                     .andExpect(redirectedUrl("/books/on-loan"))
                     .andExpect(flash().attributeExists("successMessage"))
-                    .andExpect(flash().attribute("successMessage", BookMsg.SUCCESS_RENEW_BOOK.getMessage()));
+                    .andExpect(flash().attribute("successMessage", BookMessage.SUCCESS_RENEW_BOOK.getMessage()));
         }
 
         @Test
         @DisplayName("실패: 반납 불가능한 경우")
         void renewBook_fail() throws Exception {
             // given
-            willThrow(new NoSuchElementException(BookMsg.NOT_FOUND_LOAN_HISTORY.getMessage())).given(bookService).renewBook(anyLong());
+            willThrow(new NoSuchElementException(BookMessage.NOT_FOUND_LOAN_HISTORY.getMessage())).given(bookService).renewBook(anyLong());
 
             // when, then
             mockMvc.perform(put("/books/renewal")
@@ -307,7 +307,7 @@ class BookControllerTest {
                     .andExpect(status().is3xxRedirection())
                     .andExpect(redirectedUrl("/books/loan"))
                     .andExpect(flash().attributeExists("errorMessage"))
-                    .andExpect(flash().attribute("errorMessage", BookMsg.NOT_FOUND_LOAN_HISTORY.getMessage()));
+                    .andExpect(flash().attribute("errorMessage", BookMessage.NOT_FOUND_LOAN_HISTORY.getMessage()));
         }
     }
 
@@ -365,7 +365,7 @@ class BookControllerTest {
         void addBookmark_fail() throws Exception {
             // given
             Long bookId = 1L;
-            willThrow(new IllegalStateException(BookMsg.ALREADY_BOOKMARK.getMessage()))
+            willThrow(new IllegalStateException(BookMessage.ALREADY_BOOKMARK.getMessage()))
                     .given(bookService).addBookmark(anyLong(), anyLong());
 
             // when, then
@@ -376,7 +376,7 @@ class BookControllerTest {
                     .andExpect(status().is3xxRedirection())
                     .andExpect(redirectedUrl("/books?page=0"))
                     .andExpect(flash().attributeExists("errorMessage"))
-                    .andExpect(flash().attribute("errorMessage", BookMsg.ALREADY_BOOKMARK.getMessage()));
+                    .andExpect(flash().attribute("errorMessage", BookMessage.ALREADY_BOOKMARK.getMessage()));
         }
     }
 
@@ -404,7 +404,7 @@ class BookControllerTest {
         @DisplayName("실패: 찜하지 않은 경우 (찜 목록 페이지에서 요청한 경우)")
         void removeBookmark_fail() throws Exception {
             // given
-            willThrow(new IllegalStateException(BookMsg.NOT_FOUND_BOOKMARK.getMessage()))
+            willThrow(new IllegalStateException(BookMessage.NOT_FOUND_BOOKMARK.getMessage()))
                     .given(bookService).removeBookmark(anyLong(), anyLong());
 
             // when, then
@@ -415,7 +415,7 @@ class BookControllerTest {
                     .andExpect(status().is3xxRedirection())
                     .andExpect(redirectedUrl("/books/like?page=0"))
                     .andExpect(flash().attributeExists("errorMessage"))
-                    .andExpect(flash().attribute("errorMessage", BookMsg.NOT_FOUND_BOOKMARK.getMessage()));
+                    .andExpect(flash().attribute("errorMessage", BookMessage.NOT_FOUND_BOOKMARK.getMessage()));
         }
     }
 

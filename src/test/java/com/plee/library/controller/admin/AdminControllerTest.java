@@ -9,8 +9,8 @@ import com.plee.library.dto.admin.request.UpdateMemberRequest;
 import com.plee.library.dto.admin.response.AllLoanHistoryResponse;
 import com.plee.library.dto.admin.response.LoanStatusResponse;
 import com.plee.library.dto.book.request.SaveBookRequest;
-import com.plee.library.message.BookMsg;
-import com.plee.library.message.MemberMsg;
+import com.plee.library.util.message.BookMessage;
+import com.plee.library.util.message.MemberMessage;
 import com.plee.library.service.book.BookService;
 import com.plee.library.service.member.MemberService;
 import org.junit.jupiter.api.BeforeEach;
@@ -104,14 +104,14 @@ class AdminControllerTest {
         @DisplayName("실패: 이미 존재하는 도서 요청")
         void addBook_fail() throws Exception {
             // given
-            willThrow(new IllegalStateException(BookMsg.ALREADY_EXIST_BOOK.getMessage())).given(bookService).saveBook(any(SaveBookRequest.class));
+            willThrow(new IllegalStateException(BookMessage.ALREADY_EXIST_BOOK.getMessage())).given(bookService).saveBook(any(SaveBookRequest.class));
 
             // when, then
             mockMvc.perform(post("/admin/new-book")
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(req)))
                     .andExpect(status().isBadRequest())
-                    .andExpect(content().string(BookMsg.ALREADY_EXIST_BOOK.getMessage()));
+                    .andExpect(content().string(BookMessage.ALREADY_EXIST_BOOK.getMessage()));
         }
     }
 
@@ -132,7 +132,7 @@ class AdminControllerTest {
                             .param("newQuantity", String.valueOf(req.getNewQuantity())))
                     .andExpect(status().is3xxRedirection())
                     .andExpect(redirectedUrl("/admin/books"))
-                    .andExpect(flash().attribute("successMessage", BookMsg.SUCCESS_UPDATE_QUANTITY.getMessage()));
+                    .andExpect(flash().attribute("successMessage", BookMessage.SUCCESS_UPDATE_QUANTITY.getMessage()));
         }
 
         @Test
@@ -141,7 +141,7 @@ class AdminControllerTest {
             // given
             Long bookId = 1L;
             UpdateBookRequest req = new UpdateBookRequest(2);
-            willThrow(new IllegalArgumentException(BookMsg.CANNOT_UPDATE_QUANTITY.getMessage())).given(bookService).updateBookQuantity(eq(bookId), any(UpdateBookRequest.class));
+            willThrow(new IllegalArgumentException(BookMessage.CANNOT_UPDATE_QUANTITY.getMessage())).given(bookService).updateBookQuantity(eq(bookId), any(UpdateBookRequest.class));
 
             // when, then
             mockMvc.perform(put("/admin/books/{bookId}", bookId)
@@ -150,7 +150,7 @@ class AdminControllerTest {
                     .andExpect(status().is3xxRedirection())
                     .andExpect(redirectedUrl("/admin/books"))
                     .andExpect(flash().attributeExists("errorMessage"))
-                    .andExpect(flash().attribute("errorMessage", BookMsg.CANNOT_UPDATE_QUANTITY.getMessage()));
+                    .andExpect(flash().attribute("errorMessage", BookMessage.CANNOT_UPDATE_QUANTITY.getMessage()));
         }
 
         @Test
@@ -159,7 +159,7 @@ class AdminControllerTest {
             // given
             Long bookId = 1L;
             UpdateBookRequest req = new UpdateBookRequest(2);
-            willThrow(new IllegalArgumentException(BookMsg.CANNOT_UPDATE_SAME_QUANTITY.getMessage())).given(bookService).updateBookQuantity(eq(bookId), any(UpdateBookRequest.class));
+            willThrow(new IllegalArgumentException(BookMessage.CANNOT_UPDATE_SAME_QUANTITY.getMessage())).given(bookService).updateBookQuantity(eq(bookId), any(UpdateBookRequest.class));
 
             // when, then
             mockMvc.perform(put("/admin/books/{bookId}", bookId)
@@ -168,7 +168,7 @@ class AdminControllerTest {
                     .andExpect(status().is3xxRedirection())
                     .andExpect(redirectedUrl("/admin/books"))
                     .andExpect(flash().attributeExists("errorMessage"))
-                    .andExpect(flash().attribute("errorMessage", BookMsg.CANNOT_UPDATE_SAME_QUANTITY.getMessage()));
+                    .andExpect(flash().attribute("errorMessage", BookMessage.CANNOT_UPDATE_SAME_QUANTITY.getMessage()));
         }
     }
 
@@ -183,7 +183,7 @@ class AdminControllerTest {
         mockMvc.perform(delete("/admin/books/{bookId}", bookId))
                 .andExpect(status().is3xxRedirection())
                 .andExpect(redirectedUrl("/admin/books"))
-                .andExpect(flash().attribute("successMessage", BookMsg.SUCCESS_DELETE_BOOK.getMessage()));
+                .andExpect(flash().attribute("successMessage", BookMessage.SUCCESS_DELETE_BOOK.getMessage()));
     }
 
     @Test
@@ -255,7 +255,7 @@ class AdminControllerTest {
             mockMvc.perform(delete("/admin/members/{memberId}", 1L))
                     .andExpect(status().is3xxRedirection())
                     .andExpect(redirectedUrl("/admin/members"))
-                    .andExpect(flash().attribute("successMessage", MemberMsg.SUCCESS_DELETE_MEMBER.getMessage()));
+                    .andExpect(flash().attribute("successMessage", MemberMessage.SUCCESS_DELETE_MEMBER.getMessage()));
             then(memberService).should(times(1)).deleteMember(anyLong());
         }
 
@@ -263,14 +263,14 @@ class AdminControllerTest {
         @DisplayName("실패: 요청한 회원이 존재하지 않을 경우")
         void deleteMember_fail() throws Exception {
             // given
-            willThrow(new NoSuchElementException(MemberMsg.NOT_FOUND_MEMBER.getMessage())).given(memberService).deleteMember(anyLong());
+            willThrow(new NoSuchElementException(MemberMessage.NOT_FOUND_MEMBER.getMessage())).given(memberService).deleteMember(anyLong());
 
             // when, then
             mockMvc.perform(delete("/admin/members/{memberId}", 1L))
                     .andExpect(status().is3xxRedirection())
                     .andExpect(redirectedUrl("/admin/members"))
                     .andExpect(flash().attributeExists("errorMessage"))
-                    .andExpect(flash().attribute("errorMessage", MemberMsg.NOT_FOUND_MEMBER.getMessage()));
+                    .andExpect(flash().attribute("errorMessage", MemberMessage.NOT_FOUND_MEMBER.getMessage()));
             then(memberService).should(times(1)).deleteMember(anyLong());
         }
 

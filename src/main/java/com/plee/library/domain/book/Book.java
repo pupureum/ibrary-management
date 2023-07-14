@@ -1,7 +1,7 @@
 package com.plee.library.domain.book;
 
 import com.plee.library.domain.BaseTimeEntity;
-import com.plee.library.util.message.BookMsg;
+import com.plee.library.util.message.BookMessage;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Builder;
@@ -55,21 +55,21 @@ public class Book extends BaseTimeEntity {
 
     public void decreaseLoanableCnt() {
         if (this.loanableCnt < 1) {
-            throw new IllegalStateException(BookMsg.CANNOT_LOAN_BOOK.getMessage());
+            throw new IllegalStateException(BookMessage.CANNOT_LOAN_BOOK.getMessage());
         }
         this.loanableCnt -= 1;
     }
 
     public void increaseLoanableCnt() {
         if (this.loanableCnt >= this.quantity) {
-            throw new IllegalStateException(BookMsg.INVALID_LOANABLE_CNT.getMessage());
+            throw new IllegalStateException(BookMessage.INVALID_LOANABLE_CNT.getMessage());
         }
         this.loanableCnt += 1;
     }
 
     public void increaseLoanableCnt(int cnt) {
         if (this.loanableCnt + cnt > this.quantity) {
-            throw new IllegalStateException(BookMsg.INVALID_LOANABLE_CNT.getMessage());
+            throw new IllegalStateException(BookMessage.INVALID_LOANABLE_CNT.getMessage());
         }
         this.loanableCnt += cnt;
     }

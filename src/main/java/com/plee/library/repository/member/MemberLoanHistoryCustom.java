@@ -7,5 +7,5 @@ import java.util.List;
 
 public interface MemberLoanHistoryCustom {
     List<MemberLoanHistory> searchHistory(LoanHistorySearchCondition condition);
-    List<MemberLoanHistory> searchOverDueHistory(LoanHistorySearchCondition condition);
+    List<MemberLoanHistory> searchOverdueHistory(LoanHistorySearchCondition condition);
 }

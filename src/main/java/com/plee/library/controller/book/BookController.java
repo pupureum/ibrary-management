@@ -6,7 +6,7 @@ import com.plee.library.dto.book.request.AddBookRequest;
 import com.plee.library.dto.book.request.ReturnBookRequest;
 import com.plee.library.dto.book.request.SearchBookRequest;
 import com.plee.library.dto.book.response.*;
-import com.plee.library.util.message.BookMsg;
+import com.plee.library.util.message.BookMessage;
 import com.plee.library.service.book.BookService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -116,7 +116,7 @@ public class BookController {
         System.out.println("here===========");
         try {
             bookService.loanBook(bookId, member.getId());
-            redirectAttributes.addFlashAttribute("successMessage", BookMsg.SUCCESS_LOAN_BOOK.getMessage());
+            redirectAttributes.addFlashAttribute("successMessage", BookMessage.SUCCESS_LOAN_BOOK.getMessage());
         } catch (Exception e) {
             log.warn("loanBook error", e.getMessage());
             redirectAttributes.addFlashAttribute("errorMessage", e.getMessage());
@@ -131,7 +131,7 @@ public class BookController {
         log.info("PUT returnBook historyId = {} book = ", request.getHistoryId(), request.getBookInfoIsbn());
         try {
             bookService.returnBook(request, member.getId());
-            redirectAttributes.addFlashAttribute("successMessage", BookMsg.SUCCESS_RETURN_BOOK.getMessage());
+            redirectAttributes.addFlashAttribute("successMessage", BookMessage.SUCCESS_RETURN_BOOK.getMessage());
         } catch (NoSuchElementException e) {
             log.warn("returnBook error", e.getMessage());
             redirectAttributes.addFlashAttribute("errorMessage", e.getMessage());
@@ -149,7 +149,7 @@ public class BookController {
         log.info("PUT renewBook historyId = {}", historyId);
         try {
             bookService.renewBook(historyId);
-            redirectAttributes.addFlashAttribute("successMessage", BookMsg.SUCCESS_RENEW_BOOK.getMessage());
+            redirectAttributes.addFlashAttribute("successMessage", BookMessage.SUCCESS_RENEW_BOOK.getMessage());
         } catch (Exception e) {
             log.warn("renewBook error", e.getMessage());
             redirectAttributes.addFlashAttribute("errorMessage", e.getMessage());

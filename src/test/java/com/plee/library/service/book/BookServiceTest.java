@@ -1,6 +1,5 @@
 package com.plee.library.service.book;
 
-import com.plee.library.config.NaverBookSearchConfig;
 import com.plee.library.domain.book.Book;
 import com.plee.library.domain.book.BookInfo;
 import com.plee.library.domain.member.Member;
@@ -19,7 +18,7 @@ import com.plee.library.dto.book.response.AllBooksMarkInfoResponse;
 import com.plee.library.dto.book.response.BookInfoResponse;
 import com.plee.library.dto.book.response.LoanHistoryResponse;
 import com.plee.library.dto.member.condition.LoanHistorySearchCondition;
-import com.plee.library.message.BookMsg;
+import com.plee.library.util.message.BookMessage;
 import com.plee.library.repository.book.BookInfoRepository;
 import com.plee.library.repository.book.BookRepository;
 import com.plee.library.repository.member.MemberBookmarkRepository;
@@ -145,7 +144,7 @@ class BookServiceTest {
             // when
             assertThatThrownBy(() -> bookService.saveBook(req))
                     .isInstanceOf(IllegalStateException.class)
-                    .hasMessageContaining(BookMsg.ALREADY_EXIST_BOOK.getMessage());
+                    .hasMessageContaining(BookMessage.ALREADY_EXIST_BOOK.getMessage());
         }
     }
 
@@ -212,7 +211,7 @@ class BookServiceTest {
             // when
             assertThatThrownBy(() -> bookService.addNewBookRequest(req, 1L))
                     .isInstanceOf(IllegalStateException.class)
-                    .hasMessageContaining(BookMsg.ALREADY_EXIST_BOOK.getMessage());
+                    .hasMessageContaining(BookMessage.ALREADY_EXIST_BOOK.getMessage());
         }
 
         @Test
@@ -226,7 +225,7 @@ class BookServiceTest {
             // when
             assertThatThrownBy(() -> bookService.addNewBookRequest(req, 1L))
                     .isInstanceOf(IllegalStateException.class)
-                    .hasMessageContaining(BookMsg.ALREADY_BOOK_REQUEST.getMessage());
+                    .hasMessageContaining(BookMessage.ALREADY_BOOK_REQUEST.getMessage());
         }
     }
 
@@ -263,7 +262,7 @@ class BookServiceTest {
             // when, then
             assertThatThrownBy(() -> bookService.loanBook(1L, 1L))
                     .isInstanceOf(IllegalStateException.class)
-                    .hasMessageContaining(BookMsg.CANNOT_LOAN_BOOK.getMessage());
+                    .hasMessageContaining(BookMessage.CANNOT_LOAN_BOOK.getMessage());
         }
 
         @Test
@@ -281,7 +280,7 @@ class BookServiceTest {
             // when, then
             assertThatThrownBy(() -> bookService.loanBook(1L, 1L))
                     .isInstanceOf(IllegalStateException.class)
-                    .hasMessageContaining(BookMsg.ALREADY_LOAN_BOOK.getMessage());
+                    .hasMessageContaining(BookMessage.ALREADY_LOAN_BOOK.getMessage());
         }
 
         @Test
@@ -300,7 +299,7 @@ class BookServiceTest {
             // when, then
             assertThatThrownBy(() -> bookService.loanBook(book.getId(), member.getId()))
                     .isInstanceOf(IllegalStateException.class)
-                    .hasMessageContaining(BookMsg.MAX_LOAN_BOOK.getMessage());
+                    .hasMessageContaining(BookMessage.MAX_LOAN_BOOK.getMessage());
         }
     }
 
@@ -345,7 +344,7 @@ class BookServiceTest {
             // when, then
             assertThatThrownBy(() -> bookService.returnBook(req, 1L))
                     .isInstanceOf(NoSuchElementException.class)
-                    .hasMessageContaining(BookMsg.NOT_FOUND_BOOK.getMessage());
+                    .hasMessageContaining(BookMessage.NOT_FOUND_BOOK.getMessage());
         }
 
         @Test
@@ -358,7 +357,7 @@ class BookServiceTest {
             // when, then
             assertThatThrownBy(() -> bookService.returnBook(req, 1L))
                     .isInstanceOf(NoSuchElementException.class)
-                    .hasMessageContaining(BookMsg.NOT_FOUND_LOAN_HISTORY.getMessage());
+                    .hasMessageContaining(BookMessage.NOT_FOUND_LOAN_HISTORY.getMessage());
         }
     }
 
@@ -397,7 +396,7 @@ class BookServiceTest {
             // when, then
             assertThatThrownBy(() -> bookService.renewBook(1L))
                     .isInstanceOf(NoSuchElementException.class)
-                    .hasMessageContaining(BookMsg.NOT_FOUND_LOAN_HISTORY.getMessage());
+                    .hasMessageContaining(BookMessage.NOT_FOUND_LOAN_HISTORY.getMessage());
         }
 
         @Test
@@ -410,7 +409,7 @@ class BookServiceTest {
             // when, then
             assertThatThrownBy(() -> bookService.renewBook(1L))
                     .isInstanceOf(IllegalStateException.class)
-                    .hasMessageContaining(BookMsg.ALREADY_RETURN_BOOK.getMessage());
+                    .hasMessageContaining(BookMessage.ALREADY_RETURN_BOOK.getMessage());
         }
 
         @Test
@@ -423,7 +422,7 @@ class BookServiceTest {
             // when, then
             assertThatThrownBy(() -> bookService.renewBook(1L))
                     .isInstanceOf(IllegalStateException.class)
-                    .hasMessageContaining(BookMsg.ALREADY_RENEW_BOOK.getMessage());
+                    .hasMessageContaining(BookMessage.ALREADY_RENEW_BOOK.getMessage());
         }
     }
 
@@ -455,7 +454,7 @@ class BookServiceTest {
             // when, then
             assertThatThrownBy(() -> bookService.updateBookQuantity(1L, req))
                     .isInstanceOf(IllegalArgumentException.class)
-                    .hasMessageContaining(BookMsg.CANNOT_UPDATE_SAME_QUANTITY.getMessage());
+                    .hasMessageContaining(BookMessage.CANNOT_UPDATE_SAME_QUANTITY.getMessage());
         }
 
         @Test
@@ -470,7 +469,7 @@ class BookServiceTest {
             // when, then
             assertThatThrownBy(() -> bookService.updateBookQuantity(1L, req))
                     .isInstanceOf(IllegalArgumentException.class)
-                    .hasMessageContaining(BookMsg.CANNOT_UPDATE_QUANTITY.getMessage());
+                    .hasMessageContaining(BookMessage.CANNOT_UPDATE_QUANTITY.getMessage());
         }
     }
 
@@ -546,7 +545,7 @@ class BookServiceTest {
                     .bookInfo(bookInfo)
                     .build();
             book.decreaseLoanableCnt();
-            given(memberLoanHisRepository.search(any(LoanHistorySearchCondition.class))).willReturn(List.of(history));
+            given(memberLoanHisRepository.searchHistory(any(LoanHistorySearchCondition.class))).willReturn(List.of(history));
             given(memberLoanHisRepository.existsByBookInfoIsbnAndReturnedAtIsNull(anyString())).willReturn(true);
 
             // when
@@ -555,7 +554,7 @@ class BookServiceTest {
             // then
             // 반납 처리 확인
             assertThat(history.isReturned()).isTrue();
-            then(memberLoanHisRepository).should(times(1)).search(any(LoanHistorySearchCondition.class));
+            then(memberLoanHisRepository).should(times(1)).searchHistory(any(LoanHistorySearchCondition.class));
 
             // 찜 삭제 호출 안됨 확인
             then(memberBookmarkRepository).should(never()).deleteAll();
@@ -591,7 +590,7 @@ class BookServiceTest {
             then(memberBookmarkRepository).should(times(1)).deleteAll(List.of(memberBookmark));
 
             // 대출 기록 조회 호출 여부 확인
-            then(memberLoanHisRepository).should(never()).search(any(LoanHistorySearchCondition.class));
+            then(memberLoanHisRepository).should(never()).searchHistory(any(LoanHistorySearchCondition.class));
 
             // 도서 삭제 호출 확인
             then(bookRepository).should(times(1)).deleteById(anyLong());
@@ -633,7 +632,7 @@ class BookServiceTest {
                 // when, then
                 assertThatThrownBy(() -> bookService.addBookmark(1L, 1L))
                         .isInstanceOf(NoSuchElementException.class)
-                        .hasMessageContaining(BookMsg.NOT_FOUND_BOOK.getMessage());
+                        .hasMessageContaining(BookMessage.NOT_FOUND_BOOK.getMessage());
             }
 
             @Test
@@ -647,7 +646,7 @@ class BookServiceTest {
                 // when, then
                 assertThatThrownBy(() -> bookService.addBookmark(1L, 1L))
                         .isInstanceOf(IllegalStateException.class)
-                        .hasMessageContaining(BookMsg.ALREADY_BOOKMARK.getMessage());
+                        .hasMessageContaining(BookMessage.ALREADY_BOOKMARK.getMessage());
             }
         }
 
@@ -679,7 +678,7 @@ class BookServiceTest {
                 // when, then
                 assertThatThrownBy(() -> bookService.removeBookmark(1L, 1L))
                         .isInstanceOf(NoSuchElementException.class)
-                        .hasMessageContaining(BookMsg.NOT_FOUND_BOOK.getMessage());
+                        .hasMessageContaining(BookMessage.NOT_FOUND_BOOK.getMessage());
             }
 
             @Test
@@ -692,7 +691,7 @@ class BookServiceTest {
                 // when, then
                 assertThatThrownBy(() -> bookService.removeBookmark(1L, 1L))
                         .isInstanceOf(IllegalStateException.class)
-                        .hasMessageContaining(BookMsg.NOT_FOUND_BOOKMARK.getMessage());
+                        .hasMessageContaining(BookMessage.NOT_FOUND_BOOKMARK.getMessage());
             }
         }
     }
@@ -886,7 +885,7 @@ class BookServiceTest {
         void findOnLoanHistory() {
             // given
             List<MemberLoanHistory> histories = Arrays.asList(memberLoanHis, memberLoanHis2);
-            given(memberLoanHisRepository.search(any(LoanHistorySearchCondition.class))).willReturn(histories);
+            given(memberLoanHisRepository.searchHistory(any(LoanHistorySearchCondition.class))).willReturn(histories);
 
             // when
             Page<LoanHistoryResponse> result = bookService.findOnLoanHistory(1L);

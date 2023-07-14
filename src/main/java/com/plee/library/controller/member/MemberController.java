@@ -5,7 +5,7 @@ import com.plee.library.domain.member.Member;
 import com.plee.library.dto.member.request.SignUpMemberRequest;
 import com.plee.library.dto.admin.request.UpdateMemberRequest;
 import com.plee.library.dto.member.response.MemberInfoResponse;
-import com.plee.library.util.message.MemberMsg;
+import com.plee.library.util.message.MemberMessage;
 import com.plee.library.service.member.MemberService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -98,7 +98,7 @@ public class MemberController {
 
         // 현재 접속된 회원과 수정하려는 회원이 같은지 확인
         if (!member.getId().equals(memberId)) {
-            return ResponseEntity.badRequest().body(MemberMsg.INVALID_ACCESS.getMessage());
+            return ResponseEntity.badRequest().body(MemberMessage.INVALID_ACCESS.getMessage());
         }
 
         try {

@@ -79,11 +79,9 @@ class MemberLoanHistoryCustomTest {
 
         @Test
         @DisplayName("모든 대출 내역 조회")
-        void findAllLoanHistory() {
-            // given
-
+        void searchAllMemberLoanHistory() {
             // when
-            List<MemberLoanHistory> result = memberLoanHisRepository.search(LoanHistorySearchCondition.builder()
+            List<MemberLoanHistory> result = memberLoanHisRepository.searchHistory(LoanHistorySearchCondition.builder()
                     .memberId(member.getId())
                     .build());
 
@@ -95,14 +93,14 @@ class MemberLoanHistoryCustomTest {
 
         @Test
         @DisplayName("대출중인 도서만 조회")
-        void findByMemberIdAndReturnedAtIsNull() {
+        void searchOnLoanHistory() {
             // given
             // loanHistory1은 반납 처리
             loanHistory1.doReturn();
             memberLoanHisRepository.save(loanHistory1);
 
             // when
-            List<MemberLoanHistory> result = memberLoanHisRepository.search(LoanHistorySearchCondition.builder()
+            List<MemberLoanHistory> result = memberLoanHisRepository.searchHistory(LoanHistorySearchCondition.builder()
                     .memberId(member.getId())
                     .notReturned(true)
                     .build());
@@ -114,19 +112,53 @@ class MemberLoanHistoryCustomTest {
         }
     }
 
-    @Test
-    @DisplayName("특정 시간 기준 연체된 도서 조회")
-    void findOverDueBooks() {
-        // given
+    @Nested
+    @DisplayName("연체 도서 조회")
+    class SearchOverdueHistoryTest {
 
-        // when
-        List<MemberLoanHistory> overDueHistories = memberLoanHisRepository.search(LoanHistorySearchCondition.builder()
-                .time(LocalDateTime.now()) // 현재 시간 이전에 대여된 도서 조회
-                .build());
+        @Test
+        @DisplayName("모두 대출 기간이 지난 경우")
+        void searchOverdueHistory() {
+            // when
+            // 7일 뒤 기준 연체된 도서 조회
+            List<MemberLoanHistory> overdueHistories = memberLoanHisRepository.searchOverdueHistory(LoanHistorySearchCondition.builder()
+                    .time(LocalDateTime.now().plusDays(7))
+                    .build());
 
-        // then
-        assertThat(overDueHistories).isNotNull();
-        assertThat(overDueHistories.size()).isEqualTo(2);
-        assertThat(overDueHistories).contains(loanHistory1, loanHistory2);
+            // then
+            assertThat(overdueHistories).isNotNull();
+            assertThat(overdueHistories.size()).isEqualTo(2);
+            assertThat(overdueHistories).contains(loanHistory1, loanHistory2);
+        }
+
+        @Test
+        @DisplayName("대출 연장으로 기간이 늘어난 경우")
+        void searchOverdueHistory_containRenew() {
+            // given
+            // loanHistory1 기간 연장
+            loanHistory1.doRenew();
+
+            // when
+            List<MemberLoanHistory> overdueHistories = memberLoanHisRepository.searchOverdueHistory(LoanHistorySearchCondition.builder()
+                    .time(LocalDateTime.now().plusDays(7))
+                    .build());
+
+            // then
+            assertThat(overdueHistories).isNotNull();
+            assertThat(overdueHistories.size()).isEqualTo(1);
+            assertThat(overdueHistories).containsExactly(loanHistory2);
+        }
+
+        @Test
+        @DisplayName("연체된 도서가 없는 경우")
+        void searchOverdueHistory_notExist() {
+            // when
+            List<MemberLoanHistory> overdueHistories = memberLoanHisRepository.searchOverdueHistory(LoanHistorySearchCondition.builder()
+                    .time(LocalDateTime.now())
+                    .build());
+
+            // then
+            assertThat(overdueHistories).isEmpty();
+        }
     }
 }

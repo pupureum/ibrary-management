@@ -9,7 +9,7 @@ import com.plee.library.dto.admin.request.UpdateMemberRequest;
 import com.plee.library.dto.admin.response.AllMemberInfoResponse;
 import com.plee.library.dto.member.request.SignUpMemberRequest;
 import com.plee.library.dto.member.response.MemberInfoResponse;
-import com.plee.library.message.MemberMsg;
+import com.plee.library.util.message.MemberMessage;
 import com.plee.library.repository.book.BookRepository;
 import com.plee.library.repository.member.MemberLoanHistoryRepository;
 import com.plee.library.repository.member.MemberRepository;
@@ -92,7 +92,7 @@ class MemberServiceTest {
 
             // then
             assertThat(bindingResult.hasErrors()).isTrue();
-            String expectedMessage = MemberMsg.NOT_MATCHED_PASSWORD.getMessage();
+            String expectedMessage = MemberMessage.NOT_MATCHED_PASSWORD.getMessage();
             assertThat(bindingResult.getFieldError("confirmPassword").getDefaultMessage()).isEqualTo(expectedMessage);
         }
 
@@ -115,7 +115,7 @@ class MemberServiceTest {
 
             // then
             assertThat(bindingResult.hasErrors()).isTrue();
-            String expectedMessage = MemberMsg.DUPLICATE_LOGIN_ID.getMessage();
+            String expectedMessage = MemberMessage.DUPLICATE_LOGIN_ID.getMessage();
             assertThat(bindingResult.getFieldError("loginId").getDefaultMessage()).isEqualTo(expectedMessage);
         }
     }
@@ -393,7 +393,7 @@ class MemberServiceTest {
             // when, then
             assertThatThrownBy(() -> memberService.changeMemberInfo(1L, req))
                     .isInstanceOf(IllegalStateException.class)
-                    .hasMessageContaining(MemberMsg.NOT_CHANGED_PASSWORD.getMessage());
+                    .hasMessageContaining(MemberMessage.NOT_CHANGED_PASSWORD.getMessage());
         }
     }
 
@@ -418,7 +418,7 @@ class MemberServiceTest {
             // given
             given(memberRepository.findById(anyLong())).willReturn(Optional.of(member));
             // 대출 기록을 빈 리스트로 반환
-            given(memberLoanHisRepository.search(
+            given(memberLoanHisRepository.searchHistory(
                     LoanHistorySearchCondition
                             .builder()
                             .memberId(any())
@@ -453,7 +453,7 @@ class MemberServiceTest {
             book.decreaseLoanableCnt();
 
             given(memberRepository.findById(anyLong())).willReturn(Optional.of(member));
-            given(memberLoanHisRepository.search(
+            given(memberLoanHisRepository.searchHistory(
                     LoanHistorySearchCondition
                             .builder()
                             .memberId(any())

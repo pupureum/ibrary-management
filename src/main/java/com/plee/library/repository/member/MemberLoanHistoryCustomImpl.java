@@ -26,8 +26,8 @@ public class MemberLoanHistoryCustomImpl implements MemberLoanHistoryCustom{
     }
 
     @Override
-    public List<MemberLoanHistory> searchOverDueHistory(LoanHistorySearchCondition condition) {
-        return buildOverDueLoanHistoryQuery(condition)
+    public List<MemberLoanHistory> searchOverdueHistory(LoanHistorySearchCondition condition) {
+        return buildOverdueLoanHistoryQuery(condition)
                 .fetch();
     }
 
@@ -42,15 +42,15 @@ public class MemberLoanHistoryCustomImpl implements MemberLoanHistoryCustom{
                 );
     }
 
-    private JPAQuery<MemberLoanHistory> buildOverDueLoanHistoryQuery(LoanHistorySearchCondition condition) {
-        LocalDateTime overDue = condition.getTime().minusDays(LOAN_PERIOD);
-        LocalDateTime renewOverDue = condition.getTime().minusDays(LOAN_PERIOD + RENEW_PERIOD);
+    private JPAQuery<MemberLoanHistory> buildOverdueLoanHistoryQuery(LoanHistorySearchCondition condition) {
+        LocalDateTime overdue = condition.getTime().minusDays(LOAN_PERIOD);
+        LocalDateTime renewOverdue = condition.getTime().minusDays(LOAN_PERIOD + RENEW_PERIOD);
 
         return queryFactory
                 .selectFrom(memberLoanHistory)
                 .where(
-                        notReturned(true).and(time(overDue)).and(isRenewFalse())
-                        .or(notReturned(true).and(time(renewOverDue)).and(isRenewTrue()))
+                        notReturned(true).and(time(overdue)).and(isRenewFalse())
+                        .or(notReturned(true).and(time(renewOverdue)).and(isRenewTrue()))
                 );
     }
 

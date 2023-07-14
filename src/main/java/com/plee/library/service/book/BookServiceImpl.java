@@ -15,8 +15,8 @@ import com.plee.library.dto.admin.response.RequestStatusResponse;
 import com.plee.library.dto.book.condition.BookSearchCondition;
 import com.plee.library.dto.book.request.*;
 import com.plee.library.dto.book.response.*;
-import com.plee.library.util.message.BookMsg;
-import com.plee.library.util.message.MemberMsg;
+import com.plee.library.util.message.BookMessage;
+import com.plee.library.util.message.MemberMessage;
 import com.plee.library.repository.book.BookInfoRepository;
 import com.plee.library.repository.book.BookRepository;
 import com.plee.library.repository.member.MemberBookmarkRepository;
@@ -62,7 +62,7 @@ public class BookServiceImpl implements BookService {
     public void saveBook(SaveBookRequest request) {
         // 이미 도서가 존재하는 경우
         if (bookRepository.existsByBookInfoIsbn(request.getIsbn())) {
-            throw new IllegalStateException(BookMsg.ALREADY_EXIST_BOOK.getMessage());
+            throw new IllegalStateException(BookMessage.ALREADY_EXIST_BOOK.getMessage());
         }
 
         // 도서 정보 존재 여부에 따라, 도서 정보를 저장하거나 이미 존재하는 도서 정보를 사용
@@ -120,12 +120,12 @@ public class BookServiceImpl implements BookService {
 
         // 이미 보유한 도서인 경우
         if (bookRepository.existsByBookInfoIsbn(requestIsbn)) {
-            throw new IllegalStateException(BookMsg.ALREADY_EXIST_BOOK.getMessage());
+            throw new IllegalStateException(BookMessage.ALREADY_EXIST_BOOK.getMessage());
         }
 
         // 이미 추가 요청한 도서인 경우
         if (memberReqHisRepository.existsByMemberIdAndBookInfoIsbn(member.getId(), requestIsbn)) {
-            throw new IllegalStateException(BookMsg.ALREADY_BOOK_REQUEST.getMessage());
+            throw new IllegalStateException(BookMessage.ALREADY_BOOK_REQUEST.getMessage());
         }
 
         // 다른 회원의 요청 등의 이유로 도서 정보가 존재한다면 해당 정보를 사용, 존재하지 않는다면 도서 정보 생성
@@ -151,17 +151,17 @@ public class BookServiceImpl implements BookService {
 
         // 대출 가능한 도서 수량이 없는 경우
         if (book.getLoanableCnt() <= 0) {
-            throw new IllegalStateException(BookMsg.CANNOT_LOAN_BOOK.getMessage());
+            throw new IllegalStateException(BookMessage.CANNOT_LOAN_BOOK.getMessage());
         }
 
         // 이미 대출한 도서인 경우
         if (memberLoanHisRepository.findByMemberIdAndBookInfoIsbnAndReturnedAtIsNull(member.getId(), book.getBookInfo().getIsbn()).isPresent()) {
-            throw new IllegalStateException(BookMsg.ALREADY_LOAN_BOOK.getMessage());
+            throw new IllegalStateException(BookMessage.ALREADY_LOAN_BOOK.getMessage());
         }
 
         // 대출 가능한 도서의 수를 초과한 경우
         if (memberLoanHisRepository.countByMemberIdAndReturnedAtIsNull(member.getId()) >= LOANABLE_BOOK_LIMIT) {
-            throw new IllegalStateException(BookMsg.MAX_LOAN_BOOK.getMessage());
+            throw new IllegalStateException(BookMessage.MAX_LOAN_BOOK.getMessage());
         }
 
         member.loanBook(book);
@@ -180,11 +180,11 @@ public class BookServiceImpl implements BookService {
     public void returnBook(ReturnBookRequest request, Long memberId) {
         // 도서가 없는 경우 예외 처리
         Book book = bookRepository.findByBookInfoIsbn(request.getBookInfoIsbn())
-                .orElseThrow(() -> new NoSuchElementException(BookMsg.NOT_FOUND_BOOK.getMessage()));
+                .orElseThrow(() -> new NoSuchElementException(BookMessage.NOT_FOUND_BOOK.getMessage()));
 
         // 대출 내역이 없는 경우 예외 처리
         MemberLoanHistory history = memberLoanHisRepository.findByMemberIdAndBookInfoIsbnAndReturnedAtIsNull(memberId, book.getBookInfo().getId())
-                .orElseThrow(() -> new NoSuchElementException(BookMsg.NOT_FOUND_LOAN_HISTORY.getMessage()));
+                .orElseThrow(() -> new NoSuchElementException(BookMessage.NOT_FOUND_LOAN_HISTORY.getMessage()));
 
         // 반납 처리 및 대출 가능한 도서 수량 증가
         history.doReturn();
@@ -204,16 +204,16 @@ public class BookServiceImpl implements BookService {
     @Transactional
     public int processDailyBookReturn(LocalDateTime scheduledAt) {
         // 요청된 시간 기준으로 연체된 대출 기록 조회
-        List<MemberLoanHistory> overDueHis = memberLoanHisRepository.searchOverDueHistory(LoanHistorySearchCondition.builder()
+        List<MemberLoanHistory> overdueHis = memberLoanHisRepository.searchOverdueHistory(LoanHistorySearchCondition.builder()
                 .time(scheduledAt)
                 .build());
 
         // 연체된 기록이 있는 경우
-        if (!overDueHis.isEmpty()) {
-            log.info("overDueHis exist");
+        if (!overdueHis.isEmpty()) {
+            log.info("overdueHis exist");
 
             // 중복 도서를 그룹화하여 수량 계산 및 해당 기록 반납 처리
-            Map<String, Integer> bookInfoCount = processLoanHistory(overDueHis, scheduledAt);
+            Map<String, Integer> bookInfoCount = processLoanHistory(overdueHis, scheduledAt);
 
             // 도서 정보로 반납 처리한 도서 조회
             List<Book> booksToUpdate = bookRepository.findByBookInfoIsbnIn(bookInfoCount.keySet());
@@ -224,10 +224,10 @@ public class BookServiceImpl implements BookService {
             // 반납 처리한 도서의 대출 가능한 수량 증가
             increaseLoanableCnt(booksToUpdate, bookInfoCount);
 
-            memberLoanHisRepository.saveAll(overDueHis);
+            memberLoanHisRepository.saveAll(overdueHis);
             bookRepository.saveAll(booksToUpdate);
         }
-        return overDueHis.size();
+        return overdueHis.size();
     }
 
     /**
@@ -261,21 +261,21 @@ public class BookServiceImpl implements BookService {
                     .filter(isbn -> !foundBooks.contains(isbn))
                     .collect(Collectors.toSet());
             // book이 존재 하지 않는 isbn값만을 추출하여 메세지에 추가
-            throw new NoSuchElementException(notFoundBooks + BookMsg.NOT_FOUND_BOOK.getMessage());
+            throw new NoSuchElementException(notFoundBooks + BookMessage.NOT_FOUND_BOOK.getMessage());
         }
     }
 
     /**
      * 도서 별 그룹화 및 대출 기록 반납 처리를 수행합니다.
      *
-     * @param overDueHis   연체된 대출 기록
+     * @param overdueHis   연체된 대출 기록
      * @param scheduledAt 일정 시간
      * @return 그룹화 한 반납 도서 별 수량
      */
-    private Map<String, Integer> processLoanHistory(List<MemberLoanHistory> overDueHis, LocalDateTime scheduledAt) {
+    private Map<String, Integer> processLoanHistory(List<MemberLoanHistory> overdueHis, LocalDateTime scheduledAt) {
         Map<String, Integer> bookInfoCount = new HashMap<>();
 
-        for (MemberLoanHistory history : overDueHis) {
+        for (MemberLoanHistory history : overdueHis) {
             String bookIsbn = history.getBookInfo().getIsbn();
             bookInfoCount.put(bookIsbn, bookInfoCount.getOrDefault(bookIsbn, 0) + 1);
 
@@ -297,16 +297,16 @@ public class BookServiceImpl implements BookService {
     public void renewBook(Long historyId) {
         // 대출 내역 조회
         MemberLoanHistory targetLoanHistory = memberLoanHisRepository.findById(historyId)
-                .orElseThrow(() -> new NoSuchElementException(BookMsg.NOT_FOUND_LOAN_HISTORY.getMessage()));
+                .orElseThrow(() -> new NoSuchElementException(BookMessage.NOT_FOUND_LOAN_HISTORY.getMessage()));
 
         // 대출중이 아닌 경우
         if (targetLoanHistory.isReturned()) {
-            throw new IllegalStateException(BookMsg.ALREADY_RETURN_BOOK.getMessage());
+            throw new IllegalStateException(BookMessage.ALREADY_RETURN_BOOK.getMessage());
         }
 
         // 이미 대출 연장을 한 경우
         if (!targetLoanHistory.isRenewable()) {
-            throw new IllegalStateException(BookMsg.ALREADY_RENEW_BOOK.getMessage());
+            throw new IllegalStateException(BookMessage.ALREADY_RENEW_BOOK.getMessage());
         }
 
         // 반납 처리
@@ -330,13 +330,13 @@ public class BookServiceImpl implements BookService {
 
         // 현재 수량과 같은 수량으로 수정하려는 경우
         if (newQuantity.equals(book.getQuantity())) {
-            throw new IllegalArgumentException(BookMsg.CANNOT_UPDATE_SAME_QUANTITY.getMessage());
+            throw new IllegalArgumentException(BookMessage.CANNOT_UPDATE_SAME_QUANTITY.getMessage());
         }
 
         //대출중인 도서 수보다 적은 수량으로 수정하려는 경우
         int loanedCnt = book.getQuantity() - book.getLoanableCnt();
         if (newQuantity < loanedCnt) {
-            throw new IllegalArgumentException(BookMsg.CANNOT_UPDATE_QUANTITY.getMessage());
+            throw new IllegalArgumentException(BookMessage.CANNOT_UPDATE_QUANTITY.getMessage());
         }
 
         book.setQuantity(newQuantity);
@@ -413,7 +413,7 @@ public class BookServiceImpl implements BookService {
 
         // 이미 찜한 경우
         if (isAlreadyBookmark(memberId, bookId)) {
-            throw new IllegalStateException(BookMsg.ALREADY_BOOKMARK.getMessage());
+            throw new IllegalStateException(BookMessage.ALREADY_BOOKMARK.getMessage());
         }
 
         member.addBookmark(book);
@@ -443,12 +443,12 @@ public class BookServiceImpl implements BookService {
     public void removeBookmark(Long memberId, Long bookId) {
         // 존재하지 않는 도서인 경우
         if (!bookRepository.existsById(bookId)) {
-            throw new NoSuchElementException(BookMsg.NOT_FOUND_BOOK.getMessage());
+            throw new NoSuchElementException(BookMessage.NOT_FOUND_BOOK.getMessage());
         }
 
         // 찜하지 않은 경우
         if (!isAlreadyBookmark(memberId, bookId)) {
-            throw new IllegalStateException(BookMsg.NOT_FOUND_BOOKMARK.getMessage());
+            throw new IllegalStateException(BookMessage.NOT_FOUND_BOOKMARK.getMessage());
         }
         memberBookmarkRepository.deleteByMemberIdAndBookId(memberId, bookId);
         log.info("SUCCESS addBookmark member = {}, bookId = {}", memberId, bookId);
@@ -758,7 +758,7 @@ public class BookServiceImpl implements BookService {
     @Transactional(readOnly = true)
     public Book findBookById(Long bookId) {
         return bookRepository.findById(bookId)
-                .orElseThrow(() -> new NoSuchElementException(BookMsg.NOT_FOUND_BOOK.getMessage()));
+                .orElseThrow(() -> new NoSuchElementException(BookMessage.NOT_FOUND_BOOK.getMessage()));
     }
 
     /**
@@ -771,6 +771,6 @@ public class BookServiceImpl implements BookService {
     @Transactional(readOnly = true)
     public Member findMemberById(Long memberId) {
         return memberRepository.findById(memberId)
-                .orElseThrow(() -> new NoSuchElementException(MemberMsg.NOT_FOUND_MEMBER.getMessage()));
+                .orElseThrow(() -> new NoSuchElementException(MemberMessage.NOT_FOUND_MEMBER.getMessage()));
     }
 }
