@@ -45,7 +45,7 @@ import static org.mockito.BDDMockito.*;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayName("BookService 테스트")
-class BookServiceImplTest {
+class BookServiceTest {
 
     @Mock
     private BookRepository bookRepository;
@@ -103,83 +103,39 @@ class BookServiceImplTest {
                     .build();
         }
 
-        @Nested
+        @Test
         @DisplayName("도서 요청이 있던 도서인 경우")
-        class BookRequestAlreadyTest {
+        void checkBookRequestAlready_exist() {
+            // given
+            given(bookRepository.existsByBookInfoIsbn(req.getIsbn())).willReturn(false);
+            Optional<BookInfo> optionalBookInfo = Optional.of(bookInfo);
+            given(bookInfoRepository.findById(req.getIsbn())).willReturn(optionalBookInfo);
+            given(memberReqHisRepository.existsByBookInfoIsbnAndIsApprovedFalse(req.getIsbn())).willReturn(true);
 
-            @Test
-            @Order(1)
-            @DisplayName("기존 도서 정보 가져오기")
-            void checkBookRequestAlready_exist() {
-                // given
-                Optional<BookInfo> optionalBookInfo = Optional.of(bookInfo);
-                given(bookInfoRepository.findById(req.getIsbn())).willReturn(optionalBookInfo);
+            // when
+            bookService.saveBook(req);
 
-                // when
-                BookInfo getBookInfo = bookService.checkBookRequestAlready(req);
-
-                // then
-                assertThat(getBookInfo).isNotNull();
-                assertThat(getBookInfo.getIsbn()).isEqualTo(req.getIsbn());
-                then(bookInfoRepository).should(never()).save(any(BookInfo.class));
-            }
-
-            @Test
-            @DisplayName("도서 저장")
-            void saveBook() {
-                // given
-                given(bookRepository.existsByBookInfoIsbn(req.getIsbn())).willReturn(false);
-                Optional<BookInfo> optionalBookInfo = Optional.of(bookInfo);
-                given(bookInfoRepository.findById(req.getIsbn())).willReturn(optionalBookInfo);
-                given(memberReqHisRepository.existsByBookInfoIsbnAndIsApprovedFalse(req.getIsbn())).willReturn(true);
-
-
-                // when
-                bookService.saveBook(req);
-
-                // then
-                then(bookRepository).should(times(1)).save(any());
-                then(bookInfoRepository).should(never()).save(any(BookInfo.class));
-            }
+            // then
+            then(memberReqHisRepository).should(times(1)).approveByBookInfoIsbn(req.getIsbn());
+            // 책 정보 저장은 호출 X
+            then(bookInfoRepository).should(never()).save(any(BookInfo.class));
+            then(bookRepository).should(times(1)).save(any());
         }
 
-        @Nested
         @DisplayName("도서 요청이 없던 도서인 경우")
-        class BookRequestNotAlreadyTest {
+        @Test
+        void checkBookRequestAlready_notExist() {
+            // given
+            given(bookRepository.existsByBookInfoIsbn(req.getIsbn())).willReturn(false);
+            given(bookInfoRepository.findById(req.getIsbn())).willReturn(Optional.ofNullable(null));
+            given(bookInfoRepository.save(any(BookInfo.class))).willReturn(bookInfo);
 
-            @Test
-            @Order(1)
-            @DisplayName("도서 정보를 생성해서 가져오기")
-            void checkBookRequestAlready_notExist() {
-                // given
-                given(bookInfoRepository.findById(req.getIsbn())).willReturn(Optional.ofNullable(null));
-                given(bookInfoRepository.save(any(BookInfo.class))).willReturn(bookInfo);
+            // when
+            bookService.saveBook(req);
 
-                // when
-                BookInfo getBookInfo = bookService.checkBookRequestAlready(req);
-
-                // then
-                assertThat(getBookInfo).isNotNull();
-                assertThat(getBookInfo.getIsbn()).isEqualTo(req.getIsbn());
-                then(bookInfoRepository).should(times(1)).save(any(BookInfo.class));
-            }
-
-            @Test
-            @DisplayName("도서 저장")
-            void saveBook() {
-                // given
-                given(bookRepository.existsByBookInfoIsbn(req.getIsbn())).willReturn(false);
-                given(bookInfoRepository.findById(req.getIsbn())).willReturn(Optional.ofNullable(null));
-                given(bookInfoRepository.save(any(BookInfo.class))).willReturn(bookInfo);
-
-                // when
-                bookService.saveBook(req);
-
-                // then
-                then(bookRepository).should(times(1)).save(any());
-                then(bookInfoRepository).should(times(1)).save(any(BookInfo.class));
-                then(bookRepository).should(times(1)).save(any(Book.class));
-            }
+            // then
+            then(bookInfoRepository).should(times(1)).save(any(BookInfo.class));
+            then(bookRepository).should(times(1)).save(any(Book.class));
         }
 
         @Test
@@ -920,6 +876,7 @@ class BookServiceImplTest {
         }
 
         @Test
+        @DisplayName("특정 회원의 대출중인 이력 조회 테스트")
         void findOnLoanHistory() {
             // given
             List<MemberLoanHistory> histories = Arrays.asList(memberLoanHis, memberLoanHis2);
@@ -933,31 +890,5 @@ class BookServiceImplTest {
             assertThat(result.getTotalElements()).isEqualTo(2);
             assertThat(result.getContent()).usingRecursiveComparison().isEqualTo(expectedResponse);
         }
-    }
-
-
-    @Test
-    void findMemberRequestHistory() {
-    }
-
-    @Test
-    void findAllNewBookReqHistory() {
-    }
-
-    @Test
-    void findBySearchApi() {
-    }
-
-    @Test
-    void findLikeBooks() {
-    }
-
-    @Test
-    void findBookById() {
-    }
-
-    @Test
-    void getBookDetails() {
-
     }
 }

@@ -39,7 +39,7 @@ import static org.mockito.BDDMockito.*;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayName("MemberService 테스트")
-class MemberServiceImplTest {
+class MemberServiceTest {
 
     @Mock
     private MemberRepository memberRepository;
