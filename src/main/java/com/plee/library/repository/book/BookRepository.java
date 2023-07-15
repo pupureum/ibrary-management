@@ -13,6 +13,8 @@ import java.util.Set;
 public interface BookRepository extends JpaRepository<Book, Long>, QuerydslPredicateExecutor<Book>, BookRepositoryCustom {
      Optional<Book> findByBookInfoIsbn(String isbn);
 
+     Page<Book> findAllByBookCategoryId(Long categoryId, Pageable pageable);
+
      List<Book> findByBookInfoIsbnIn(Set<String> isbns);
 
      Page<Book> findByBookCategoryId(Long categoryId, Pageable pageable);

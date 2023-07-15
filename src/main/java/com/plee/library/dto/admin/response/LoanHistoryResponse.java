@@ -14,7 +14,7 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Getter
-public class AllLoanHistoryResponse {
+public class LoanHistoryResponse {
     private final Long id;
     private final BookInfo bookInfo;
     private final Member member;
@@ -24,7 +24,7 @@ public class AllLoanHistoryResponse {
 
 
     @Builder
-    public AllLoanHistoryResponse(Long id, BookInfo bookInfo, Member member, boolean isRenew, LocalDate loanedAt, LocalDate returnedAt) {
+    public LoanHistoryResponse(Long id, BookInfo bookInfo, Member member, boolean isRenew, LocalDate loanedAt, LocalDate returnedAt) {
         this.id = id;
         this.bookInfo = bookInfo;
         this.member = member;
@@ -33,9 +33,9 @@ public class AllLoanHistoryResponse {
         this.returnedAt = returnedAt;
     }
 
-    public static List<AllLoanHistoryResponse> from(Page<MemberLoanHistory> histories) {
+    public static List<LoanHistoryResponse> from(Page<MemberLoanHistory> histories) {
         return histories.stream()
-                .map(h -> AllLoanHistoryResponse.builder()
+                .map(h -> LoanHistoryResponse.builder()
                         .id(h.getId())
                         .member(h.getMember())
                         .bookInfo(h.getBookInfo())

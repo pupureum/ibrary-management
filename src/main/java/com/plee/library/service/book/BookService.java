@@ -1,9 +1,10 @@
 package com.plee.library.service.book;
 
 import com.plee.library.domain.book.Book;
+import com.plee.library.domain.book.BookCategory;
 import com.plee.library.dto.admin.request.UpdateBookRequest;
-import com.plee.library.dto.admin.response.AllBooksResponse;
-import com.plee.library.dto.admin.response.AllLoanHistoryResponse;
+import com.plee.library.dto.admin.response.BooksResponse;
+import com.plee.library.dto.admin.response.LoanHistoryResponse;
 import com.plee.library.dto.admin.response.RequestStatusResponse;
 import com.plee.library.dto.admin.response.LoanStatusResponse;
 import com.plee.library.dto.book.request.*;
@@ -45,17 +46,19 @@ public interface BookService {
 
     List<CategoryResponse> findCategories();
 
-    Page<AllBooksResponse> findBooks(Pageable pageable);
+    Page<BooksResponse> findBooks(Pageable pageable);
+
+    Page<BooksResponse> findBooksByCategory(Long categoryId, Pageable pageable);
 
     Page<BooksMarkResponse> findBooksWithMark(Long memberId, Pageable pageable);
 
     Page<BooksMarkResponse> findBooksByCategoryWithMark(Long categoryId, Long memberId , Pageable pageable);
 
-    Page<LoanHistoryResponse> findLoanHistory(Long memberId, Pageable pageable);
+    Page<com.plee.library.dto.book.response.LoanHistoryResponse> findLoanHistory(Long memberId, Pageable pageable);
 
-    Page<LoanHistoryResponse> findOnLoanHistory(Long memberId);
+    Page<com.plee.library.dto.book.response.LoanHistoryResponse> findOnLoanHistory(Long memberId);
 
-    Page<AllLoanHistoryResponse> findAllLoanHistory(Pageable pageable);
+    Page<LoanHistoryResponse> findAllLoanHistory(Pageable pageable);
 
     Page<RequestHistoryResponse> findMemberRequestHistory(Long memberId, Pageable pageable);
 
@@ -66,6 +69,8 @@ public interface BookService {
     Page<MarkedBooksResponse> findBookmarked(Long memberId, Pageable pageable);
 
     Book findBookById(Long bookId);
+
+    BookCategory findByCategoryId(Long categoryId);
 
     boolean isBookMarked(Long memberId, Long bookId);
 }

@@ -6,8 +6,7 @@ import com.plee.library.config.MemberAdapter;
 import com.plee.library.domain.member.MemberLoanHistory;
 import com.plee.library.dto.admin.request.UpdateMemberRequest;
 import com.plee.library.dto.member.request.SignUpMemberRequest;
-import com.plee.library.dto.admin.response.AllMemberInfoResponse;
-import com.plee.library.dto.member.response.MemberInfoResponse;
+import com.plee.library.dto.admin.response.MemberInfoResponse;
 import com.plee.library.util.message.MemberMessage;
 import com.plee.library.repository.book.BookRepository;
 import com.plee.library.repository.member.MemberLoanHistoryRepository;
@@ -107,11 +106,11 @@ public class MemberServiceImpl implements MemberService, UserDetailsService {
      */
     @Override
     @Transactional(readOnly = true)
-    public MemberInfoResponse findMember(Long memberId) {
+    public com.plee.library.dto.member.response.MemberInfoResponse findMember(Long memberId) {
         Member foundMember = findMemberById(memberId);
 
         // 회원 정보를 MemberInfoResponse 객체로 변환
-        return MemberInfoResponse.from(foundMember);
+        return com.plee.library.dto.member.response.MemberInfoResponse.from(foundMember);
     }
 
     /**
@@ -135,12 +134,12 @@ public class MemberServiceImpl implements MemberService, UserDetailsService {
      */
     @Override
     @Transactional(readOnly = true)
-    public Page<AllMemberInfoResponse> findAllMembers(Pageable pageable) {
+    public Page<MemberInfoResponse> findAllMembers(Pageable pageable) {
         // 회원들을 최신순으로 Pagination 하여 조회
         Page<Member> members = memberRepository.findAll(pageable);
 
         // 조회된 회원들을 MemberInfoResponse 객체 리스트로 변환
-        List<AllMemberInfoResponse> response = AllMemberInfoResponse.from(members);
+        List<MemberInfoResponse> response = MemberInfoResponse.from(members);
         return new PageImpl<>(response, pageable, members.getTotalElements());
     }
 

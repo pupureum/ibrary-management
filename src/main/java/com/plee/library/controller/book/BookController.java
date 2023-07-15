@@ -90,27 +90,27 @@ public class BookController {
         return "book/searchBookList";
     }
 
+    // 카테고리별 도서 조회 결과를 반환합니다.
     @GetMapping("/category/{categoryId}")
     public String searchBookByCategory(@PathVariable("categoryId") Long categoryId, @PageableDefault(size = 5, sort = "createdAt", direction = DESC) Pageable pageable,
-                                       @CurrentMember Member member, Model model) {
+                                       @CurrentMember Member member, RedirectAttributes redirectAttributes, Model model) {
         log.info("GET searchBookByCategory categoryId = {}", categoryId);
         try {
-            // 페이징된 카테고리별 검색 결과를 모델에 담아 반환
+            // 특정 카테고리의 도서와 카테고리 정보 조회
             Page<BooksMarkResponse> response = bookService.findBooksByCategoryWithMark(categoryId, member.getId(), pageable);
             List<CategoryResponse> categories = bookService.findCategories();
 
-            // 페이징된 도서 정보와 카테고리 정보, 메뉴 정보를 모델에 담아 반환
+            // 도서 정보와 카테고리 정보, 메뉴 정보를 모델에 담아 반환
             model.addAttribute("books", response);
             model.addAttribute("categories", categories);
             model.addAttribute("selectedCategory", categoryId);
         } catch (NoSuchElementException e) {
             // 카테고리 정보를 찾을 수 없는 경우, 에러 메세지를 담아 리다이렉트
-            log.error("searchBookByCategory error", e);
-            model.addAttribute("errorMessage", e.getMessage());
+            log.warn("searchBookByCategory error", e.getMessage());
+            redirectAttributes.addFlashAttribute("errorMessage", e.getMessage());
             return "redirect:/books";
         }
         return "book/bookList";
-//        return "book/bookCategoryList";
     }
 
     // 대출 기록 페이지를 반환합니다.
@@ -247,7 +247,6 @@ public class BookController {
     public String addBookMark(@PathVariable Long bookId, @ModelAttribute BookmarkRequest request,
                               @CurrentMember Member member, RedirectAttributes redirectAttributes) {
         log.info("POST likeBook member = {}, bookId = {}", member.getLoginId(), bookId);
-        System.out.println(request.getCategory() + "category");
         try {
             bookService.addBookmark(member.getId(), bookId);
         } catch (Exception e) {

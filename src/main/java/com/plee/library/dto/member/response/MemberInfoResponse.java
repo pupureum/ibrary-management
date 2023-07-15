@@ -2,13 +2,10 @@ package com.plee.library.dto.member.response;
 
 import com.plee.library.domain.member.Member;
 import com.plee.library.domain.member.Role;
-import com.plee.library.dto.admin.response.AllMemberInfoResponse;
 import lombok.Builder;
 import lombok.Getter;
 
 import java.time.LocalDate;
-import java.util.List;
-import java.util.stream.Collectors;
 
 @Getter
 public class MemberInfoResponse {

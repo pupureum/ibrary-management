@@ -34,6 +34,9 @@
                             <h4 th:text="${response.book.bookInfo.title}"
                                 style="margin-top: 20px; margin-bottom: 50px; font-family: SeoulNamsanM"></h4>
                             <h5 style="margin-top: 20px; margin-bottom: 20px; font-family: SeoulNamsanM">
+                                카테고리: <span th:text="${response.book.bookCategory.categoryName}"></span>
+                            </h5>
+                            <h5 style="margin-top: 20px; margin-bottom: 20px; font-family: SeoulNamsanM">
                                 저자: <span th:text="${response.book.bookInfo.author}"></span>
                             </h5>
                             <h5 style="margin-top: 20px; margin-bottom: 20px; font-family: SeoulNamsanM">

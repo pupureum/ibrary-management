@@ -2,12 +2,12 @@ package com.plee.library.controller.admin;
 
 import com.plee.library.dto.admin.request.UpdateBookRequest;
 import com.plee.library.dto.admin.request.UpdateMemberRequest;
-import com.plee.library.dto.admin.response.AllLoanHistoryResponse;
+import com.plee.library.dto.admin.response.LoanHistoryResponse;
 import com.plee.library.dto.admin.response.LoanStatusResponse;
 import com.plee.library.dto.admin.response.RequestStatusResponse;
 import com.plee.library.dto.book.request.SaveBookRequest;
-import com.plee.library.dto.admin.response.AllBooksResponse;
-import com.plee.library.dto.admin.response.AllMemberInfoResponse;
+import com.plee.library.dto.admin.response.BooksResponse;
+import com.plee.library.dto.admin.response.MemberInfoResponse;
 import com.plee.library.dto.book.response.CategoryResponse;
 import com.plee.library.util.message.BookMessage;
 import com.plee.library.util.message.MemberMessage;
@@ -45,7 +45,7 @@ public class AdminController {
     @GetMapping("/new-book")
     public String addBookForm(Model model) {
         log.info("ADMIN GET addBookForm request");
-        List<CategoryResponse> categories =  bookService.findCategories();
+        List<CategoryResponse> categories = bookService.findCategories();
 
         model.addAttribute("categories", categories);
         model.addAttribute("selectedMenu", "admin-new-book");
@@ -65,7 +65,7 @@ public class AdminController {
 
         try {
             bookService.saveBook(request);
-        } catch (IllegalStateException e) {
+        } catch (Exception e) {
             // 이미 존재하는 도서일 경우, 에러 메시지 반환
             log.warn("ADMIN POST addBook request failed", e.getMessage());
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
@@ -77,9 +77,31 @@ public class AdminController {
     @GetMapping("/books")
     public String allBooks(@PageableDefault(size = 10, sort = "createdAt", direction = DESC) Pageable pageable, Model model) {
         log.info("ADMIN GET allBooks request");
-        Page<AllBooksResponse> books = bookService.findBooks(pageable);
+        Page<BooksResponse> response = bookService.findBooks(pageable);
+        List<CategoryResponse> categories = bookService.findCategories();
 
-        model.addAttribute("books", books);
+        model.addAttribute("books", response);
+        model.addAttribute("categories", categories);
+
+        model.addAttribute("selectedMenu", "admin-book-list");
+        return "admin/bookList";
+    }
+
+    @GetMapping("/books/category/{categoryId}")
+    public String categoryBooks(@PathVariable("categoryId") Long categoryId, @PageableDefault(size = 10, sort = "createdAt", direction = DESC) Pageable pageable, Model model) {
+        log.info("ADMIN GET categoryBooks request");
+        try {
+            Page<BooksResponse> response = bookService.findBooksByCategory(categoryId, pageable);
+            List<CategoryResponse> categories = bookService.findCategories();
+
+            model.addAttribute("books", response);
+            model.addAttribute("categories", categories);
+        } catch (NoSuchElementException e) {
+            log.warn("ADMIN GET categoryBooks request failed", e.getMessage());
+            return "redirect:/admin/books";
+        }
+
+        model.addAttribute("selectedCategory", categoryId);
         model.addAttribute("selectedMenu", "admin-book-list");
         return "admin/bookList";
     }
@@ -126,7 +148,7 @@ public class AdminController {
     public String loanStatus(@PageableDefault(size = 10, sort = "createdAt", direction = DESC) Pageable pageable, Model model) {
         log.info("ADMIN GET LoanStatus request");
         // 모든 대출 내역 조회
-        Page<AllLoanHistoryResponse> loanHistory = bookService.findAllLoanHistory(pageable);
+        Page<LoanHistoryResponse> loanHistory = bookService.findAllLoanHistory(pageable);
 
         // 최근 5일간 대출 빈도수 차트 데이터
         LoanStatusResponse data = bookService.calculateDailyLoanCounts();
@@ -152,7 +174,7 @@ public class AdminController {
     @GetMapping("/members")
     public String manageMember(@PageableDefault(size = 10, sort = "createdAt", direction = DESC) Pageable pageable, Model model) {
         log.info("ADMIN GET manageMember request");
-        Page<AllMemberInfoResponse> response = memberService.findAllMembers(pageable);
+        Page<MemberInfoResponse> response = memberService.findAllMembers(pageable);
 
         model.addAttribute("members", response);
         model.addAttribute("selectedMenu", "admin-member-management");
