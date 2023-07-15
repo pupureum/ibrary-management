@@ -14,7 +14,6 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
 
-@SuppressWarnings("removal")
 @RequiredArgsConstructor
 @Configuration
 @EnableWebSecurity
@@ -23,29 +22,30 @@ public class WebSecurityConfig {
     @Bean
     public WebSecurityCustomizer configure() {
         return (web) -> web.ignoring()
-                .requestMatchers("/static/**", "/css/**", "/js/**", "/images/**", "/favicon.ico", "/error", "/h2-console/**");
+                .requestMatchers("/static/**", "/css/**", "/js/**", "/images/**", "/favicon.ico", "/error");
     }
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         return http
-                .authorizeRequests()
-                    .requestMatchers("/member/login", "/member/signup", "/").permitAll()
-                    .requestMatchers("/admin/**").hasRole("ADMIN")
-                    .anyRequest().authenticated()
-                .and()
-                .formLogin()
-                    .loginPage("/member/login")
-                    .usernameParameter("loginId")
-                    .passwordParameter("password")
-                    .loginProcessingUrl("/member/login")
-                    .defaultSuccessUrl("/books")
-                    .failureUrl("/member/login?error=true")
-                    .failureHandler(authFailHandler())
-                .and()
-                .csrf()
-                    .csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
-                .and()
+                .authorizeRequests(authorizeRequests ->
+                        authorizeRequests
+                                .requestMatchers("/member/login", "/member/signup", "/").permitAll()
+                                .requestMatchers("/admin/**").hasRole("ADMIN")
+                                .anyRequest().authenticated()
+                )
+                .csrf(csrf ->
+                        csrf.csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
+                )
+                .formLogin(formLogin ->
+                        formLogin
+                                .loginPage("/member/login")
+                                .usernameParameter("loginId")
+                                .passwordParameter("password")
+                                .loginProcessingUrl("/member/login")
+                                .defaultSuccessUrl("/books")
+                                .failureHandler(authFailHandler())
+                )
                 .build();
     }
 
@@ -56,7 +56,8 @@ public class WebSecurityConfig {
 
     @Bean
     public AuthenticationManager authenticationManager(HttpSecurity http, BCryptPasswordEncoder bCryptPasswordEncoder, UserDetailsService userService) throws Exception {
-        return http.getSharedObject(AuthenticationManagerBuilder.class)
+        return http
+                .getSharedObject(AuthenticationManagerBuilder.class)
                 .userDetailsService(userService)
                 .passwordEncoder(bCryptPasswordEncoder)
                 .and()

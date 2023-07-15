@@ -133,10 +133,10 @@ class MemberControllerTest {
         }
 
         @Test
-        @DisplayName("실패: 유효하지 않은 dto 요청")
+        @DisplayName("실패: 유효하지 않은 요청")
         void signupFail_invalidLoginId() throws Exception {
             // given
-            // 회원가입 요청 dto 생성 (아이디 형식 오류)
+            // 회원가입 요청 생성 (아이디 형식 오류)
             SignUpMemberRequest req = SignUpMemberRequest.builder()
                     .name("이푸름")
                     .loginId("test@test.com")
