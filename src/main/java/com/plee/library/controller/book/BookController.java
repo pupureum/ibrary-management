@@ -3,6 +3,7 @@ package com.plee.library.controller.book;
 import com.plee.library.annotation.CurrentMember;
 import com.plee.library.domain.member.Member;
 import com.plee.library.dto.book.request.AddBookRequest;
+import com.plee.library.dto.book.request.BookmarkRequest;
 import com.plee.library.dto.book.request.ReturnBookRequest;
 import com.plee.library.dto.book.request.SearchBookRequest;
 import com.plee.library.dto.book.response.*;
@@ -23,6 +24,7 @@ import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
+import java.util.List;
 import java.util.NoSuchElementException;
 
 import static org.springframework.data.domain.Sort.Direction.DESC;
@@ -39,10 +41,13 @@ public class BookController {
     public String allBooks(@PageableDefault(size = 5, sort = "createdAt", direction = DESC) Pageable pageable,
                            @CurrentMember Member member, Model model) {
         log.info("GET allBooks request");
-        Page<AllBooksMarkInfoResponse> response = bookService.findAllBooksWithMark(member.getId(), pageable);
+        Page<BooksMarkResponse> response = bookService.findBooksWithMark(member.getId(), pageable);
+        List<CategoryResponse> categories = bookService.findCategories();
 
         // 페이징된 도서 정보와 메뉴 정보를 모델에 담아 반환
         model.addAttribute("books", response);
+        // 메뉴와 카테고리 정보를 모델에 담아 반환
+        model.addAttribute("categories", categories);
         model.addAttribute("selectedMenu", "book-list");
         return "book/bookList";
     }
@@ -80,9 +85,32 @@ public class BookController {
         }
 
         // 페이징된 검색 결과를 모델에 담아 반환
-        Page<AllBooksMarkInfoResponse> books = bookService.findBySearchKeyword(request, member.getId(), PageRequest.of(page, 5));
+        Page<BooksMarkResponse> books = bookService.findBySearchKeyword(request, member.getId(), PageRequest.of(page, 5));
         model.addAttribute("books", books);
         return "book/searchBookList";
+    }
+
+    @GetMapping("/category/{categoryId}")
+    public String searchBookByCategory(@PathVariable("categoryId") Long categoryId, @PageableDefault(size = 5, sort = "createdAt", direction = DESC) Pageable pageable,
+                                       @CurrentMember Member member, Model model) {
+        log.info("GET searchBookByCategory categoryId = {}", categoryId);
+        try {
+            // 페이징된 카테고리별 검색 결과를 모델에 담아 반환
+            Page<BooksMarkResponse> response = bookService.findBooksByCategoryWithMark(categoryId, member.getId(), pageable);
+            List<CategoryResponse> categories = bookService.findCategories();
+
+            // 페이징된 도서 정보와 카테고리 정보, 메뉴 정보를 모델에 담아 반환
+            model.addAttribute("books", response);
+            model.addAttribute("categories", categories);
+            model.addAttribute("selectedCategory", categoryId);
+        } catch (NoSuchElementException e) {
+            // 카테고리 정보를 찾을 수 없는 경우, 에러 메세지를 담아 리다이렉트
+            log.error("searchBookByCategory error", e);
+            model.addAttribute("errorMessage", e.getMessage());
+            return "redirect:/books";
+        }
+        return "book/bookList";
+//        return "book/bookCategoryList";
     }
 
     // 대출 기록 페이지를 반환합니다.
@@ -216,9 +244,10 @@ public class BookController {
 
     // 도서 찜 추가 요청을 처리합니다.
     @PostMapping("/like/{bookId}")
-    public String addBookMark(@PathVariable Long bookId, @RequestParam("page") int page, @RequestParam("pageInfo") String pageInfo,
+    public String addBookMark(@PathVariable Long bookId, @ModelAttribute BookmarkRequest request,
                               @CurrentMember Member member, RedirectAttributes redirectAttributes) {
         log.info("POST likeBook member = {}, bookId = {}", member.getLoginId(), bookId);
+        System.out.println(request.getCategory() + "category");
         try {
             bookService.addBookmark(member.getId(), bookId);
         } catch (Exception e) {
@@ -227,18 +256,25 @@ public class BookController {
         }
 
         // 도서 상세 페이지에서 찜 추가 요청 한 경우 상세페이지로 리다이렉트
-        if (pageInfo.equals("bookDetail")) {
+        if (request.getPageInfo().equals("bookDetail")) {
             return "redirect:/books/" + bookId;
         }
 
+        // 기존 페이지 정보 추가
+        redirectAttributes.addAttribute("page", request.getPage());
+
+        // 카테고리 선택된 경우에 찜 요청한 경우 해당 카테고리 페이지로 리다이렉트
+        if (!request.getCategory().isEmpty()) {
+            return "redirect:/books/category/" + request.getCategory();
+        }
+
         // 전체 도서 목록으로 리다이렉트
-        redirectAttributes.addAttribute("page", page);
         return "redirect:/books";
     }
 
     // 도서 찜 해제 요청을 처리합니다.
     @DeleteMapping("/unlike/{bookId}")
-    public String removeBookmark(@PathVariable Long bookId, @RequestParam("page") int page, @RequestParam("pageInfo") String pageInfo,
+    public String removeBookmark(@PathVariable Long bookId, @ModelAttribute BookmarkRequest request,
                                  @CurrentMember Member member, RedirectAttributes redirectAttributes) {
         log.info("DELETE unlikeBook member = {}, bookId = {}", member.getLoginId(), bookId);
         try {
@@ -249,16 +285,21 @@ public class BookController {
         }
 
         // 도서 상세 페이지에서 요청이 들어온경우, 도서 상세 페이지로 리다이렉트
-        if (pageInfo.equals("bookDetail")) {
+        if (request.getPageInfo().equals("bookDetail")) {
             return "redirect:/books/" + bookId;
         }
 
         // 현재 페이지 번호를 쿼리 파라미터로 추가
-        redirectAttributes.addAttribute("page", page);
+        redirectAttributes.addAttribute("page", request.getPage());
 
         // 찜한 도서 페이지에서 요청이 들어온경우, 찜한 도서 페이지로 리다이렉트
-        if (pageInfo.equals("bookmarkList")) {
+        if (request.getPageInfo().equals("bookmarkList")) {
             return "redirect:/books/like";
+        }
+
+        // 카테고리 선택된 경우에 찜 요청한 경우 해당 카테고리 페이지로 리다이렉트
+        if (!request.getCategory().isEmpty()) {
+            return "redirect:/books/category/" + request.getCategory();
         }
 
         // 전체 도서 목록으로 리다이렉트

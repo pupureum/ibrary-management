@@ -31,15 +31,17 @@ public class Book extends BaseTimeEntity {
     @Column(name = "loanable_cnt", nullable = false)
     private int loanableCnt;
 
-    @Version
-    private Long version;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "book_category_seq", nullable = false)
+    private BookCategory bookCategory;
 
     @Builder
-    public Book(Long id, BookInfo bookInfo, int quantity) {
+    public Book(Long id, BookInfo bookInfo, int quantity, BookCategory category) {
         this.id = id;
         this.bookInfo = bookInfo;
         this.quantity = quantity;
         this.loanableCnt = quantity;
+        this.bookCategory = category;
         this.createdAt = LocalDateTime.now();
     }
 
@@ -51,6 +53,10 @@ public class Book extends BaseTimeEntity {
             return;
         }
         this.loanableCnt += diff;
+    }
+
+    public void setBookCategory(BookCategory bookCategory) {
+        this.bookCategory = bookCategory;
     }
 
     public void decreaseLoanableCnt() {

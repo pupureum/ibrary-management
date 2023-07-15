@@ -15,6 +15,8 @@ public interface BookRepository extends JpaRepository<Book, Long>, QuerydslPredi
 
      List<Book> findByBookInfoIsbnIn(Set<String> isbns);
 
+     Page<Book> findByBookCategoryId(Long categoryId, Pageable pageable);
+
      List<Book> findTop4ByOrderByCreatedAtDesc();
 
      boolean existsByBookInfoIsbn(String isbn);

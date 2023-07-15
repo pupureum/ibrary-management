@@ -8,6 +8,7 @@ import com.plee.library.dto.admin.response.RequestStatusResponse;
 import com.plee.library.dto.book.request.SaveBookRequest;
 import com.plee.library.dto.admin.response.AllBooksResponse;
 import com.plee.library.dto.admin.response.AllMemberInfoResponse;
+import com.plee.library.dto.book.response.CategoryResponse;
 import com.plee.library.util.message.BookMessage;
 import com.plee.library.util.message.MemberMessage;
 import com.plee.library.service.book.BookService;
@@ -26,6 +27,7 @@ import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
+import java.util.List;
 import java.util.NoSuchElementException;
 
 import static org.springframework.data.domain.Sort.Direction.DESC;
@@ -39,10 +41,13 @@ public class AdminController {
 
     private final MemberService memberService;
 
-    // 도서 추가 뷰를 반환합니다.
+    // 도서 추가 뷰를 카테고리 정보와 함께 반환합니다.
     @GetMapping("/new-book")
     public String addBookForm(Model model) {
         log.info("ADMIN GET addBookForm request");
+        List<CategoryResponse> categories =  bookService.findCategories();
+
+        model.addAttribute("categories", categories);
         model.addAttribute("selectedMenu", "admin-new-book");
         return "admin/addBook";
     }
@@ -72,7 +77,7 @@ public class AdminController {
     @GetMapping("/books")
     public String allBooks(@PageableDefault(size = 10, sort = "createdAt", direction = DESC) Pageable pageable, Model model) {
         log.info("ADMIN GET allBooks request");
-        Page<AllBooksResponse> books = bookService.findAllBooks(pageable);
+        Page<AllBooksResponse> books = bookService.findBooks(pageable);
 
         model.addAttribute("books", books);
         model.addAttribute("selectedMenu", "admin-book-list");

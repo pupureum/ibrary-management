@@ -34,12 +34,4 @@ public class SignUpMemberRequest {
         this.password = password;
         this.confirmPassword = confirmPassword;
     }
-
-    public Member toEntity() {
-        return Member.builder()
-                .name(this.name)
-                .loginId(this.loginId)
-                .password(this.password)
-                .build();
-    }
 }

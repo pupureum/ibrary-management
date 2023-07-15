@@ -37,15 +37,19 @@ public interface BookService {
 
     LoanStatusResponse calculateDailyLoanCounts();
 
-    Page<AllBooksMarkInfoResponse> findBySearchKeyword(SearchBookRequest request, Long memberId, Pageable pageable);
+    Page<BooksMarkResponse> findBySearchKeyword(SearchBookRequest request, Long memberId, Pageable pageable);
 
     List<BookInfoResponse> findNewBooks();
 
     BookDetailResponse getBookDetails(Long memberId, Long bookId);
 
-    Page<AllBooksResponse> findAllBooks(Pageable pageable);
+    List<CategoryResponse> findCategories();
 
-    Page<AllBooksMarkInfoResponse> findAllBooksWithMark(Long memberId, Pageable pageable);
+    Page<AllBooksResponse> findBooks(Pageable pageable);
+
+    Page<BooksMarkResponse> findBooksWithMark(Long memberId, Pageable pageable);
+
+    Page<BooksMarkResponse> findBooksByCategoryWithMark(Long categoryId, Long memberId , Pageable pageable);
 
     Page<LoanHistoryResponse> findLoanHistory(Long memberId, Pageable pageable);
 

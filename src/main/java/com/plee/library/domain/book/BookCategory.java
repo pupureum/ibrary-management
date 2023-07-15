@@ -1,28 +1,35 @@
 package com.plee.library.domain.book;
 
-import lombok.AllArgsConstructor;
+import jakarta.persistence.*;
+import lombok.AccessLevel;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
+
+import java.util.HashSet;
+import java.util.Set;
 
 @Getter
-@AllArgsConstructor
-public enum BookCategory {
-    ECONOMICS("경제경영"),
-    SELF_DEVELOPMENT("자기계발"),
-    LITERATURE_ESSAY("시/에세이"),
-    HUMANITIES("인문"),
-    NOVEL("소설"),
-    LANGUAGE("국어/외국어"),
-    POLITICS_SOCIAL("정치/사회"),
-    HISTORY_CULTURE("역사/문화"),
-    SCIENCE_ENGINEERING("과학/공학"),
-    IT_PROGRAMMING("IT/프로그래밍"),
-    HEALTH_MEDICAL("건강/의학"),
-    HOME_LIFE_COOKING("가정/생활/요리"),
-    TRAVEL_HOBBY("여행/취미"),
-    ART_POPULAR_CULTURE("예술/대중문화"),
-    CHILDREN("아동"),
-    TEENAGER("청소년"),
-    TEXTBOOK_EXAM("교재/수험서");
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
+@Entity
+@Table(name = "book_category", uniqueConstraints = {@UniqueConstraint(name = "category_name_unique", columnNames = {"category_name"})})
+public class BookCategory {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "book_category_seq", updatable = false)
+    private Long id;
 
-    private final String title;
+    @Column(name = "category_name", nullable = false)
+    private String categoryName;
+
+    @OneToMany(mappedBy = "bookCategory")
+    private Set<Book> books = new HashSet<>();
+
+    public BookCategory(Long id, String categoryName) {
+        this.id = id;
+        this.categoryName = categoryName;
+    }
+
+    public void setCategoryName(String categoryName) {
+        this.categoryName = categoryName;
+    }
 }

@@ -2,6 +2,7 @@ package com.plee.library.service.book;
 
 import com.plee.library.config.NaverBookSearchConfig;
 import com.plee.library.domain.book.Book;
+import com.plee.library.domain.book.BookCategory;
 import com.plee.library.domain.book.BookInfo;
 import com.plee.library.domain.member.Member;
 import com.plee.library.domain.member.MemberBookmark;
@@ -15,6 +16,7 @@ import com.plee.library.dto.admin.response.RequestStatusResponse;
 import com.plee.library.dto.book.condition.BookSearchCondition;
 import com.plee.library.dto.book.request.*;
 import com.plee.library.dto.book.response.*;
+import com.plee.library.repository.book.BookCategoryRepository;
 import com.plee.library.util.message.BookMessage;
 import com.plee.library.util.message.MemberMessage;
 import com.plee.library.repository.book.BookInfoRepository;
@@ -35,7 +37,7 @@ import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import static com.plee.library.util.constant.Constants.LOANABLE_BOOK_LIMIT;
+import static com.plee.library.util.constant.Constant.LOANABLE_BOOK_LIMIT;
 
 @Slf4j
 @Service
@@ -44,6 +46,7 @@ public class BookServiceImpl implements BookService {
 
     private final BookRepository bookRepository;
     private final BookInfoRepository bookInfoRepository;
+    private final BookCategoryRepository bookCategoryRepository;
     private final MemberRequestHistoryRepository memberReqHisRepository;
     private final MemberBookmarkRepository memberBookmarkRepository;
     private final MemberLoanHistoryRepository memberLoanHisRepository;
@@ -67,9 +70,12 @@ public class BookServiceImpl implements BookService {
 
         // 도서 정보 존재 여부에 따라, 도서 정보를 저장하거나 이미 존재하는 도서 정보를 사용
         BookInfo bookInfo = checkBookRequestAlready(request);
+        BookCategory category = bookCategoryRepository.findById(request.getCategoryId())
+                .orElseThrow(() -> new NoSuchElementException(BookMessage.NOT_FOUND_CATEGORY.getMessage()));
         Book book = Book.builder()
                 .bookInfo(bookInfo)
                 .quantity(request.getQuantity())
+                .category(category)
                 .build();
         bookRepository.save(book);
         log.info("SUCCESS saveBook bookId = {}", book.getId());
@@ -497,7 +503,7 @@ public class BookServiceImpl implements BookService {
      * @param pageable 페이지 정보
      * @return 검색된 책 정보와 찜 등록 여부 정보를 담은 Page 객체
      */
-    public Page<AllBooksMarkInfoResponse> findBySearchKeyword(SearchBookRequest request, Long memberId, Pageable pageable) {
+    public Page<BooksMarkResponse> findBySearchKeyword(SearchBookRequest request, Long memberId, Pageable pageable) {
         // 키워드 앞뒤의 공백 제거
         String keyword = request.getKeyword().trim();
 
@@ -510,7 +516,7 @@ public class BookServiceImpl implements BookService {
                         .build(), pageable);
 
         // 조회된 책들을 AllBooksMarkInfoResponse 객체의 리스트로 변환
-        List<AllBooksMarkInfoResponse> response = books.map(book -> mapToAllBooksMarkResponse(book, memberId)).toList();
+        List<BooksMarkResponse> response = books.map(book -> mapToAllBooksMarkResponse(book, memberId)).toList();
         return new PageImpl<>(response, pageable, books.getTotalElements());
     }
 
@@ -528,14 +534,14 @@ public class BookServiceImpl implements BookService {
     }
 
     /**
-     * 전체 도서를 페이지네이션 하여 최근 도서순으로 조회합니다.
+     * 전체 도서를 페이지네이션 하여 신규 도서순으로 조서회합니다.
      *
      * @param pageable 페이지 정보
      * @return 전체 도서 정보를 담은 Page 객체
      */
     @Override
     @Transactional(readOnly = true)
-    public Page<AllBooksResponse> findAllBooks(Pageable pageable) {
+    public Page<AllBooksResponse> findBooks(Pageable pageable) {
         // 책들을 최신순으로 페이지네이션 하여 조회
         Page<Book> books = bookRepository.findAll(pageable);
 
@@ -545,17 +551,37 @@ public class BookServiceImpl implements BookService {
     }
 
     /**
-     * 특정 회원의 찜 여부 정보와 전체 도서를 페이지네이션하여 최근 도서순으로 조회합니다.
+     * 특정 회원의 찜 여부 정보와 전체 도서를 페이지네이션하여 신규 도서순으로 조회합니다.
      *
      * @param memberId 회원의 ID
      * @param pageable 페이지 정보
      * @return 특정 회원의 찜 정보와 도서 정보를 담은 Page 객체
      */
-    public Page<AllBooksMarkInfoResponse> findAllBooksWithMark(Long memberId, Pageable pageable) {
+    @Override
+    @Transactional(readOnly = true)
+    public Page<BooksMarkResponse> findBooksWithMark(Long memberId, Pageable pageable) {
         Page<Book> books = bookRepository.findAll(pageable);
 
         // 조회된 책들을 찜 여부 정보를 포함한 AllBooksMarkResponse 객체의 리스트로 변환
-        List<AllBooksMarkInfoResponse> response = books.map(book -> mapToAllBooksMarkResponse(book, memberId)).toList();
+        List<BooksMarkResponse> response = books.map(book -> mapToAllBooksMarkResponse(book, memberId)).toList();
+        return new PageImpl<>(response, pageable, books.getTotalElements());
+    }
+
+    /**
+     * 특정 회원의 찜 여부 정보와, 특정 카테고리의 도서를 페이지네이션하여 신규 도서순으로 조회합니다.
+     *
+     * @param categoryId 카테고리 ID
+     * @param memberId 회원의 ID
+     * @param pageable 페이지 정보
+     * @return 특정 회원의 찜 정보와 도서 정보를 담은 Page 객체
+     */
+    @Override
+    @Transactional(readOnly = true)
+    public Page<BooksMarkResponse> findBooksByCategoryWithMark(Long categoryId, Long memberId, Pageable pageable) {
+        Page<Book> books = bookRepository.findByBookCategoryId(categoryId, pageable);
+
+        // 조회된 책들을 찜 여부 정보를 포함한 AllBooksMarkResponse 객체의 리스트로 변환
+        List<BooksMarkResponse> response = books.map(book -> mapToAllBooksMarkResponse(book, memberId)).toList();
         return new PageImpl<>(response, pageable, books.getTotalElements());
     }
 
@@ -566,8 +592,8 @@ public class BookServiceImpl implements BookService {
      * @param memberId 회원 ID
      * @return AllBooksMarkResponse 객체
      */
-    private AllBooksMarkInfoResponse mapToAllBooksMarkResponse(Book book, Long memberId) {
-        return AllBooksMarkInfoResponse.builder()
+    private BooksMarkResponse mapToAllBooksMarkResponse(Book book, Long memberId) {
+        return BooksMarkResponse.builder()
                 .id(book.getId())
                 .quantity(book.getQuantity())
                 .loanableCnt(book.getLoanableCnt())
@@ -719,6 +745,21 @@ public class BookServiceImpl implements BookService {
 
         // 도서 상세 정보와 회원의 대출 중 여부, 찜 등록 여부를 BookDetailResponse 객체로 변환
         return BookDetailResponse.of(book, isLoaned, isMarked);
+    }
+
+    /**
+     * 모든 카테고리 정보를 조회합니다.
+     *
+     * @return 카테고리 정보를 담은 CategoryResponse 리스트
+     */
+    @Override
+    @Transactional(readOnly = true)
+    public List<CategoryResponse> findCategories() {
+        List<BookCategory> categories = bookCategoryRepository.findAll();
+
+        return bookCategoryRepository.findAll().stream()
+                .map(CategoryResponse::from)
+                .collect(Collectors.toList());
     }
 
     /**

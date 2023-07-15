@@ -13,6 +13,7 @@ public enum BookMessage implements Message {
     SUCCESS_DELETE_BOOK("도서가 삭제되었습니다."),
     NOT_FOUND_BOOK_INFO("책 정보를 찾을 수 없습니다."),
     NOT_FOUND_BOOK("해당 도서를 찾을 수 없습니다."),
+    NOT_FOUND_CATEGORY("해당 카테고리를 찾을 수 없습니다."),
     NOT_FOUND_LOAN_HISTORY("대출 내역이 없습니다."),
     NOT_FOUND_BOOKMARK("찜한 도서가 아닙니다."),
     ALREADY_EXIST_BOOK("이미 존재하는 책입니다."),

@@ -11,8 +11,8 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 import static com.plee.library.domain.member.QMemberLoanHistory.memberLoanHistory;
-import static com.plee.library.util.constant.Constants.LOAN_PERIOD;
-import static com.plee.library.util.constant.Constants.RENEW_PERIOD;
+import static com.plee.library.util.constant.Constant.LOAN_PERIOD;
+import static com.plee.library.util.constant.Constant.RENEW_PERIOD;
 
 @RequiredArgsConstructor
 public class MemberLoanHistoryCustomImpl implements MemberLoanHistoryCustom{

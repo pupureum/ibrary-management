@@ -39,10 +39,6 @@ public class BookInfo extends BaseTimeEntity implements Persistable<String> {
     @Column(name = "pub_date")
     private String pubDate;
 
-//    @Enumerated(EnumType.STRING)
-//    @Column(name = "category")
-//    private BookCategory category;
-
     @Builder
     public BookInfo(String isbn, String title, String author, String publisher, String image, String description, String pubDate) {
         this.isbn = isbn;
