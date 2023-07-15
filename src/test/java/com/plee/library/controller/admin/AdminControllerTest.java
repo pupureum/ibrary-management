@@ -6,9 +6,11 @@ import com.plee.library.domain.book.BookInfo;
 import com.plee.library.domain.member.Member;
 import com.plee.library.dto.admin.request.UpdateBookRequest;
 import com.plee.library.dto.admin.request.UpdateMemberRequest;
-import com.plee.library.dto.admin.response.AllLoanHistoryResponse;
+import com.plee.library.dto.admin.response.BooksResponse;
+import com.plee.library.dto.admin.response.LoanHistoryResponse;
 import com.plee.library.dto.admin.response.LoanStatusResponse;
 import com.plee.library.dto.book.request.SaveBookRequest;
+import com.plee.library.dto.book.response.CategoryResponse;
 import com.plee.library.util.message.BookMessage;
 import com.plee.library.util.message.MemberMessage;
 import com.plee.library.service.book.BookService;
@@ -33,14 +35,12 @@ import org.springframework.web.filter.CharacterEncodingFilter;
 
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.NoSuchElementException;
+import java.util.*;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.*;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -83,13 +83,14 @@ class AdminControllerTest {
                     .isbn("9788994492032")
                     .title("자바의 정석")
                     .author("남궁성")
+                    .categoryId(1L)
                     .quantity(2)
                     .build();
         }
 
         @Test
         @DisplayName("도서 추가 성공")
-        void addBook() throws Exception {
+        void addBook_success() throws Exception {
             // given
             willDoNothing().given(bookService).saveBook(req);
 
@@ -116,11 +117,66 @@ class AdminControllerTest {
     }
 
     @Nested
+    @WithUserDetails
+    @DisplayName("GET 카테고리별 도서 목록 조회 요청")
+    class getCategoryBooksTest {
+        private Page<BooksResponse> booksPage;
+        private List<CategoryResponse> categories;
+
+        @BeforeEach
+        void setUp() {
+            List<BooksResponse> books = new ArrayList<>();
+            Pageable pageable = PageRequest.of(0, 10, Sort.by("createdAt").descending());
+            booksPage = new PageImpl<>(books, pageable, 0);
+            categories = new ArrayList<>();
+
+        }
+
+        @Test
+        @DisplayName("카테고리 도서 목록 조회 성공")
+        void categoryBooks_success() throws Exception {
+            // given
+            Long categoryId = 1L;
+            given(bookService.findBooksByCategory(anyLong(), any(Pageable.class))).willReturn(booksPage);
+            given(bookService.findCategories()).willReturn(categories);
+
+            // when, then
+            mockMvc.perform(get("/admin/books/category/{categoryId}", categoryId)
+                            .param("page", "1")
+                            .with(csrf()))
+                    .andExpect(status().isOk())
+                    .andExpect(view().name("admin/bookList"))
+                    .andExpect(model().attribute("books", booksPage))
+                    .andExpect(model().attribute("categories", categories))
+                    .andExpect(model().attribute("selectedCategory", categoryId));
+            then(bookService).should(times(1)).findBooksByCategory(anyLong(), any(Pageable.class));
+            then(bookService).should(times(1)).findCategories();
+        }
+
+        @Test
+        @DisplayName("실패: 카테고리가 없는 경우")
+        void searchBookByCategory_fail() throws Exception {
+            // given
+            given(bookService.findBooksByCategory(anyLong(), any(Pageable.class))).willReturn(booksPage);
+            willThrow(new NoSuchElementException(BookMessage.NOT_FOUND_CATEGORY.getMessage())).given(bookService).findCategories();
+
+            // when, then
+            mockMvc.perform(get("/admin/books/category/{categoryId}", 1L)
+                            .with(csrf()))
+                    .andExpect(status().is3xxRedirection())
+                    .andExpect(redirectedUrl("/admin/books"))
+                    .andExpect(flash().attributeExists("errorMessage"))
+                    .andExpect(flash().attribute("errorMessage", BookMessage.NOT_FOUND_CATEGORY.getMessage()));
+        }
+    }
+
+    @Nested
+    @WithUserDetails
     @DisplayName("도서 정보 수정 요청")
     class UpdateBookQuantityTest {
         @Test
         @DisplayName("도서 정보 수정 성공")
-        void updateBookQuantity() throws Exception {
+        void updateBookQuantity_success() throws Exception {
             // given
             Long bookId = 1L;
             UpdateBookRequest req = new UpdateBookRequest(3);
@@ -173,6 +229,7 @@ class AdminControllerTest {
     }
 
     @Test
+    @WithUserDetails
     @DisplayName("도서 삭제 요청")
     void deleteBook() throws Exception {
         // given
@@ -187,6 +244,7 @@ class AdminControllerTest {
     }
 
     @Test
+    @WithUserDetails
     @DisplayName("대출 현황 조회 요청")
     void loanStatus() throws Exception {
         // given
@@ -199,8 +257,8 @@ class AdminControllerTest {
                 .build();
 
         Pageable pageable = PageRequest.of(0, 10, Sort.by(Sort.Direction.DESC, "createdAt"));
-        List<AllLoanHistoryResponse> hisRes = Arrays.asList(
-                AllLoanHistoryResponse.builder()
+        List<LoanHistoryResponse> hisRes = Arrays.asList(
+                LoanHistoryResponse.builder()
                         .id(1L)
                         .member(Member.builder().id(1L).loginId("test@gmail.com").build())
                         .bookInfo(bookInfo)
@@ -208,7 +266,7 @@ class AdminControllerTest {
                         .loanedAt(LocalDate.now())
                         .build()
         );
-        Page<AllLoanHistoryResponse> pageRes = new PageImpl<>(hisRes, pageable, hisRes.size());
+        Page<LoanHistoryResponse> pageRes = new PageImpl<>(hisRes, pageable, hisRes.size());
 
         // 대출 수 데이터 생성
         LoanStatusResponse dataRes = new LoanStatusResponse(new HashMap<>());
@@ -247,7 +305,7 @@ class AdminControllerTest {
     class DeleteMemberTest {
         @Test
         @DisplayName("삭제 성공")
-        void deleteMember() throws Exception {
+        void deleteMember_success() throws Exception {
             // given
             willDoNothing().given(memberService).deleteMember(anyLong());
 

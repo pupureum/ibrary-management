@@ -6,9 +6,8 @@ import com.plee.library.domain.member.Member;
 import com.plee.library.domain.member.MemberLoanHistory;
 import com.plee.library.domain.member.Role;
 import com.plee.library.dto.admin.request.UpdateMemberRequest;
-import com.plee.library.dto.admin.response.AllMemberInfoResponse;
+import com.plee.library.dto.admin.response.MemberInfoResponse;
 import com.plee.library.dto.member.request.SignUpMemberRequest;
-import com.plee.library.dto.member.response.MemberInfoResponse;
 import com.plee.library.util.message.MemberMessage;
 import com.plee.library.repository.book.BookRepository;
 import com.plee.library.repository.member.MemberLoanHistoryRepository;
@@ -162,13 +161,13 @@ class MemberServiceTest {
         given(memberRepository.findById(anyLong())).willReturn(Optional.of(member));
 
         // when
-        MemberInfoResponse foundMemberResponse = memberService.findMember(1L);
+        com.plee.library.dto.member.response.MemberInfoResponse foundMemberResponse = memberService.findMember(1L);
 
         // then
-        MemberInfoResponse expectedMemberRep = MemberInfoResponse.from(member);
+        com.plee.library.dto.member.response.MemberInfoResponse expectedMemberRep = com.plee.library.dto.member.response.MemberInfoResponse.from(member);
 
         assertThat(foundMemberResponse).isNotNull();
-        assertThat(foundMemberResponse).isInstanceOf(MemberInfoResponse.class);
+        assertThat(foundMemberResponse).isInstanceOf(com.plee.library.dto.member.response.MemberInfoResponse.class);
         assertThat(foundMemberResponse).usingRecursiveComparison().isEqualTo(expectedMemberRep);
         then(memberRepository).should().findById(anyLong());
         then(memberRepository).should(times(1)).findById(anyLong());
@@ -184,10 +183,10 @@ class MemberServiceTest {
         given(memberRepository.findAll(pageable)).willReturn(new PageImpl<>(members, pageable, members.size()));
 
         // when
-        Page<AllMemberInfoResponse> foundMembers = memberService.findAllMembers(pageable);
+        Page<MemberInfoResponse> foundMembers = memberService.findAllMembers(pageable);
 
         // then
-        Page<AllMemberInfoResponse> expectedResponse = createAllMemberInfoResponsePage(members, pageable);
+        Page<MemberInfoResponse> expectedResponse = createAllMemberInfoResponsePage(members, pageable);
 
         assertThat(foundMembers).isNotNull();
         assertThat(foundMembers.getTotalElements()).isEqualTo(5);
@@ -196,9 +195,9 @@ class MemberServiceTest {
         then(memberRepository).should(times(1)).findAll(pageable);
     }
 
-    private Page<AllMemberInfoResponse> createAllMemberInfoResponsePage(List<Member> members, Pageable pageable) {
-        List<AllMemberInfoResponse> response = members.stream()
-                .map(member -> AllMemberInfoResponse.builder()
+    private Page<MemberInfoResponse> createAllMemberInfoResponsePage(List<Member> members, Pageable pageable) {
+        List<MemberInfoResponse> response = members.stream()
+                .map(member -> MemberInfoResponse.builder()
                         .name(member.getName())
                         .loginId(member.getLoginId())
                         .password(member.getPassword())

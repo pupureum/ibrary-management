@@ -2,6 +2,7 @@ package com.plee.library.repository.book;
 
 import com.plee.library.config.TestJPAConfig;
 import com.plee.library.domain.book.Book;
+import com.plee.library.domain.book.BookCategory;
 import com.plee.library.domain.book.BookInfo;
 import com.plee.library.dto.book.condition.BookSearchCondition;
 import org.junit.jupiter.api.BeforeEach;
@@ -30,12 +31,20 @@ class BookRepositoryCustomTest {
     BookRepository bookRepository;
 
     @Autowired
+    BookCategoryRepository bookCategoryRepository;
+
+    @Autowired
     BookInfoRepository bookInfoRepository;
 
     private List<Book> books = new ArrayList<>();
 
     @BeforeEach
     void setUpBook() {
+        BookCategory category = BookCategory.builder()
+                .categoryName("category")
+                .build();
+        bookCategoryRepository.save(category);
+
         // 테스트를 위해 제목 bookInfo1 ~ bookInfo8을 가진 8개의 Book 생성
         for (int i = 1; i <= 8; i++) {
             BookInfo bookInfo = BookInfo.builder()
@@ -45,9 +54,11 @@ class BookRepositoryCustomTest {
                     .build();
             bookInfoRepository.save(bookInfo);
 
+
             Book book = Book.builder()
                     .bookInfo(bookInfo)
                     .quantity(1)
+                    .category(category)
                     .build();
             bookRepository.save(book);
         }

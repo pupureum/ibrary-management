@@ -2,6 +2,7 @@ package com.plee.library.repository.book;
 
 import com.plee.library.config.TestJPAConfig;
 import com.plee.library.domain.book.Book;
+import com.plee.library.domain.book.BookCategory;
 import com.plee.library.domain.book.BookInfo;
 import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,15 +17,21 @@ import static org.assertj.core.api.Assertions.*;
 
 @DataJpaTest
 @Import(TestJPAConfig.class)
-@DisplayName("BookInfoRepository 테스트")
+@DisplayName("BookRepository 테스트")
 class BookRepositoryTest {
     @Autowired
     private BookRepository bookRepository;
+
+    @Autowired
+    BookCategoryRepository bookCategoryRepository;
+
     @Autowired
     private BookInfoRepository bookInfoRepository;
 
     private BookInfo bookInfo1;
     private BookInfo bookInfo2;
+
+    private BookCategory category;
 
     @BeforeEach
     void setUpBookInfo() {
@@ -49,6 +56,11 @@ class BookRepositoryTest {
                 .pubDate("20141215")
                 .build();
         bookInfoRepository.save(bookInfo2);
+
+        category = BookCategory.builder()
+                .categoryName("category")
+                .build();
+        bookCategoryRepository.save(category);
     }
 
     @Nested
@@ -61,6 +73,7 @@ class BookRepositoryTest {
             Book book = Book.builder()
                     .bookInfo(bookInfo1)
                     .quantity(5)
+                    .category(category)
                     .build();
 
             // when
@@ -81,12 +94,14 @@ class BookRepositoryTest {
             Book book1 = Book.builder()
                     .bookInfo(bookInfo1)
                     .quantity(5)
+                    .category(category)
                     .build();
             bookRepository.save(book1);
 
             Book book2 = Book.builder()
                     .bookInfo(bookInfo1)
                     .quantity(5)
+                    .category(category)
                     .build();
 
             // when, then
@@ -105,11 +120,13 @@ class BookRepositoryTest {
             Book book1 = Book.builder()
                     .bookInfo(bookInfo1)
                     .quantity(3)
+                    .category(category)
                     .build();
             bookRepository.save(book1);
             Book book2 = Book.builder()
                     .bookInfo(bookInfo2)
                     .quantity(1)
+                    .category(category)
                     .build();
             bookRepository.save(book2);
 
@@ -148,11 +165,13 @@ class BookRepositoryTest {
             Book book1 = Book.builder()
                     .bookInfo(bookInfo1)
                     .quantity(3)
+                    .category(category)
                     .build();
             bookRepository.save(book1);
             Book book2 = Book.builder()
                     .bookInfo(bookInfo2)
                     .quantity(1)
+                    .category(category)
                     .build();
             bookRepository.save(book2);
 
@@ -191,11 +210,13 @@ class BookRepositoryTest {
             Book book1 = Book.builder()
                     .bookInfo(bookInfo1)
                     .quantity(3)
+                    .category(category)
                     .build();
             bookRepository.save(book1);
             Book book2 = Book.builder()
                     .bookInfo(bookInfo2)
                     .quantity(1)
+                    .category(category)
                     .build();
             bookRepository.save(book2);
 
@@ -214,11 +235,13 @@ class BookRepositoryTest {
             Book book1 = Book.builder()
                     .bookInfo(bookInfo1)
                     .quantity(3)
+                    .category(category)
                     .build();
             bookRepository.save(book1);
             Book book2 = Book.builder()
                     .bookInfo(bookInfo2)
                     .quantity(1)
+                    .category(category)
                     .build();
             bookRepository.save(book2);
 
@@ -238,6 +261,7 @@ class BookRepositoryTest {
                 Book book = Book.builder()
                         .bookInfo(bookInfo)
                         .quantity(1)
+                        .category(category)
                         .build();
                 bookRepository.save(book);
                 books.add(book);
@@ -262,11 +286,13 @@ class BookRepositoryTest {
             Book book1 = Book.builder()
                     .bookInfo(bookInfo1)
                     .quantity(3)
+                    .category(category)
                     .build();
             bookRepository.save(book1);
             Book book2 = Book.builder()
                     .bookInfo(bookInfo2)
                     .quantity(1)
+                    .category(category)
                     .build();
             bookRepository.save(book2);
 
@@ -299,6 +325,7 @@ class BookRepositoryTest {
         Book book1 = Book.builder()
                 .bookInfo(bookInfo1)
                 .quantity(3)
+                .category(category)
                 .build();
         bookRepository.save(book1);
 
@@ -317,6 +344,7 @@ class BookRepositoryTest {
         Book book1 = Book.builder()
                 .bookInfo(bookInfo1)
                 .quantity(3)
+                .category(category)
                 .build();
         bookRepository.save(book1);
 
@@ -335,6 +363,7 @@ class BookRepositoryTest {
         Book book2 = Book.builder()
                 .bookInfo(bookInfo2)
                 .quantity(1)
+                .category(category)
                 .build();
         bookRepository.save(book2);
         book2.decreaseLoanableCnt();
@@ -355,6 +384,7 @@ class BookRepositoryTest {
         Book book1 = Book.builder()
                 .bookInfo(bookInfo1)
                 .quantity(3)
+                .category(category)
                 .build();
         bookRepository.save(book1);
 

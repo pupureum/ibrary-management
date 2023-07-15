@@ -2,9 +2,11 @@ package com.plee.library.repository.member;
 
 import com.plee.library.config.TestJPAConfig;
 import com.plee.library.domain.book.Book;
+import com.plee.library.domain.book.BookCategory;
 import com.plee.library.domain.book.BookInfo;
 import com.plee.library.domain.member.Member;
 import com.plee.library.domain.member.MemberBookmark;
+import com.plee.library.repository.book.BookCategoryRepository;
 import com.plee.library.repository.book.BookInfoRepository;
 import com.plee.library.repository.book.BookRepository;
 import org.junit.jupiter.api.BeforeEach;
@@ -34,6 +36,8 @@ class MemberBookmarkRepositoryTest {
     @Autowired
     private BookInfoRepository bookInfoRepository;
     @Autowired
+    private BookCategoryRepository bookCategoryRepository;
+    @Autowired
     private BookRepository bookRepository;
 
     private List<Member> members = new ArrayList<>();
@@ -52,6 +56,12 @@ class MemberBookmarkRepositoryTest {
             memberRepository.save(member);
             members.add(member);
         }
+
+        BookCategory category = BookCategory.builder()
+                .categoryName("category")
+                .build();
+        bookCategoryRepository.save(category);
+
         // 테스트를 위한 도서 2권 생성
         for (int i = 1; i <= 2; i++) {
             BookInfo bookInfo = BookInfo.builder()
@@ -68,6 +78,7 @@ class MemberBookmarkRepositoryTest {
             Book book = Book.builder()
                     .bookInfo(bookInfo)
                     .quantity(1)
+                    .category(category)
                     .build();
             bookRepository.save(book);
             books.add(book);

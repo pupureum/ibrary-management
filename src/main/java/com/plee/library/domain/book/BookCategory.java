@@ -2,6 +2,7 @@ package com.plee.library.domain.book;
 
 import jakarta.persistence.*;
 import lombok.AccessLevel;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
@@ -24,6 +25,7 @@ public class BookCategory {
     @OneToMany(mappedBy = "bookCategory")
     private Set<Book> books = new HashSet<>();
 
+    @Builder
     public BookCategory(Long id, String categoryName) {
         this.id = id;
         this.categoryName = categoryName;

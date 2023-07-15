@@ -15,7 +15,7 @@ public class BooksResponse {
     private final Long id;
     private final int quantity;
     private final int loanableCnt;
-    private final BookCategory category;
+    private final BookCategory bookCategory;
     private final BookInfo bookInfo;
 
     @Builder
@@ -23,7 +23,7 @@ public class BooksResponse {
         this.id = id;
         this.quantity = quantity;
         this.loanableCnt = loanableCnt;
-        this.category = category;
+        this.bookCategory = category;
         this.bookInfo = bookInfo;
     }
 

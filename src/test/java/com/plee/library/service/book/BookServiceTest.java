@@ -1,23 +1,24 @@
 package com.plee.library.service.book;
 
 import com.plee.library.domain.book.Book;
+import com.plee.library.domain.book.BookCategory;
 import com.plee.library.domain.book.BookInfo;
 import com.plee.library.domain.member.Member;
 import com.plee.library.domain.member.MemberBookmark;
 import com.plee.library.domain.member.MemberLoanHistory;
 import com.plee.library.dto.admin.request.UpdateBookRequest;
-import com.plee.library.dto.admin.response.AllBooksResponse;
-import com.plee.library.dto.admin.response.AllLoanHistoryResponse;
+import com.plee.library.dto.admin.response.BooksResponse;
+import com.plee.library.dto.admin.response.LoanHistoryResponse;
 import com.plee.library.dto.admin.response.LoanStatusResponse;
 import com.plee.library.dto.book.condition.BookSearchCondition;
 import com.plee.library.dto.book.request.AddBookRequest;
 import com.plee.library.dto.book.request.ReturnBookRequest;
 import com.plee.library.dto.book.request.SaveBookRequest;
 import com.plee.library.dto.book.request.SearchBookRequest;
-import com.plee.library.dto.book.response.AllBooksMarkInfoResponse;
+import com.plee.library.dto.book.response.BooksMarkResponse;
 import com.plee.library.dto.book.response.BookInfoResponse;
-import com.plee.library.dto.book.response.LoanHistoryResponse;
 import com.plee.library.dto.member.condition.LoanHistorySearchCondition;
+import com.plee.library.repository.book.BookCategoryRepository;
 import com.plee.library.util.message.BookMessage;
 import com.plee.library.repository.book.BookInfoRepository;
 import com.plee.library.repository.book.BookRepository;
@@ -34,6 +35,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.test.context.support.WithUserDetails;
 
 import java.time.LocalDate;
 import java.util.*;
@@ -51,6 +53,8 @@ class BookServiceTest {
     @Mock
     private BookInfoRepository bookInfoRepository;
     @Mock
+    private BookCategoryRepository bookCategoryRepository;
+    @Mock
     private MemberRequestHistoryRepository memberReqHisRepository;
     @Mock
     private MemberBookmarkRepository memberBookmarkRepository;
@@ -64,6 +68,8 @@ class BookServiceTest {
     private BookInfo bookInfo;
     private Book book;
     private Member member;
+
+    private BookCategory category;
 
     @BeforeEach
     void setUp() {
@@ -79,9 +85,12 @@ class BookServiceTest {
                 .password("password")
                 .build();
 
+        category = new BookCategory(1L, "category");
+
         book = Book.builder()
                 .bookInfo(bookInfo)
                 .quantity(2)
+                .category(category)
                 .build();
     }
 
@@ -89,6 +98,7 @@ class BookServiceTest {
     @DisplayName("도서 저장 테스트")
     class SaveBookTest {
         private SaveBookRequest req;
+        private BookCategory category;
 
         @BeforeEach
         void setUp() {
@@ -97,17 +107,21 @@ class BookServiceTest {
                     .title("title")
                     .author("author")
                     .publisher("publisher")
+                    .quantity(2)
+                    .categoryId(1L)
                     .build();
+            category = new BookCategory(1L, "category");
         }
 
         @Test
         @DisplayName("도서 요청이 있던 도서인 경우")
-        void checkBookRequestAlready_exist() {
+        void save_requestExist() {
             // given
             given(bookRepository.existsByBookInfoIsbn(req.getIsbn())).willReturn(false);
             Optional<BookInfo> optionalBookInfo = Optional.of(bookInfo);
             given(bookInfoRepository.findById(req.getIsbn())).willReturn(optionalBookInfo);
             given(memberReqHisRepository.existsByBookInfoIsbnAndIsApprovedFalse(req.getIsbn())).willReturn(true);
+            given(bookCategoryRepository.findById(req.getCategoryId())).willReturn(Optional.of(category));
 
             // when
             bookService.saveBook(req);
@@ -121,11 +135,12 @@ class BookServiceTest {
 
         @DisplayName("도서 요청이 없던 도서인 경우")
         @Test
-        void checkBookRequestAlready_notExist() {
+        void save_requestNotExist() {
             // given
             given(bookRepository.existsByBookInfoIsbn(req.getIsbn())).willReturn(false);
             given(bookInfoRepository.findById(req.getIsbn())).willReturn(Optional.ofNullable(null));
             given(bookInfoRepository.save(any(BookInfo.class))).willReturn(bookInfo);
+            given(bookCategoryRepository.findById(req.getCategoryId())).willReturn(Optional.of(category));
 
             // when
             bookService.saveBook(req);
@@ -289,11 +304,8 @@ class BookServiceTest {
             // given
             given(memberRepository.findById(member.getId())).willReturn(Optional.of(member));
             given(bookRepository.findById(book.getId())).willReturn(Optional.of(book));
-            MemberLoanHistory history = MemberLoanHistory.builder()
-                    .member(member)
-                    .bookInfo(bookInfo)
-                    .build();
-            given(memberLoanHisRepository.findByMemberIdAndBookInfoIsbnAndReturnedAtIsNull(eq(member.getId()), eq(bookInfo.getIsbn()))).willReturn(Optional.of(history));
+            given(memberLoanHisRepository.findByMemberIdAndBookInfoIsbnAndReturnedAtIsNull(member.getId(), bookInfo.getIsbn()))
+                    .willReturn(Optional.empty());
             given(memberLoanHisRepository.countByMemberIdAndReturnedAtIsNull(member.getId())).willReturn(3L);
 
             // when, then
@@ -306,7 +318,8 @@ class BookServiceTest {
     @Nested
     @DisplayName("도서 반납 테스트")
     class ReturnBookTest {
-        ReturnBookRequest req;
+        private ReturnBookRequest req;
+        private MemberLoanHistory history;
 
         @BeforeEach
         void setUp() {
@@ -314,14 +327,20 @@ class BookServiceTest {
                     .historyId(1L)
                     .bookInfoIsbn(bookInfo.getIsbn())
                     .build();
+            history = MemberLoanHistory.builder()
+                    .member(member)
+                    .bookInfo(bookInfo)
+                    .build();
         }
 
         @Test
         @DisplayName("도서 반납 성공")
         void returnBook() {
             // given
-            given(memberRepository.findById(anyLong())).willReturn(Optional.of(member));
             given(bookRepository.findByBookInfoIsbn(bookInfo.getIsbn())).willReturn(Optional.of(book));
+            given(memberLoanHisRepository.findByMemberIdAndBookInfoIsbnAndReturnedAtIsNull(1L,bookInfo.getIsbn()))
+                    .willReturn(Optional.of(history));
+
             member.loanBook(book);
             book.decreaseLoanableCnt();
 
@@ -338,7 +357,6 @@ class BookServiceTest {
         @DisplayName("실패: 도서가 없는 경우")
         void returnBook_failNotExistBook() {
             // given
-            given(memberRepository.findById(anyLong())).willReturn(Optional.of(member));
             given(bookRepository.findByBookInfoIsbn(req.getBookInfoIsbn())).willReturn(Optional.empty());
 
             // when, then
@@ -351,8 +369,9 @@ class BookServiceTest {
         @DisplayName("실패: 대출 기록이 없는 경우")
         void returnBook_failNotLoaned() {
             // given
-            given(memberRepository.findById(anyLong())).willReturn(Optional.of(member));
             given(bookRepository.findByBookInfoIsbn(req.getBookInfoIsbn())).willReturn(Optional.of(book));
+            given(memberLoanHisRepository.findByMemberIdAndBookInfoIsbnAndReturnedAtIsNull(1L,bookInfo.getIsbn()))
+                    .willReturn(Optional.empty());
 
             // when, then
             assertThatThrownBy(() -> bookService.returnBook(req, 1L))
@@ -738,7 +757,7 @@ class BookServiceTest {
         given(memberBookmarkRepository.existsByMemberIdAndBookId(1L, null)).willReturn(false);
 
         // when
-        Page<AllBooksMarkInfoResponse> result = bookService.findBySearchKeyword(req, 1L, pageable);
+        Page<BooksMarkResponse> result = bookService.findBySearchKeyword(req, 1L, pageable);
 
         // then
         assertThat(result.getTotalElements()).isEqualTo(4);
@@ -767,6 +786,7 @@ class BookServiceTest {
 
     // 도서 4권 생성
     private List<Book> createBooks() {
+        BookCategory category = new BookCategory(1L, "category");
         List<Book> books = new ArrayList<>();
         for (int i = 0; i < 4; i++) {
             BookInfo bookInfo = BookInfo.builder()
@@ -777,6 +797,7 @@ class BookServiceTest {
             Book book = Book.builder()
                     .bookInfo(bookInfo)
                     .quantity(1)
+                    .category(category)
                     .build();
             books.add(book);
         }
@@ -795,10 +816,10 @@ class BookServiceTest {
         given(bookRepository.findAll(pageable)).willReturn(bookPage);
 
         // when
-        Page<AllBooksResponse> result = bookService.findAllBooks(pageable);
+        Page<BooksResponse> result = bookService.findBooks(pageable);
 
         // then
-        List<AllBooksResponse> expected = AllBooksResponse.from(bookPage);
+        List<BooksResponse> expected = BooksResponse.from(bookPage);
         // 전체 도서 수는 5권
         assertThat(result.getTotalElements()).isEqualTo(5);
         assertThat(result.getContent()).usingRecursiveComparison().isEqualTo(expected);
@@ -818,11 +839,61 @@ class BookServiceTest {
         given(memberBookmarkRepository.existsByMemberIdAndBookId(1L, null)).willReturn(true);
 
         // when
-        Page<AllBooksMarkInfoResponse> result = bookService.findAllBooksWithMark(1L, pageable);
+        Page<BooksMarkResponse> result = bookService.findBooksWithMark(1L, pageable);
 
         // then
+        // 전체 도서 수는 5권
         assertThat(result.getTotalElements()).isEqualTo(5);
         assertThat(result.getContent()).allSatisfy(book -> assertThat(book.isMarked()).isEqualTo(true));
+    }
+
+    @Nested
+    @WithUserDetails
+    @DisplayName("특정 카테고리 도서 검색 테스트")
+    class FindBooksByCategoryWithMarkTest {
+        @Test
+        @DisplayName("해당 카테고리의 도서 정보와 회원의 찜 정보 조회 성공")
+        void findAllBooksWithMark_success() {
+            // given
+            Long categoryId = 1L;
+            given(bookCategoryRepository.existsById(categoryId)).willReturn(true);
+
+            // 도서 조회 결과 생성
+            List<Book> books = createBooks();
+            books.add(book);
+            Pageable pageable = PageRequest.of(0, 10);
+            Page<Book> bookPage = new PageImpl<>(books, pageable, 4);
+            given(bookRepository.findByBookCategoryId(categoryId, pageable)).willReturn(bookPage);
+
+            // 찜 정보 생성
+            given(memberBookmarkRepository.existsByMemberIdAndBookId(1L, null)).willReturn(true);
+
+            // when
+            Page<BooksMarkResponse> result = bookService.findBooksByCategoryWithMark(1L, 1L, pageable);
+
+            // then
+            assertThat(result.getTotalElements()).isEqualTo(5);
+            assertThat(result.getContent()).allSatisfy(book -> assertThat(book.getBookCategory().getId()).isEqualTo(category.getId()));
+            assertThat(result.getContent()).allSatisfy(book -> assertThat(book.getBookCategory().getCategoryName()).isEqualTo(category.getCategoryName()));
+            assertThat(result.getContent()).allSatisfy(book -> assertThat(book.isMarked()).isEqualTo(true));
+
+            then(bookCategoryRepository).should(times(1)).existsById(categoryId);
+            then(bookRepository).should(times(1)).findByBookCategoryId(categoryId, pageable);
+            then(memberBookmarkRepository).should(times(5)).existsByMemberIdAndBookId(1L, null);
+        }
+
+        @Test
+        @DisplayName("실패: 해당 카테고리 없는 경우")
+        void findAllBooksWithMark_fail() {
+            // given
+            Long categoryId = 1L;
+            given(bookCategoryRepository.existsById(categoryId)).willThrow(new NoSuchElementException(BookMessage.NOT_FOUND_CATEGORY.getMessage()));
+
+            // when, then
+            assertThatThrownBy(() -> bookService.findBooksByCategoryWithMark(categoryId, 1L, any(Pageable.class)))
+                    .isInstanceOf(NoSuchElementException.class)
+                    .hasMessageContaining(BookMessage.NOT_FOUND_CATEGORY.getMessage());
+        }
     }
 
     @Nested
@@ -853,10 +924,10 @@ class BookServiceTest {
             given(memberLoanHisRepository.findAll(pageable)).willReturn(histories);
 
             // when
-            Page<AllLoanHistoryResponse> result = bookService.findAllLoanHistory(pageable);
+            Page<LoanHistoryResponse> result = bookService.findAllLoanHistory(pageable);
 
             // then
-            List<AllLoanHistoryResponse> expectedResponse = AllLoanHistoryResponse.from(histories);
+            List<LoanHistoryResponse> expectedResponse = LoanHistoryResponse.from(histories);
 
             assertThat(result.getTotalElements()).isEqualTo(2);
             assertThat(result.getContent()).usingRecursiveComparison().isEqualTo(expectedResponse);
@@ -872,10 +943,10 @@ class BookServiceTest {
             given(memberLoanHisRepository.findAllByMemberId(anyLong(), any(Pageable.class))).willReturn(histories);
 
             // when
-            Page<LoanHistoryResponse> result = bookService.findLoanHistory(1L, pageable);
+            Page<com.plee.library.dto.book.response.LoanHistoryResponse> result = bookService.findLoanHistory(1L, pageable);
 
             // then
-            List<LoanHistoryResponse> expectedResponse = LoanHistoryResponse.from(histories.getContent());
+            List<com.plee.library.dto.book.response.LoanHistoryResponse> expectedResponse = com.plee.library.dto.book.response.LoanHistoryResponse.from(histories.getContent());
             assertThat(result.getTotalElements()).isEqualTo(2);
             assertThat(result.getContent()).usingRecursiveComparison().isEqualTo(expectedResponse);
         }
@@ -888,10 +959,10 @@ class BookServiceTest {
             given(memberLoanHisRepository.searchHistory(any(LoanHistorySearchCondition.class))).willReturn(histories);
 
             // when
-            Page<LoanHistoryResponse> result = bookService.findOnLoanHistory(1L);
+            Page<com.plee.library.dto.book.response.LoanHistoryResponse> result = bookService.findOnLoanHistory(1L);
 
             // then
-            List<LoanHistoryResponse> expectedResponse = LoanHistoryResponse.from(histories);
+            List<com.plee.library.dto.book.response.LoanHistoryResponse> expectedResponse = com.plee.library.dto.book.response.LoanHistoryResponse.from(histories);
             assertThat(result.getTotalElements()).isEqualTo(2);
             assertThat(result.getContent()).usingRecursiveComparison().isEqualTo(expectedResponse);
         }

@@ -87,8 +87,10 @@ public class AdminController {
         return "admin/bookList";
     }
 
+    // 카테고리별 도서 목록 페이지를 반환합니다.
     @GetMapping("/books/category/{categoryId}")
-    public String categoryBooks(@PathVariable("categoryId") Long categoryId, @PageableDefault(size = 10, sort = "createdAt", direction = DESC) Pageable pageable, Model model) {
+    public String categoryBooks(@PathVariable("categoryId") Long categoryId, @PageableDefault(size = 10, sort = "createdAt", direction = DESC) Pageable pageable,
+                                RedirectAttributes redirectAttributes, Model model) {
         log.info("ADMIN GET categoryBooks request");
         try {
             Page<BooksResponse> response = bookService.findBooksByCategory(categoryId, pageable);
@@ -97,12 +99,13 @@ public class AdminController {
             model.addAttribute("books", response);
             model.addAttribute("categories", categories);
         } catch (NoSuchElementException e) {
+            // 카테고리 정보가 없는 경우
             log.warn("ADMIN GET categoryBooks request failed", e.getMessage());
+            redirectAttributes.addFlashAttribute("errorMessage", e.getMessage());
             return "redirect:/admin/books";
         }
 
         model.addAttribute("selectedCategory", categoryId);
-        model.addAttribute("selectedMenu", "admin-book-list");
         return "admin/bookList";
     }
 
