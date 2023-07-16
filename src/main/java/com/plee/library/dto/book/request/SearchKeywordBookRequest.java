@@ -8,7 +8,7 @@ import lombok.*;
 @Builder
 @RequiredArgsConstructor
 @AllArgsConstructor
-public class SearchBookRequest {
+public class SearchKeywordBookRequest {
 
     @NotBlank(message = "검색어를 입력해주세요.")
     private String keyword;

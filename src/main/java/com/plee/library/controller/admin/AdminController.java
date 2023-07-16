@@ -1,5 +1,6 @@
 package com.plee.library.controller.admin;
 
+import com.plee.library.dto.admin.request.SearchBookRequest;
 import com.plee.library.dto.admin.request.UpdateBookRequest;
 import com.plee.library.dto.admin.request.UpdateMemberRequest;
 import com.plee.library.dto.admin.response.LoanHistoryResponse;
@@ -106,6 +107,38 @@ public class AdminController {
         }
 
         model.addAttribute("selectedCategory", categoryId);
+        return "admin/bookList";
+    }
+
+    // 키워드 및 카테고리 내 도서 검색 결과를 반환합니다.
+    @GetMapping("/books/search")
+    public String searchBook(@Valid @ModelAttribute("searchBookRequest") SearchBookRequest request, BindingResult bindingResult,
+                             @PageableDefault(size = 10, sort = "createdAt", direction = DESC) Pageable pageable, RedirectAttributes redirectAttributes, Model model) {
+        log.info("ADMIN GET searchBook request, keyword = {} category = {}", request.getKeyword(), request.getCategoryId());
+        // 유효성 검증 실패 시, 에러 메시지를 반환합니다.
+        if (bindingResult.hasErrors()) {
+            log.warn("ADMIN GET searchBook validation error");
+            redirectAttributes.addFlashAttribute("errorMessage", bindingResult.getFieldError().getDefaultMessage());
+            // 유효성 검증 실패 시 검색 시도한 페이지로 리다이렉트하기 위해 page 정보 전달
+            redirectAttributes.addAttribute("page", request.getBefore());
+            return "redirect:/admin/books";
+        }
+
+        try {
+            Page<BooksResponse> response = bookService.searchBooks(request, pageable);
+            List<CategoryResponse> categories = bookService.findCategories();
+
+            model.addAttribute("books", response);
+            model.addAttribute("categories", categories);
+        } catch (NoSuchElementException e) {
+            // 카테고리 정보가 없는 경우
+            log.warn("ADMIN GET searchBook request failed", e.getMessage());
+            redirectAttributes.addFlashAttribute("errorMessage", e.getMessage());
+            return "redirect:/admin/books";
+        }
+
+        model.addAttribute("selectedCategory", request.getCategoryId());
+        model.addAttribute("selectedMenu", "admin-book-list");
         return "admin/bookList";
     }
 

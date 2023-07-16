@@ -17,28 +17,18 @@
         <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
             <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
                 <h3 style="margin-top: 50px; margin-bottom: 30px; margin-left: 20px; font-family: SeoulNamsanM">대출 현황</h3>
-                <div class="btn-toolbar mb-2 mb-md-0">
-<!--                    <div class="btn-group me-2">-->
-<!--                        <button type="button" class="btn btn-sm btn-outline-secondary">Share</button>-->
-<!--                        <button type="button" class="btn btn-sm btn-outline-secondary">Export</button>-->
-<!--                    </div>-->
-<!--                    <button type="button" class="btn btn-sm btn-outline-secondary dropdown-toggle">-->
-<!--                        <span data-feather="calendar" class="align-text-bottom"></span>-->
-<!--                        This week-->
-<!--                    </button>-->
-                </div>
             </div>
             <div class="row">
                 <div class="col-md-6">
                     <h6>도서 대출 빈도수</h6>
                     <canvas class="my-4 w-100" id="loanCountChart" width="400" height="200"></canvas>
                 </div>
-                <div class="col-md-6" style="padding-left: 100px">
-                    <h6>대출 현황</h6>
-                    <div class="chart-container" style="position: relative; height: 250px; width: 150%;">
-                        <canvas id="loanStatusChart"></canvas>
-                    </div>
-                </div>
+<!--                <div class="col-md-6" style="padding-left: 100px">-->
+<!--                    <h6>대출 현황</h6>-->
+<!--                    <div class="chart-container" style="position: relative; height: 250px; width: 150%;">-->
+<!--                        <canvas id="loanStatusChart"></canvas>-->
+<!--                    </div>-->
+<!--                </div>-->
             </div>
             <div class="table-responsive">
                 <table class="table table-hover">
@@ -143,18 +133,18 @@
         }
     });
 
-    let ctx2 = document.getElementById('loanStatusChart').getContext('2d');
-    new Chart(ctx2, {
-        type: 'pie',
-        data: {
-            labels: ['대출', '반납', '연장'],
-            datasets: [{
-                data: [12, 19, 3],
-                backgroundColor: ['#f57d96', '#73ace7', '#a8d064'],
-                hoverBackgroundColor: ['#f57d96', '#73ace7', '#a8d064']
-            }]
-        },
-    });
+    // let ctx2 = document.getElementById('loanStatusChart').getContext('2d');
+    // new Chart(ctx2, {
+    //     type: 'pie',
+    //     data: {
+    //         labels: ['대출', '반납', '연장'],
+    //         datasets: [{
+    //             data: [12, 19, 3],
+    //             backgroundColor: ['#f57d96', '#73ace7', '#a8d064'],
+    //             hoverBackgroundColor: ['#f57d96', '#73ace7', '#a8d064']
+    //         }]
+    //     },
+    // });
 </script>
 </body>
 </html>

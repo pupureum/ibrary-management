@@ -8,6 +8,7 @@ import com.plee.library.domain.member.Member;
 import com.plee.library.domain.member.MemberBookmark;
 import com.plee.library.domain.member.MemberLoanHistory;
 import com.plee.library.domain.member.MemberRequestHistory;
+import com.plee.library.dto.admin.request.SearchBookRequest;
 import com.plee.library.dto.admin.request.UpdateBookRequest;
 import com.plee.library.dto.admin.response.BooksResponse;
 import com.plee.library.dto.admin.response.LoanHistoryResponse;
@@ -355,11 +356,9 @@ public class BookServiceImpl implements BookService {
      *
      * @param isbn 책 정보의 ISBN(13)
      */
-    @Transactional
-    public void deleteBookInfo(String isbn) {
-        boolean hasLoanHistory = memberLoanHisRepository.existsByBookInfoIsbnAndReturnedAtIsNull(isbn);
+    private void deleteBookInfo(String isbn) {
+        boolean hasLoanHistory = memberLoanHisRepository.existsByBookInfoIsbn(isbn);
         boolean hasRequestHistory = memberReqHisRepository.existsByBookInfoIsbn(isbn);
-
         if (!hasLoanHistory && !hasRequestHistory) {
             bookInfoRepository.deleteById(isbn);
             log.info("SUCCESS deleteBookInfo Book ISBN = {}", isbn);
@@ -387,7 +386,7 @@ public class BookServiceImpl implements BookService {
             notReturnedHis.forEach(history -> {
                 history.doReturn();
             });
-            log.info("SUCCESS return not returned books = {}", notReturnedHis.size());
+            log.info("SUCCESS return book = {}", notReturnedHis.size());
         }
 
         // 찜 목록에서 삭제
@@ -503,7 +502,7 @@ public class BookServiceImpl implements BookService {
      * @param pageable 페이지 정보
      * @return 검색된 책 정보와 찜 등록 여부 정보를 담은 Page 객체
      */
-    public Page<BooksMarkResponse> findBySearchKeyword(SearchBookRequest request, Long memberId, Pageable pageable) {
+    public Page<BooksMarkResponse> findBySearchKeyword(SearchKeywordBookRequest request, Long memberId, Pageable pageable) {
         // 키워드 앞뒤의 공백 제거
         String keyword = request.getKeyword().trim();
 
@@ -544,6 +543,32 @@ public class BookServiceImpl implements BookService {
     public Page<BooksResponse> findBooks(Pageable pageable) {
         // 책들을 최신순으로 페이지네이션 하여 조회
         Page<Book> books = bookRepository.findAll(pageable);
+
+        // 조회된 책들을 AllBooksResponse 객체의 리스트로 변환
+        List<BooksResponse> response = BooksResponse.from(books);
+        return new PageImpl<>(response, pageable, books.getTotalElements());
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Page<BooksResponse> searchBooks(SearchBookRequest request, Pageable pageable) {
+        // 카테고리 검색이지만, 해당 카테고리가 없는 경우
+        if (request.getCategoryId() != null) {
+            bookCategoryRepository.findById(request.getCategoryId())
+                    .orElseThrow(() -> new NoSuchElementException(BookMessage.NOT_FOUND_CATEGORY.getMessage()));
+        }
+
+        // 키워드 앞뒤의 공백 제거
+        String keyword = request.getKeyword().trim();
+
+        // 부합하는 도서를 검색하고, 페이지네이션하여 조회
+        Page<Book> books = bookRepository.search(
+                BookSearchCondition.builder()
+                        .keyword(keyword)
+                        .title(request.isTitle())
+                        .author(request.isAuthor())
+                        .categoryId(request.getCategoryId())
+                        .build(), pageable);
 
         // 조회된 책들을 AllBooksResponse 객체의 리스트로 변환
         List<BooksResponse> response = BooksResponse.from(books);

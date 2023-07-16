@@ -52,9 +52,15 @@ public class BookRepositoryCustomImpl implements BookRepositoryCustom {
     private BooleanBuilder searchExpression(BookSearchCondition condition) {
         BooleanBuilder builder = new BooleanBuilder();
 
-        return builder
+        builder
                 .or(titleLike(condition.isTitle(), condition.getKeyword()))
-                .or(authorLike(condition.isAuthor(), condition.getKeyword()));
+                .or(authorLike(condition.isAuthor(), condition.getKeyword()))
+                .and(categoryEq(condition.getCategoryId()));
+
+//        if (condition.getCategoryId() != null) {
+//            builder.and(book.bookCategory.id.eq(condition.getCategoryId()));
+//        }
+        return builder;
     }
 
     private BooleanExpression titleLike(boolean title, String keyword) {
@@ -63,5 +69,9 @@ public class BookRepositoryCustomImpl implements BookRepositoryCustom {
 
     private BooleanExpression authorLike(boolean author, String keyword) {
         return author ? book.bookInfo.author.containsIgnoreCase(keyword) : null;
+    }
+
+    private BooleanExpression categoryEq(Long categoryId) {
+        return categoryId != null ? book.bookCategory.id.eq(categoryId) : null;
     }
 }

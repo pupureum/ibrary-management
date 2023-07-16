@@ -2,6 +2,7 @@ package com.plee.library.service.book;
 
 import com.plee.library.domain.book.Book;
 import com.plee.library.domain.book.BookCategory;
+import com.plee.library.dto.admin.request.SearchBookRequest;
 import com.plee.library.dto.admin.request.UpdateBookRequest;
 import com.plee.library.dto.admin.response.BooksResponse;
 import com.plee.library.dto.admin.response.LoanHistoryResponse;
@@ -38,7 +39,7 @@ public interface BookService {
 
     LoanStatusResponse calculateDailyLoanCounts();
 
-    Page<BooksMarkResponse> findBySearchKeyword(SearchBookRequest request, Long memberId, Pageable pageable);
+    Page<BooksMarkResponse> findBySearchKeyword(SearchKeywordBookRequest request, Long memberId, Pageable pageable);
 
     List<BookInfoResponse> findNewBooks();
 
@@ -47,6 +48,8 @@ public interface BookService {
     List<CategoryResponse> findCategories();
 
     Page<BooksResponse> findBooks(Pageable pageable);
+
+    Page<BooksResponse> searchBooks(SearchBookRequest request, Pageable pageable);
 
     Page<BooksResponse> findBooksByCategory(Long categoryId, Pageable pageable);
 

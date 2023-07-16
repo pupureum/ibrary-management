@@ -5,7 +5,7 @@ import com.plee.library.domain.member.Member;
 import com.plee.library.dto.book.request.AddBookRequest;
 import com.plee.library.dto.book.request.BookmarkRequest;
 import com.plee.library.dto.book.request.ReturnBookRequest;
-import com.plee.library.dto.book.request.SearchBookRequest;
+import com.plee.library.dto.book.request.SearchKeywordBookRequest;
 import com.plee.library.dto.book.response.*;
 import com.plee.library.util.message.BookMessage;
 import com.plee.library.service.book.BookService;
@@ -72,7 +72,7 @@ public class BookController {
 
     // 도서 검색 결과를 반환합니다.
     @GetMapping("/search")
-    public String searchBookByKeyword(@Valid @ModelAttribute("searchBookRequest") SearchBookRequest request, BindingResult bindingResult,
+    public String searchBookByKeyword(@Valid @ModelAttribute("searchBookRequest") SearchKeywordBookRequest request, BindingResult bindingResult,
                                       @RequestParam("page") int page, @CurrentMember Member member, RedirectAttributes redirectAttributes, Model model) {
         log.info("GET searchBookByKeyword keyword = {}", request.getKeyword());
         if (bindingResult.hasErrors()) {

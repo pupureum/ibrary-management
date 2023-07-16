@@ -29,21 +29,10 @@
         <div th:replace="~{fragments/sidebar :: sidebar(${selectedMenu})}"/>
         <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
             <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
-                <h3 style="margin-top: 50px; margin-bottom: 30px; margin-left: 20px; font-family: SeoulNamsanM">사용자 관리</h3>
+                <h3 style="margin-top: 50px; margin-bottom: 30px; margin-left: 20px; font-family: SeoulNamsanM">회원 관리</h3>
                 <h6>
                     <span th:text="'총 ' + ${members.totalElements} + '명의 회원이 있습니다.'"></span>
                 </h6>
-                <form th:action="@{/book/search}" method="get">
-                    <div class="btn-toolbar mb-2 mb-md-2">
-                        <div class="input-group">
-                            <input type="text" class="form-control mb-7" style="width: 400px;" id="keyword"
-                                   placeholder="권한을 변경할 사용자의 이름 또는 아이디를 입력하세요!">
-                            <div>
-                                <button type="submit" class="btn btn-outline-primary">검색</button>
-                            </div>
-                        </div>
-                    </div>
-                </form>
             </div>
             <div class="table-responsive">
                 <table class="table table-hover">

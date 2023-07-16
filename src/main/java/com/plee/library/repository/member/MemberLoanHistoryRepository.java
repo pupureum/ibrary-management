@@ -18,6 +18,8 @@ import java.util.Optional;
 public interface MemberLoanHistoryRepository extends JpaRepository<MemberLoanHistory, Long>, QuerydslPredicateExecutor<MemberLoanHistoryRepository>, MemberLoanHistoryCustom {
     boolean existsByBookInfoIsbnAndReturnedAtIsNull(String bookInfoId);
 
+    boolean existsByBookInfoIsbn(String bookInfoId);
+
     long countByMemberIdAndReturnedAtIsNull(Long memberId);
 
     @Query("SELECT Date(h.createdAt), COUNT(h) FROM MemberLoanHistory h WHERE Date(h.createdAt) >= :startDate AND Date(h.createdAt) <= :endDate GROUP BY Date(h.createdAt)")

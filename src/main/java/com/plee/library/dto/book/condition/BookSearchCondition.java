@@ -13,4 +13,5 @@ public class BookSearchCondition {
     private String keyword;
     private boolean title;
     private boolean author;
+    private Long categoryId;
 }
