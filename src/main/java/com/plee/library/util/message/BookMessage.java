@@ -6,6 +6,7 @@ import lombok.Getter;
 @Getter
 @AllArgsConstructor
 public enum BookMessage implements Message {
+    SUCCESS_ADD_BOOK("도서 입고가 성공적으로 처리되었습니다."),
     SUCCESS_LOAN_BOOK("대출이 성공적으로 처리되었습니다."),
     SUCCESS_RETURN_BOOK("반납이 성공적으로 처리되었습니다."),
     SUCCESS_RENEW_BOOK("연장이 성공적으로 처리되었습니다."),

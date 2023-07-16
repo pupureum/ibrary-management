@@ -56,9 +56,11 @@
                         <td th:text="${member.createdAt}" class="text-center"></td>
                         <td class="text-center">
                             <button type="button" class="btn btn-sm btn-outline-secondary update-member-btn"
-                                    th:data-member-id="${member.id}" th:data-member-email="${member.loginId}" th:data-member-name="${member.name}" th:data-member-role="${member.role}" style="margin: 0 auto;">수정</button>
+                                    th:data-member-id="${member.id}" th:data-member-email="${member.loginId}" th:data-member-name="${member.name}"
+                                    th:data-member-role="${member.role}" style="margin: 0 auto;">수정</button>
                             <form th:action="@{/admin/members/{memberId}(memberId=${member.id})}" th:method="post"
-                                  onsubmit="return confirm('대출중인 도서는 자동 반납 처리되며, 회원의 대출 이력과, 신규 도서 요청 내역 모두 삭제됩니다.\n정말로 삭제하시겠습니까?');">
+                                  onsubmit="return confirm('대출중인 도서는 자동 반납 처리되며,' +
+                                   '\n회원의 대출 이력과, 신규 도서 요청 내역 모두 삭제됩니다.\n정말로 삭제하시겠습니까?');">
                                 <input type="hidden" name="_method" value="delete"/>
                                 <button type="submit" class="btn btn-sm btn-outline-danger delete-member-btn" style="margin: 0 auto;">삭제</button>
                             </form>

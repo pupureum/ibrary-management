@@ -1,5 +1,6 @@
 package com.plee.library.domain.book;
 
+import com.plee.library.domain.BaseTimeEntity;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Builder;
@@ -13,7 +14,7 @@ import java.util.Set;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Entity
 @Table(name = "book_category", uniqueConstraints = {@UniqueConstraint(name = "category_name_unique", columnNames = {"category_name"})})
-public class BookCategory {
+public class BookCategory extends BaseTimeEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "book_category_seq", updatable = false)

@@ -11,8 +11,8 @@ import com.plee.library.domain.member.MemberRequestHistory;
 import com.plee.library.dto.admin.request.SearchBookRequest;
 import com.plee.library.dto.admin.request.UpdateBookRequest;
 import com.plee.library.dto.admin.response.BooksResponse;
-import com.plee.library.dto.admin.response.LoanHistoryResponse;
 import com.plee.library.dto.admin.response.LoanStatusResponse;
+import com.plee.library.dto.admin.response.LoanDailyStatusResponse;
 import com.plee.library.dto.admin.response.RequestStatusResponse;
 import com.plee.library.dto.book.condition.BookSearchCondition;
 import com.plee.library.dto.book.request.*;
@@ -59,7 +59,7 @@ public class BookServiceImpl implements BookService {
      * 도서 정보와 수량을 받아서 새로운 도서를 저장합니다.
      *
      * @param request 도서 정보와 수량을 담고 있는 요청 객체
-     * @throws IllegalStateException 이미 동일한 도서가 존재하는 경우
+     * @throws IllegalStateException  이미 동일한 도서가 존재하는 경우
      * @throws NoSuchElementException 없는 카테고리로 저장하려는 경우
      */
     @Override
@@ -177,7 +177,7 @@ public class BookServiceImpl implements BookService {
     }
 
     /**
-     * 회원의 도서 반납을 처리합니다.
+     * 회원의 도서 반납 요청을 처리합니다.
      *
      * @param request 반납할 도서에 대한 요청 정보
      * @throws NoSuchElementException 회원 정보를 찾을 수 없는 경우, 해당 도서 또는 대출 내역을 찾을 수 없는 경우
@@ -211,18 +211,18 @@ public class BookServiceImpl implements BookService {
     @Transactional
     public int processDailyBookReturn(LocalDateTime scheduledAt) {
         // 요청된 시간 기준으로 연체된 대출 기록 조회
-        List<MemberLoanHistory> overdueHis = memberLoanHisRepository.searchOverdueHistory(LoanHistorySearchCondition.builder()
+        List<MemberLoanHistory> overdueHistory = memberLoanHisRepository.searchOverdueHistory(LoanHistorySearchCondition.builder()
                 .time(scheduledAt)
                 .build());
 
         // 연체된 기록이 있는 경우
-        if (!overdueHis.isEmpty()) {
-            log.info("overdueHis exist");
+        if (!overdueHistory.isEmpty()) {
+            log.info("overdueHistory exist");
 
-            // 중복 도서를 그룹화하여 수량 계산 및 해당 기록 반납 처리
-            Map<String, Integer> bookInfoCount = processLoanHistory(overdueHis, scheduledAt);
+            // 중복된 도서를 그룹화하여 수량 계산 및 해당 기록 반납 처리
+            Map<String, Integer> bookInfoCount = processLoanHistory(overdueHistory, scheduledAt);
 
-            // 도서 정보로 반납 처리한 도서 조회
+            // 도서 정보를 통해 반납 처리한 도서 조회
             List<Book> booksToUpdate = bookRepository.findByBookInfoIsbnIn(bookInfoCount.keySet());
 
             // 반납 처리한 대출 기록에 존재하지 않는 도서가 있는 경우 예외 처리
@@ -231,10 +231,10 @@ public class BookServiceImpl implements BookService {
             // 반납 처리한 도서의 대출 가능한 수량 증가
             increaseLoanableCnt(booksToUpdate, bookInfoCount);
 
-            memberLoanHisRepository.saveAll(overdueHis);
+            memberLoanHisRepository.saveAll(overdueHistory);
             bookRepository.saveAll(booksToUpdate);
         }
-        return overdueHis.size();
+        return overdueHistory.size();
     }
 
     /**
@@ -275,14 +275,14 @@ public class BookServiceImpl implements BookService {
     /**
      * 도서 별 그룹화 및 대출 기록 반납 처리를 수행합니다.
      *
-     * @param overdueHis   연체된 대출 기록
+     * @param overdueHistory  연체된 대출 기록
      * @param scheduledAt 일정 시간
      * @return 그룹화 한 반납 도서 별 수량
      */
-    private Map<String, Integer> processLoanHistory(List<MemberLoanHistory> overdueHis, LocalDateTime scheduledAt) {
+    private Map<String, Integer> processLoanHistory(List<MemberLoanHistory> overdueHistory, LocalDateTime scheduledAt) {
         Map<String, Integer> bookInfoCount = new HashMap<>();
 
-        for (MemberLoanHistory history : overdueHis) {
+        for (MemberLoanHistory history : overdueHistory) {
             String bookIsbn = history.getBookInfo().getIsbn();
             bookInfoCount.put(bookIsbn, bookInfoCount.getOrDefault(bookIsbn, 0) + 1);
 
@@ -365,14 +365,11 @@ public class BookServiceImpl implements BookService {
 
         // 현재 대출중인 도서가 있다면 반납 처리
         if (book.getLoanableCnt() != book.getQuantity()) {
-            List<MemberLoanHistory> notReturnedHis = memberLoanHisRepository.searchHistory(LoanHistorySearchCondition.builder()
+            List<MemberLoanHistory> notReturnedHistory = memberLoanHisRepository.searchHistory(LoanHistorySearchCondition.builder()
                     .bookInfoId(isbn)
                     .build());
-
-            notReturnedHis.forEach(history -> {
-                history.doReturn();
-            });
-            log.info("SUCCESS return book = {}", notReturnedHis.size());
+            notReturnedHistory.forEach(MemberLoanHistory::doReturn);
+            log.info("SUCCESS return book = {}", notReturnedHistory.size());
         }
 
         // 찜 목록에서 삭제
@@ -470,7 +467,7 @@ public class BookServiceImpl implements BookService {
      */
     @Override
     @Transactional(readOnly = true)
-    public LoanStatusResponse calculateDailyLoanCounts() {
+    public LoanDailyStatusResponse calculateDailyLoanCounts() {
         LocalDate endDate = LocalDate.now();
         LocalDate startDate = endDate.minusDays(4);
         Map<LocalDate, Integer> dailyLoanCounts = new LinkedHashMap<>();
@@ -492,7 +489,7 @@ public class BookServiceImpl implements BookService {
         });
 
         log.info("SUCCESS calculateDailyLoanCounts");
-        return new LoanStatusResponse(dailyLoanCounts);
+        return new LoanDailyStatusResponse(dailyLoanCounts);
     }
 
     /**
@@ -523,35 +520,14 @@ public class BookServiceImpl implements BookService {
     }
 
     /**
-     * 보유중인 도서를 생성일 기준 내림차순으로 정렬하여 상위 4권을 조회합니다.
+     * 관리자 페이지의 사내 도서 목록을 요청된 카테고리 혹은 검색어로 조회합니다.
+     * 검색어는 제목과 저자와 일치하는 정보를 반환합니다.
+     * 페이지네이션 하여 신규 도서순으로 해당 페이지를 조회합니다.
      *
-     * @return 최근 입고된 도서의 정보를 담은 BookInfoResponse 리스트
-     */
-    @Override
-    @Transactional(readOnly = true)
-    public List<BookInfoResponse> findNewBooks() {
-        // 최근 입고된 도서 4권 조회
-        List<Book> books = bookRepository.findTop4ByOrderByCreatedAtDesc();
-        return BookInfoResponse.from(books);
-    }
-
-    /**
-     * 전체 도서를 페이지네이션 하여 신규 도서순으로 조서회합니다.
-     *
+     * @param request 검색 조건
      * @param pageable 페이지 정보
-     * @return 전체 도서 정보를 담은 Page 객체
+     * @return 검색된 도서 정보를 담은 Page 객체
      */
-    @Override
-    @Transactional(readOnly = true)
-    public Page<BooksResponse> findBooks(Pageable pageable) {
-        // 책들을 최신순으로 페이지네이션 하여 조회
-        Page<Book> books = bookRepository.findAll(pageable);
-
-        // 조회된 책들을 AllBooksResponse 객체의 리스트로 변환
-        List<BooksResponse> response = BooksResponse.from(books);
-        return new PageImpl<>(response, pageable, books.getTotalElements());
-    }
-
     @Override
     @Transactional(readOnly = true)
     public Page<BooksResponse> searchBooks(SearchBookRequest request, Pageable pageable) {
@@ -572,6 +548,36 @@ public class BookServiceImpl implements BookService {
                         .author(request.isAuthor())
                         .categoryId(request.getCategoryId())
                         .build(), pageable);
+
+        // 조회된 책들을 AllBooksResponse 객체의 리스트로 변환
+        List<BooksResponse> response = BooksResponse.from(books);
+        return new PageImpl<>(response, pageable, books.getTotalElements());
+    }
+
+    /**
+     * 보유중인 도서를 생성일 기준 내림차순으로 정렬하여 상위 4권을 조회합니다.
+     *
+     * @return 최근 입고된 도서의 정보를 담은 BookInfoResponse 리스트
+     */
+    @Override
+    @Transactional(readOnly = true)
+    public List<BookInfoResponse> findNewBooks() {
+        // 최근 입고된 도서 4권 조회
+        List<Book> books = bookRepository.findTop4ByOrderByCreatedAtDesc();
+        return BookInfoResponse.from(books);
+    }
+
+    /**
+     * 전체 도서를 페이지네이션 하여 신규 도서순으로 조회합니다.
+     *
+     * @param pageable 페이지 정보
+     * @return 전체 도서 정보를 담은 Page 객체
+     */
+    @Override
+    @Transactional(readOnly = true)
+    public Page<BooksResponse> findBooks(Pageable pageable) {
+        // 책들을 최신순으로 페이지네이션 하여 조회
+        Page<Book> books = bookRepository.findAll(pageable);
 
         // 조회된 책들을 AllBooksResponse 객체의 리스트로 변환
         List<BooksResponse> response = BooksResponse.from(books);
@@ -619,8 +625,8 @@ public class BookServiceImpl implements BookService {
      * 특정 카테고리의 도서 정보와 찜 여부 정보를 페이지네이션하여 신규 도서순으로 조회합니다.
      *
      * @param categoryId 카테고리 ID
-     * @param memberId 회원의 ID
-     * @param pageable 페이지 정보
+     * @param memberId   회원의 ID
+     * @param pageable   페이지 정보
      * @return 특정 회원의 찜 정보와 도서 정보를 담은 Page 객체
      */
     @Override
@@ -663,11 +669,11 @@ public class BookServiceImpl implements BookService {
      */
     @Override
     @Transactional(readOnly = true)
-    public Page<LoanHistoryResponse> findAllLoanHistory(Pageable pageable) {
+    public Page<LoanStatusResponse> findAllLoanHistory(Pageable pageable) {
         Page<MemberLoanHistory> histories = memberLoanHisRepository.findAll(pageable);
 
         // 조회된 대출 이력을 AllLoanHistoryResponse 객체의 리스트로 변환
-        List<LoanHistoryResponse> loanHistories = LoanHistoryResponse.from(histories);
+        List<LoanStatusResponse> loanHistories = LoanStatusResponse.from(histories);
         return new PageImpl<>(loanHistories, pageable, histories.getTotalElements());
     }
 
@@ -752,11 +758,6 @@ public class BookServiceImpl implements BookService {
      */
     @Override
     public SearchBookResponse findBySearchApi(String keyword) {
-        // 키워드가 null이거나 공백일 경우 null 반환
-//        if (keyword == null || keyword.isBlank()) {
-//            return null;
-//        }
-
         // 네이버 api를 사용하여 키워드로 도서 검색
         SearchApiBookRequest searchReq = new SearchApiBookRequest(keyword);
         return naverBookSearchConfig.searchBook(searchReq);
@@ -801,30 +802,13 @@ public class BookServiceImpl implements BookService {
     }
 
     /**
-     * 모든 카테고리 정보를 조회합니다.
-     *
-     * @return CategoryResponse 리스트
-     */
-    @Override
-    @Transactional(readOnly = true)
-    public List<CategoryResponse> findCategories() {
-        List<BookCategory> categories = bookCategoryRepository.findAll();
-
-        return bookCategoryRepository.findAll().stream()
-                .map(CategoryResponse::from)
-                .collect(Collectors.toList());
-    }
-
-    /**
      * 특정 회원이 주어진 도서를 찜 등록 했는지 여부를 확인합니다.
      *
      * @param memberId 회원 ID
      * @param bookId   도서 ID
      * @return 찜 등록 여부
      */
-    @Override
-    @Transactional(readOnly = true)
-    public boolean isBookMarked(Long memberId, Long bookId) {
+    private boolean isBookMarked(Long memberId, Long bookId) {
         return memberBookmarkRepository.existsByMemberIdAndBookId(memberId, bookId);
     }
 
@@ -842,22 +826,31 @@ public class BookServiceImpl implements BookService {
     }
 
     /**
+     * 모든 카테고리 정보를 조회합니다.
+     *
+     * @return CategoryResponse 리스트
+     */
+    @Override
+    @Transactional(readOnly = true)
+    public List<CategoryResponse> findCategories() {
+        return bookCategoryRepository.findAll().stream()
+                .map(CategoryResponse::from)
+                .collect(Collectors.toList());
+    }
+
+    /**
      * 주어진 bookId로 책을 조회합니다.
      *
      * @param bookId 도서 ID
      * @return 조회된 Book 객체
      * @throws NoSuchElementException 도서를 찾을 수 없는 경우
      */
-    @Override
-    @Transactional(readOnly = true)
-    public Book findBookById(Long bookId) {
+    private Book findBookById(Long bookId) {
         return bookRepository.findById(bookId)
                 .orElseThrow(() -> new NoSuchElementException(BookMessage.NOT_FOUND_BOOK.getMessage()));
     }
 
-    @Override
-    @Transactional(readOnly = true)
-    public BookCategory findByCategoryId(Long categoryId) {
+    private BookCategory findByCategoryId(Long categoryId) {
         return bookCategoryRepository.findById(categoryId)
                 .orElseThrow(() -> new NoSuchElementException(BookMessage.NOT_FOUND_CATEGORY.getMessage()));
     }
@@ -869,8 +862,7 @@ public class BookServiceImpl implements BookService {
      * @return 조회된 Member 객체
      * @throws NoSuchElementException 회원을 찾을 수 없을 경우 예외 발생
      */
-    @Transactional(readOnly = true)
-    public Member findMemberById(Long memberId) {
+    private Member findMemberById(Long memberId) {
         return memberRepository.findById(memberId)
                 .orElseThrow(() -> new NoSuchElementException(MemberMessage.NOT_FOUND_MEMBER.getMessage()));
     }

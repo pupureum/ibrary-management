@@ -392,7 +392,9 @@ class BookRepositoryTest {
         bookRepository.delete(book1);
 
         // then
+        // 도서 삭제 확인
         assertThat(bookRepository.existsById(book1.getId())).isFalse();
+        // 도서 정보는 삭제 X
         assertThat(bookInfoRepository.existsById(bookInfo1.getIsbn())).isTrue();
     }
 }

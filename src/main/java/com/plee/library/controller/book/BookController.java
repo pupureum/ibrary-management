@@ -13,7 +13,6 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
@@ -80,7 +79,7 @@ public class BookController {
             log.warn("searchBookByKeyword validation error");
             redirectAttributes.addFlashAttribute("errorMessage", bindingResult.getFieldError().getDefaultMessage());
 
-            // 유효성 검증 실패 시 검색 시도한 페이지로 리다이렉트하기 위해 page 정보 전달
+            // 유효성 검증 실패 시 검색 시도한 페이지로 리다이렉트하기 위해 page 쿼리 파라미터로 전달
             redirectAttributes.addAttribute("page", request.getBefore());
             return "redirect:/books";
         }
@@ -107,7 +106,7 @@ public class BookController {
             model.addAttribute("selectedCategory", categoryId);
         } catch (NoSuchElementException e) {
             // 카테고리 정보를 찾을 수 없는 경우, 에러 메세지를 담아 리다이렉트
-            log.warn("searchBookByCategory error", e.getMessage());
+            log.warn("searchBookByCategory error = {}", e.getMessage());
             redirectAttributes.addFlashAttribute("errorMessage", e.getMessage());
             return "redirect:/books";
         }
@@ -147,7 +146,7 @@ public class BookController {
             bookService.loanBook(bookId, member.getId());
             redirectAttributes.addFlashAttribute("successMessage", BookMessage.SUCCESS_LOAN_BOOK.getMessage());
         } catch (Exception e) {
-            log.warn("loanBook error", e.getMessage());
+            log.warn("loanBook error = {}", e.getMessage());
             redirectAttributes.addFlashAttribute("errorMessage", e.getMessage());
         }
         // 대출 요청 처리 후, 대출 기록 페이지로 리다이렉트
@@ -157,12 +156,12 @@ public class BookController {
     // 대출 도서 반납 요청을 처리합니다.
     @PutMapping("/return")
     public String returnBook(@ModelAttribute("returnBookRequest") ReturnBookRequest request, @CurrentMember Member member, RedirectAttributes redirectAttributes) {
-        log.info("PUT returnBook historyId = {} book = ", request.getHistoryId(), request.getBookInfoIsbn());
+        log.info("PUT returnBook historyId = {} book = {}", request.getHistoryId(), request.getBookInfoIsbn());
         try {
             bookService.returnBook(request, member.getId());
             redirectAttributes.addFlashAttribute("successMessage", BookMessage.SUCCESS_RETURN_BOOK.getMessage());
         } catch (NoSuchElementException e) {
-            log.warn("returnBook error", e.getMessage());
+            log.warn("returnBook error = {}", e.getMessage());
             redirectAttributes.addFlashAttribute("errorMessage", e.getMessage());
         }
         // 대출중인 도서만 보기에서 반납처리 한 경우 해당 페이지로 리다이렉트
@@ -180,7 +179,7 @@ public class BookController {
             bookService.renewBook(historyId);
             redirectAttributes.addFlashAttribute("successMessage", BookMessage.SUCCESS_RENEW_BOOK.getMessage());
         } catch (Exception e) {
-            log.warn("renewBook error", e.getMessage());
+            log.warn("renewBook error = {}", e.getMessage());
             redirectAttributes.addFlashAttribute("errorMessage", e.getMessage());
         }
         // 대출중인 도서만 보기에서 반납처리 한 경우 해당 페이지로 리다이렉트
@@ -190,17 +189,17 @@ public class BookController {
         return "redirect:/books/loan";
     }
 
+    // 네이버 검색 api를 사용하여 도서를 검색합니다.
     @GetMapping("/api/book")
     @ResponseBody
     public ResponseEntity<Object> searchBooksByApi(@RequestParam("keyword") String keyword) {
         log.info("GET searchBooksByApi keyword = {}", keyword);
         try {
-            // 네이버 검색 api를 사용하여 키워드로 도서 검색
             SearchBookResponse response = bookService.findBySearchApi(keyword);
             return ResponseEntity.ok(response);
         } catch (Exception e) {
             // 네이버 서버 에러가 발생한 경우
-            log.error("searchBooksByApi error", e.getMessage());
+            log.error("searchBooksByApi error = {}", e.getMessage());
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
         }
     }
@@ -226,7 +225,7 @@ public class BookController {
         try {
             bookService.addNewBookRequest(request, member.getId());
         } catch (Exception e) {
-            log.warn("POST requestNewBook error", e.getMessage());
+            log.warn("POST requestNewBook error = {}", e.getMessage());
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
         }
         return ResponseEntity.status(HttpStatus.OK).build();
@@ -251,7 +250,7 @@ public class BookController {
         try {
             bookService.addBookmark(member.getId(), bookId);
         } catch (Exception e) {
-            log.warn("POST likeBook error", e.getMessage());
+            log.warn("POST likeBook error = {}", e.getMessage());
             redirectAttributes.addFlashAttribute("errorMessage", e.getMessage());
         }
 
@@ -260,7 +259,7 @@ public class BookController {
             return "redirect:/books/" + bookId;
         }
 
-        // 기존 페이지 정보 추가
+        // 기존 페이지 쿼리 파라미터로 전달
         redirectAttributes.addAttribute("page", request.getPage());
 
         // 카테고리 선택된 경우에 찜 요청한 경우 해당 카테고리 페이지로 리다이렉트
@@ -280,7 +279,7 @@ public class BookController {
         try {
             bookService.removeBookmark(member.getId(), bookId);
         } catch (Exception e) {
-            log.warn("DELETE unlikeBook error", e.getMessage());
+            log.warn("DELETE unlikeBook error = {}", e.getMessage());
             redirectAttributes.addFlashAttribute("errorMessage", e.getMessage());
         }
 
@@ -289,7 +288,7 @@ public class BookController {
             return "redirect:/books/" + bookId;
         }
 
-        // 현재 페이지 번호를 쿼리 파라미터로 추가
+        // 현재 페이지 번호를 쿼리 파라미터로 전달
         redirectAttributes.addAttribute("page", request.getPage());
 
         // 찜한 도서 페이지에서 요청이 들어온경우, 찜한 도서 페이지로 리다이렉트

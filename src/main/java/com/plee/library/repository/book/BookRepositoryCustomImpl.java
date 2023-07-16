@@ -56,10 +56,6 @@ public class BookRepositoryCustomImpl implements BookRepositoryCustom {
                 .or(titleLike(condition.isTitle(), condition.getKeyword()))
                 .or(authorLike(condition.isAuthor(), condition.getKeyword()))
                 .and(categoryEq(condition.getCategoryId()));
-
-//        if (condition.getCategoryId() != null) {
-//            builder.and(book.bookCategory.id.eq(condition.getCategoryId()));
-//        }
         return builder;
     }
 

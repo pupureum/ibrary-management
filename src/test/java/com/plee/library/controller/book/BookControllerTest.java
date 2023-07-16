@@ -9,7 +9,7 @@ import com.plee.library.domain.book.BookInfo;
 import com.plee.library.dto.book.request.AddBookRequest;
 import com.plee.library.dto.book.request.BookmarkRequest;
 import com.plee.library.dto.book.request.ReturnBookRequest;
-import com.plee.library.dto.book.request.SearchBookRequest;
+import com.plee.library.dto.book.request.SearchKeywordBookRequest;
 import com.plee.library.dto.book.response.BooksMarkResponse;
 import com.plee.library.dto.book.response.BookDetailResponse;
 import com.plee.library.dto.book.response.CategoryResponse;
@@ -172,17 +172,17 @@ class BookControllerTest {
         @DisplayName("검색어가 존재하는 경우")
         void searchBookByKeyword_success() throws Exception {
             // given
-            given(bookService.findBySearchKeyword(any(SearchBookRequest.class), anyLong(), any(Pageable.class))).willReturn(Page.empty());
+            given(bookService.findBySearchKeyword(any(SearchKeywordBookRequest.class), anyLong(), any(Pageable.class))).willReturn(Page.empty());
 
             // when, then
             mockMvc.perform(get("/books/search")
                             .param("page", "1")
                             .param("keyword", "keyword")
-                            .flashAttr("searchBookRequest", new SearchBookRequest()))
+                            .flashAttr("searchBookRequest", new SearchKeywordBookRequest()))
                     .andExpect(status().isOk())
                     .andExpect(view().name("book/searchBookList"))
                     .andExpect(model().attributeExists("books"));
-            then(bookService).should(times(1)).findBySearchKeyword(any(SearchBookRequest.class), anyLong(), any(Pageable.class));
+            then(bookService).should(times(1)).findBySearchKeyword(any(SearchKeywordBookRequest.class), anyLong(), any(Pageable.class));
         }
 
         @Test
@@ -190,7 +190,7 @@ class BookControllerTest {
         void searchBookByKeyword_fail() throws Exception {
             // given
             // 키워드 정보 없는 검색 요청 dto 생성
-            SearchBookRequest failReq = SearchBookRequest
+            SearchKeywordBookRequest failReq = SearchKeywordBookRequest
                     .builder()
                     .keyword(" ")
                     .build();

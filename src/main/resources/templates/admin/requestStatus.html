@@ -82,7 +82,7 @@
     </div>
 </div>
 
-<!--도서 요청 입고 처리시 재고 수량 입력 모달창-->
+<!--도서 요청 입고 처리시 입고 수량 및 카테고리 입력 모달창-->
 <div class="modal fade" id="stockModal" tabindex="-1" role="dialog" aria-labelledby="stockModalLabel"
      aria-hidden="true">
     <div class="modal-dialog" role="document">
@@ -97,10 +97,18 @@
                 <form id="stockForm" method="post">
                     <input type="hidden" id="addBookIsbn" , name="isbn">
                     <div class="mb-3">
-                        <label for="quantity" class="form-label">수량: </label>
+                        <label for="quantity" class="form-label">입고 수량: </label>
                         <input type="number" class="label-style" id="quantity" name="quantity" min="1" max="9999"
                                required>
                     </div>
+                    <div class="form-group">
+                        <label for="selectedBookCategory" class="label-style">카테고리:</label>
+                        <select class="form-control" id="selectedBookCategory" name="categoryId">
+                            <option value="">카테고리 선택</option>
+                            <option th:each="category : ${categories}" th:value="${category.id}" th:text="${category.categoryName}"></option>
+                        </select>
+                    </div>
+                    <input type="hidden" id="selectedCategory" name="categoryId">
                     <div class="modal-footer">
                         <button type="button" class="btn btn-primary" id="confirmButton">확인</button>
                         <button type="button" class="btn btn-secondary" data-dismiss="modal">닫기</button>
@@ -203,6 +211,7 @@
                 $('#requestStatus').text('요청중');
             }
         });
+
         $('.stock-modal-trigger').click(function () {
             let addBookIsbn = $(this).data('book-isbn');
 
@@ -210,25 +219,40 @@
             $('#quantity').val('');
             $('#stockModal').modal('show');
         });
+
         $('#stockModal').on('hidden.bs.modal', function () {
             $('#addBookIsbn').val('');
             $('#quantity').val('');
         });
+
         $('.close, [data-dismiss="modal"]').click(function () {
             hideModal();
         });
+
         function hideModal() {
             $('#stockModal').modal('hide');
         }
+
+        $('#selectedBookCategory').on('change', function() {
+            let selectedCategoryId = $(this).val();
+            $('#selectedCategory').val(selectedCategoryId);
+        });
+
        $('#stockModal').on('click', '#confirmButton', function () {
            let quantity = $('#quantity').val();
+           let categoryId = $('#selectedCategory').val();
            if (quantity === '') {
                alert('입고 수량을 입력해주세요.');
                return;
            }
+           if (categoryId === '') {
+               alert('카테고리를 선택해주세요.');
+               return;
+           }
            let formData = {
                isbn: $('#addBookIsbn').val(),
-               quantity: quantity
+               quantity: quantity,
+               categoryId: categoryId
            };
            $.ajax({
                type: 'POST',
@@ -246,8 +270,7 @@
                error: function (xhr, status) {
                    console.log('도서 추가 오류 발생:', xhr);
                    console.log(xhr.responseText);
-                   console.log(status);
-                   alert("도서를 추가할 수 없습니다.");
+                   alert(xhr.responseText);
                }
            });
        });

@@ -199,8 +199,6 @@ public class MemberServiceImpl implements MemberService, UserDetailsService {
         String newName = request.getName();
         String newPassword = request.getPassword();
 
-        System.out.println("newName = " + newName);
-        System.out.println("newPassword = " + newPassword);
         // 이름이 변경되었다면 변경
         if (!newName.equals(member.getName())) {
             member.changeName(newName);

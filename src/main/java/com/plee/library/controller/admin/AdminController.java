@@ -4,8 +4,8 @@ import com.plee.library.dto.admin.request.DeleteBookRequest;
 import com.plee.library.dto.admin.request.SearchBookRequest;
 import com.plee.library.dto.admin.request.UpdateBookRequest;
 import com.plee.library.dto.admin.request.UpdateMemberRequest;
-import com.plee.library.dto.admin.response.LoanHistoryResponse;
 import com.plee.library.dto.admin.response.LoanStatusResponse;
+import com.plee.library.dto.admin.response.LoanDailyStatusResponse;
 import com.plee.library.dto.admin.response.RequestStatusResponse;
 import com.plee.library.dto.book.request.SaveBookRequest;
 import com.plee.library.dto.admin.response.BooksResponse;
@@ -61,7 +61,7 @@ public class AdminController {
         log.info("ADMIN POST addBook request, book = {}", request.getIsbn());
         // 유효성 검증 실패 시 에러 메시지 반환
         if (bindingResult.hasErrors()) {
-            log.warn("ADMIN POST addBook validation error");
+            log.warn("ADMIN POST addBook validation error = {}", bindingResult.getFieldError().getDefaultMessage());
             String errorMessage = bindingResult.getFieldError().getDefaultMessage();
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorMessage);
         }
@@ -70,7 +70,7 @@ public class AdminController {
             bookService.saveBook(request);
         } catch (Exception e) {
             // 이미 존재하는 도서일 경우, 에러 메시지 반환
-            log.warn("ADMIN POST addBook request failed", e.getMessage());
+            log.warn("ADMIN POST addBook request failed = {}", e.getMessage());
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
         }
         return ResponseEntity.status(HttpStatus.OK).build();
@@ -103,7 +103,7 @@ public class AdminController {
             model.addAttribute("categories", categories);
         } catch (NoSuchElementException e) {
             // 카테고리 정보가 없는 경우
-            log.warn("ADMIN GET categoryBooks request failed", e.getMessage());
+            log.warn("ADMIN GET categoryBooks request failed = {}", e.getMessage());
             redirectAttributes.addFlashAttribute("errorMessage", e.getMessage());
             return "redirect:/admin/books";
         }
@@ -121,7 +121,7 @@ public class AdminController {
         if (bindingResult.hasErrors()) {
             log.warn("ADMIN GET searchBook validation error");
             redirectAttributes.addFlashAttribute("errorMessage", bindingResult.getFieldError().getDefaultMessage());
-            // 유효성 검증 실패 시 검색 시도한 페이지로 리다이렉트하기 위해 page 정보 전달
+            // 유효성 검증 실패 시 검색 시도한 페이지로 리다이렉트하기 위해 page 쿼리 파라미터로 전달
             redirectAttributes.addAttribute("page", request.getBefore());
             return "redirect:/admin/books";
         }
@@ -134,7 +134,7 @@ public class AdminController {
             model.addAttribute("categories", categories);
         } catch (NoSuchElementException e) {
             // 카테고리 정보가 없는 경우
-            log.warn("ADMIN GET searchBook request failed", e.getMessage());
+            log.warn("ADMIN GET searchBook request failed = {}", e.getMessage());
             redirectAttributes.addFlashAttribute("errorMessage", e.getMessage());
             return "redirect:/admin/books";
         }
@@ -152,8 +152,9 @@ public class AdminController {
 
         // 유효성 검사 실패시, 에러 메시지를 리다이렉트로 전달
         if (bindingResult.hasErrors()) {
-            log.warn("ADMIN PUT updateBookQuantity validation error");
-            redirectAttributes.addFlashAttribute("errorMessage", bindingResult.getFieldError().getDefaultMessage());
+            String defaultMessage = bindingResult.getFieldError().getDefaultMessage();
+            log.warn("ADMIN PUT updateBookQuantity validation error = {}", defaultMessage);
+            redirectAttributes.addFlashAttribute("errorMessage", defaultMessage);
             return "redirect:/admin/books";
         }
 
@@ -161,7 +162,7 @@ public class AdminController {
             bookService.updateBookQuantity(bookId, request);
             redirectAttributes.addFlashAttribute("successMessage", BookMessage.SUCCESS_UPDATE_QUANTITY.getMessage());
         } catch (Exception e) {
-            log.warn("ADMIN PUT updateBookQuantity failed", e.getMessage());
+            log.warn("ADMIN PUT updateBookQuantity failed = {}", e.getMessage());
             redirectAttributes.addFlashAttribute("errorMessage", e.getMessage());
         }
 
@@ -177,7 +178,7 @@ public class AdminController {
             bookService.deleteBook(bookId);
             redirectAttributes.addFlashAttribute("successMessage", BookMessage.SUCCESS_DELETE_BOOK.getMessage());
         } catch (NoSuchElementException e) {
-            log.warn("ADMIN DELETE deleteBook failed", e.getMessage());
+            log.warn("ADMIN DELETE deleteBook failed = {}", e.getMessage());
             redirectAttributes.addFlashAttribute("errorMessage", e.getMessage());
         }
         return redirectBasedOnRequest(request.getCategoryId(), request.getKeyword(), request.getPage());
@@ -210,10 +211,10 @@ public class AdminController {
     public String loanStatus(@PageableDefault(size = 10, sort = "createdAt", direction = DESC) Pageable pageable, Model model) {
         log.info("ADMIN GET LoanStatus request");
         // 모든 대출 내역 조회
-        Page<LoanHistoryResponse> loanHistory = bookService.findAllLoanHistory(pageable);
+        Page<LoanStatusResponse> loanHistory = bookService.findAllLoanHistory(pageable);
 
         // 최근 5일간 대출 빈도수 차트 데이터
-        LoanStatusResponse data = bookService.calculateDailyLoanCounts();
+        LoanDailyStatusResponse data = bookService.calculateDailyLoanCounts();
 
         model.addAttribute("loanHistory", loanHistory);
         model.addAttribute("data", data);
@@ -226,8 +227,10 @@ public class AdminController {
     public String requestHistory(@PageableDefault(size = 10, sort = "createdAt", direction = DESC) Pageable pageable, Model model) {
         log.info("ADMIN GET requestHistory request");
         Page<RequestStatusResponse> response = bookService.findAllNewBookReqHistory(pageable);
+        List<CategoryResponse> categories = bookService.findCategories();
 
         model.addAttribute("requestHistory", response);
+        model.addAttribute("categories", categories);
         model.addAttribute("selectedMenu", "admin-request-status");
         return "admin/requestStatus";
     }
@@ -250,7 +253,7 @@ public class AdminController {
         try {
             memberService.updateMemberByAdmin(memberId, request);
         } catch (Exception e) {
-            log.warn("ADMIN PUT updateMemberInfo failed", e.getMessage());
+            log.warn("ADMIN PUT updateMemberInfo failed = {}", e.getMessage());
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
         }
         return ResponseEntity.ok("Success");
@@ -264,7 +267,7 @@ public class AdminController {
             memberService.deleteMember(memberId);
             redirectAttributes.addFlashAttribute("successMessage", MemberMessage.SUCCESS_DELETE_MEMBER.getMessage());
         } catch (Exception e) {
-            log.warn("ADMIN DELETE deleteMember failed", e.getMessage());
+            log.warn("ADMIN DELETE deleteMember failed = {}", e.getMessage());
             redirectAttributes.addFlashAttribute("errorMessage", e.getMessage());
         }
         return "redirect:/admin/members";
