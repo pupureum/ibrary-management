@@ -10,12 +10,7 @@ import lombok.Setter;
 @Getter
 @Setter
 @AllArgsConstructor
-public class UpdateBookRequest {
-
-    @NotNull(message = "수량을 입력해주세요.")
-    @Min(value = 1, message = "수량은 최소 1 이상이어야 합니다.")
-    @Max(value = 9999, message = "수량은 최대 9999 이하여야 합니다.")
-    private Integer newQuantity;
+public class DeleteBookRequest {
 
     private Long categoryId;
 

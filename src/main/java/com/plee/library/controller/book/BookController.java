@@ -73,7 +73,8 @@ public class BookController {
     // 도서 검색 결과를 반환합니다.
     @GetMapping("/search")
     public String searchBookByKeyword(@Valid @ModelAttribute("searchBookRequest") SearchKeywordBookRequest request, BindingResult bindingResult,
-                                      @RequestParam("page") int page, @CurrentMember Member member, RedirectAttributes redirectAttributes, Model model) {
+                                      @PageableDefault(size = 5, sort = "createdAt", direction = DESC) Pageable pageable,
+                                      @CurrentMember Member member, RedirectAttributes redirectAttributes, Model model) {
         log.info("GET searchBookByKeyword keyword = {}", request.getKeyword());
         if (bindingResult.hasErrors()) {
             log.warn("searchBookByKeyword validation error");
@@ -85,7 +86,7 @@ public class BookController {
         }
 
         // 페이징된 검색 결과를 모델에 담아 반환
-        Page<BooksMarkResponse> books = bookService.findBySearchKeyword(request, member.getId(), PageRequest.of(page, 5));
+        Page<BooksMarkResponse> books = bookService.findBySearchKeyword(request, member.getId(), pageable);
         model.addAttribute("books", books);
         return "book/searchBookList";
     }

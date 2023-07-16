@@ -351,21 +351,6 @@ public class BookServiceImpl implements BookService {
     }
 
     /**
-     * 책 정보를 삭제합니다.
-     * 대출 이력이나 요청 이력이 없는 경우, 해당 책 정보도 삭제합니다.
-     *
-     * @param isbn 책 정보의 ISBN(13)
-     */
-    private void deleteBookInfo(String isbn) {
-        boolean hasLoanHistory = memberLoanHisRepository.existsByBookInfoIsbn(isbn);
-        boolean hasRequestHistory = memberReqHisRepository.existsByBookInfoIsbn(isbn);
-        if (!hasLoanHistory && !hasRequestHistory) {
-            bookInfoRepository.deleteById(isbn);
-            log.info("SUCCESS deleteBookInfo Book ISBN = {}", isbn);
-        }
-    }
-
-    /**
      * 더이상 보유하지 않은 도서를 삭제합니다.
      * 대출 중인 도서는 반납처리 됩니다.
      *
@@ -376,11 +361,12 @@ public class BookServiceImpl implements BookService {
     @Transactional
     public void deleteBook(Long bookId) {
         Book book = findBookById(bookId);
+        String isbn = book.getBookInfo().getIsbn();
 
         // 현재 대출중인 도서가 있다면 반납 처리
         if (book.getLoanableCnt() != book.getQuantity()) {
             List<MemberLoanHistory> notReturnedHis = memberLoanHisRepository.searchHistory(LoanHistorySearchCondition.builder()
-                    .bookInfoId(book.getBookInfo().getId())
+                    .bookInfoId(isbn)
                     .build());
 
             notReturnedHis.forEach(history -> {
@@ -398,8 +384,25 @@ public class BookServiceImpl implements BookService {
 
         // 도서 및 도서 정보 삭제
         bookRepository.deleteById(bookId);
-        deleteBookInfo(book.getBookInfo().getIsbn());
+        deleteBookInfo(isbn);
         log.info("SUCCESS deleteBook Book ID = {}", bookId);
+    }
+
+    /**
+     * 책 정보를 삭제합니다.
+     * 대출 이력이나 요청 이력이 없는 경우, 해당 책 정보도 삭제합니다.
+     *
+     * @param isbn 도서 ISBN
+     */
+    private void deleteBookInfo(String isbn) {
+        log.info("deleteBookInfo Book ISBN = {}", isbn);
+        boolean hasLoanHistory = memberLoanHisRepository.existsByBookInfoIsbn(isbn);
+        boolean hasRequestHistory = memberReqHisRepository.existsByBookInfoIsbn(isbn);
+
+        if (!hasLoanHistory && !hasRequestHistory) {
+            bookInfoRepository.deleteById(isbn);
+            log.info("SUCCESS deleteBookInfo Book ISBN = {}", isbn);
+        }
     }
 
     /**

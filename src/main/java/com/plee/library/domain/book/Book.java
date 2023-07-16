@@ -79,4 +79,8 @@ public class Book extends BaseTimeEntity {
         }
         this.loanableCnt += cnt;
     }
+
+    public void setBookInfo(BookInfo bookInfo) {
+        this.bookInfo = bookInfo;
+    }
 }

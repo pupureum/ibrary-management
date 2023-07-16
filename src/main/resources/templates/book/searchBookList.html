@@ -27,8 +27,9 @@
         <div th:replace="~{fragments/sidebar :: sidebar(${selectedMenu})}"/>
         <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
             <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
-                <h3 style="margin-top: 50px; margin-bottom: 30px; margin-left: 20px; font-family: SeoulNamsanM">검색
-                    결과</h3>
+                <h3 style="margin-top: 50px; margin-bottom: 30px; margin-left: 20px; font-family: SeoulNamsanM">
+                    검색 결과: <span th:text="${param.keyword}"></span>
+                </h3>
             </div>
             <h6>
                 <span th:text="'총 ' + ${books.totalElements} + '권의 검색 결과가 있습니다.'"></span>

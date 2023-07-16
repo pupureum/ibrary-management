@@ -1,5 +1,6 @@
 package com.plee.library.controller.admin;
 
+import com.plee.library.dto.admin.request.DeleteBookRequest;
 import com.plee.library.dto.admin.request.SearchBookRequest;
 import com.plee.library.dto.admin.request.UpdateBookRequest;
 import com.plee.library.dto.admin.request.UpdateMemberRequest;
@@ -27,6 +28,7 @@ import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+import org.springframework.web.util.UriComponentsBuilder;
 
 import java.util.List;
 import java.util.NoSuchElementException;
@@ -144,7 +146,7 @@ public class AdminController {
 
     // 신규 도서 추가 요청을 처리합니다.
     @PutMapping("/books/{bookId}")
-    public String updateBookQuantity(@PathVariable Long bookId, @Valid @ModelAttribute("UpdateBookRequest") UpdateBookRequest request,
+    public String updateBookQuantity(@PathVariable Long bookId, @Valid @ModelAttribute("updateBookRequest") UpdateBookRequest request,
                                      BindingResult bindingResult, RedirectAttributes redirectAttributes) {
         log.info("ADMIN PUT updateBookQuantity request, bookId = {}, quantity = {}", bookId, request.getNewQuantity());
 
@@ -162,12 +164,14 @@ public class AdminController {
             log.warn("ADMIN PUT updateBookQuantity failed", e.getMessage());
             redirectAttributes.addFlashAttribute("errorMessage", e.getMessage());
         }
-        return "redirect:/admin/books";
+
+        return redirectBasedOnRequest(request.getCategoryId(), request.getKeyword(), request.getPage());
     }
 
     // 도서 삭제 요청을 처리합니다.
     @DeleteMapping("/books/{bookId}")
-    public String deleteBook(@PathVariable Long bookId, RedirectAttributes redirectAttributes) {
+    public String deleteBook(@PathVariable Long bookId, @ModelAttribute("deleteBookRequest") DeleteBookRequest request,
+                             RedirectAttributes redirectAttributes) {
         try {
             log.info("ADMIN DELETE deleteBook request");
             bookService.deleteBook(bookId);
@@ -176,7 +180,29 @@ public class AdminController {
             log.warn("ADMIN DELETE deleteBook failed", e.getMessage());
             redirectAttributes.addFlashAttribute("errorMessage", e.getMessage());
         }
-        return "redirect:/admin/books";
+        return redirectBasedOnRequest(request.getCategoryId(), request.getKeyword(), request.getPage());
+    }
+
+    // 요청한 뷰에 따라 리다이렉트할 url을 반환합니다.
+    private String redirectBasedOnRequest(Long categoryId, String keyword, int page) {
+        // 카테고리 뷰에서 요청이 들어온 경우, 해당 페이지로 리다이렉트
+        if (categoryId != null && keyword.isEmpty()) {
+
+            return "redirect:/admin/books/category/" + categoryId + "?page=" + page;
+        }
+        // 검색 뷰에서 요청이 들어온 경우, 해당 페이지로 리다이렉트
+        if (!keyword.isEmpty()) {
+            UriComponentsBuilder builder = UriComponentsBuilder.fromPath("/admin/books/search")
+                    .queryParam("keyword", keyword)
+                    .queryParam("page", page)
+                    .queryParam("categoryId", categoryId);
+
+            String redirectUrl = builder.toUriString();
+            return "redirect:" + redirectUrl;
+        }
+        // 전체 도서 목록뷰에서 요청이 들어온 경우, 해당 페이지로 리다이렉트
+        return "redirect:/admin/books" + "?page=" + page;
+
     }
 
     // 대출 현황 페이지를 반환합니다.
