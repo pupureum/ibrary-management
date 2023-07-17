@@ -11,7 +11,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 @Getter
-public class MemberInfoResponse {
+public class MemberStatusResponse {
     private final Long id;
     private final String name;
     private final String loginId;
@@ -20,7 +20,7 @@ public class MemberInfoResponse {
     private final LocalDate createdAt;
 
     @Builder
-    public MemberInfoResponse(Long id, String name, String loginId, String password, Role role, LocalDate createdAt) {
+    public MemberStatusResponse(Long id, String name, String loginId, String password, Role role, LocalDate createdAt) {
         this.id = id;
         this.name = name;
         this.loginId = loginId;
@@ -29,9 +29,9 @@ public class MemberInfoResponse {
         this.createdAt = createdAt;
     }
 
-    public static List<MemberInfoResponse> from(Page<Member> members) {
+    public static List<MemberStatusResponse> from(Page<Member> members) {
         return members.stream()
-                .map(member -> MemberInfoResponse.builder()
+                .map(member -> MemberStatusResponse.builder()
                         .id(member.getId())
                         .name(member.getName())
                         .loginId(member.getLoginId())

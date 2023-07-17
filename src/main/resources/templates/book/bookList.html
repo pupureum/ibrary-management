@@ -43,6 +43,11 @@
                             </span>
                         </a>
                         <ul class="dropdown-menu" aria-labelledby="categoryDropdown">
+                            <li th:if="${selectedCategory}">
+                                <a class="dropdown-item category-item" href="#" onclick="selectAll(event)">
+                                    전체 목록
+                                </a>
+                            </li>
                             <li th:each="category : ${categories}">
                                 <a class="dropdown-item category-item" href="#" th:data-category-id="${category.id}" onclick="selectCategory(event)">
                                     <span th:text="${category.categoryName}"></span>
@@ -168,15 +173,18 @@
                 <span class="sr-only">Previous</span>
             </span>
         </li>
-        <li th:each="page : ${books.getTotalPages() > 0 ? #numbers.sequence(1, books.getTotalPages()) : null}"
-            th:class="${page - 1 == books.getNumber() ? 'page-item active' : 'page-item'}">
-            <a th:if="${selectedCategory != null}"
-               th:href="@{'/books/category/' + ${selectedCategory}(page=${page - 1})}"
-               th:text="${page}" class="page-link"></a>
-            <a th:if="${selectedCategory == null}"
-               th:href="@{/books(page=${page - 1})}"
-               th:text="${page}" class="page-link"></a>
-        </li>
+        <th:block th:with="startPage=${(books.getNumber() / 10) * 10 + 1},
+        endPage=${books.getTotalPages() > 0 ? ((startPage + 9) < books.getTotalPages() ? (startPage + 9) : books.getTotalPages()) : 0}">
+            <li th:each="page : ${#numbers.sequence(startPage, endPage)}"
+                th:class="${page - 1 == books.getNumber() ? 'page-item active' : 'page-item'}">
+                <a th:if="${selectedCategory != null}"
+                   th:href="@{'/books/category/' + ${selectedCategory}(page=${page - 1})}"
+                   th:text="${page}" class="page-link"></a>
+                <a th:if="${selectedCategory == null}"
+                   th:href="@{/books(page=${page - 1})}"
+                   th:text="${page}" class="page-link"></a>
+            </li>
+        </th:block>
         <li th:class="${books.getNumber() == books.getTotalPages() - 1 && books.getTotalPages() > 1 ? 'page-item disabled' : 'page-item'}">
             <a class="page-link" th:if="${selectedCategory == null } and ${books.getNumber() != books.getTotalPages() - 1 && books.getTotalPages() > 1}"
             th:href="@{/books(page=${books.getNumber() + 1})}" aria-label="Next">
@@ -194,6 +202,58 @@
         </li>
     </ul>
 </nav>
+
+
+<!--<nav aria-label="Page navigation">-->
+<!--    <ul class="pagination justify-content-center">-->
+<!--        <li th:class="${books.getNumber() == 0 ? 'page-item disabled' : 'page-item'}">-->
+<!--            &lt;!&ndash; 이전 페이지 링크 &ndash;&gt;-->
+<!--            <a th:if="${selectedCategory != null && books.getNumber() != 0}"-->
+<!--               th:href="@{'/books/category/' + ${selectedCategory}(page=${books.getNumber() - 1})}"-->
+<!--               class="page-link" aria-label="Previous">-->
+<!--                <span class="sr-only">Previous</span>-->
+<!--            </a>-->
+<!--            <a th:if="${selectedCategory == null && books.getNumber() != 0}"-->
+<!--               th:href="@{/books(page=${books.getNumber() - 1})}"-->
+<!--               class="page-link" aria-label="Previous">-->
+<!--                <span class="sr-only">Previous</span>-->
+<!--            </a>-->
+<!--            <span th:if="${books.getNumber() == 0}" class="page-link" aria-disabled="true" aria-label="Previous">-->
+<!--                <span class="sr-only">Previous</span>-->
+<!--            </span>-->
+<!--        </li>-->
+
+<!--        &lt;!&ndash; 페이지 번호 &ndash;&gt;-->
+<!--        <li th:each="page : ${books.getTotalPages() > 0 ? #numbers.sequence(((books.getNumber() / 10) * 10) + 1,-->
+<!--         (((books.getNumber() / 10) + 1) * 10) < books.getTotalPages() ? (((books.getNumber() / 10) + 1) * 10) : books.getTotalPages()) : null}"-->
+<!--            th:class="${page - 1 == books.getNumber() ? 'page-item active' : 'page-item'}">-->
+<!--            <a th:if="${selectedCategory != null}"-->
+<!--               th:href="@{'/books/category/' + ${selectedCategory}(page=${page - 1})}"-->
+<!--               th:text="${page}" class="page-link"></a>-->
+<!--            <a th:if="${selectedCategory == null}"-->
+<!--               th:href="@{/books(page=${page - 1})}"-->
+<!--               th:text="${page}" class="page-link"></a>-->
+<!--        </li>-->
+
+<!--        <li th:class="${books.getNumber() == books.getTotalPages() - 1 && books.getTotalPages() > 1 ? 'page-item disabled' : 'page-item'}">-->
+<!--            &lt;!&ndash; 다음 페이지 링크 &ndash;&gt;-->
+<!--            <a th:if="${selectedCategory == null && books.getNumber() != books.getTotalPages() - 1 && books.getTotalPages() > 1}"-->
+<!--               th:href="@{/books(page=${books.getNumber() + 1})}" class="page-link" aria-label="Next">-->
+<!--                <span class="sr-only">Next</span>-->
+<!--            </a>-->
+<!--            <a th:if="${selectedCategory != null && books.getNumber() != books.getTotalPages() - 1 && books.getTotalPages() > 1}"-->
+<!--               th:href="@{'/books/category/' + ${selectedCategory}(page=${books.getNumber() + 1})}" class="page-link" aria-label="Next">-->
+<!--                <span class="sr-only">Next</span>-->
+<!--            </a>-->
+<!--            <span th:if="${books.getNumber() == books.getTotalPages() - 1 && books.getTotalPages() > 1}" class="page-link"-->
+<!--                  aria-disabled="true" aria-label="Next">-->
+<!--                <span class="sr-only">Next</span>-->
+<!--            </span>-->
+<!--        </li>-->
+<!--    </ul>-->
+<!--</nav>-->
+
+
 
 <script th:inline="javascript">
     // 도서 설명글 글자 수 제한
@@ -215,6 +275,13 @@
         event.preventDefault();
         const categoryId = event.currentTarget.getAttribute("data-category-id");
         document.getElementById("categoryForm").action = "/books/category/" + categoryId;
+        document.getElementById("categoryForm").submit();
+    }
+
+    // 전체 목록으로 이동
+    function selectAll(event) {
+        event.preventDefault();
+        document.getElementById("categoryForm").action = "/books";
         document.getElementById("categoryForm").submit();
     }
 </script>

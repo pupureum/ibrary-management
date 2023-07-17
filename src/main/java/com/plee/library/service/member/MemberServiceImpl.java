@@ -6,7 +6,7 @@ import com.plee.library.config.MemberAdapter;
 import com.plee.library.domain.member.MemberLoanHistory;
 import com.plee.library.dto.admin.request.UpdateMemberRequest;
 import com.plee.library.dto.member.request.SignUpMemberRequest;
-import com.plee.library.dto.admin.response.MemberInfoResponse;
+import com.plee.library.dto.admin.response.MemberStatusResponse;
 import com.plee.library.util.message.MemberMessage;
 import com.plee.library.repository.book.BookRepository;
 import com.plee.library.repository.member.MemberLoanHistoryRepository;
@@ -134,12 +134,12 @@ public class MemberServiceImpl implements MemberService, UserDetailsService {
      */
     @Override
     @Transactional(readOnly = true)
-    public Page<MemberInfoResponse> findAllMembers(Pageable pageable) {
+    public Page<MemberStatusResponse> findAllMembers(Pageable pageable) {
         // 회원들을 최신순으로 Pagination 하여 조회
         Page<Member> members = memberRepository.findAll(pageable);
 
         // 조회된 회원들을 MemberInfoResponse 객체 리스트로 변환
-        List<MemberInfoResponse> response = MemberInfoResponse.from(members);
+        List<MemberStatusResponse> response = MemberStatusResponse.from(members);
         return new PageImpl<>(response, pageable, members.getTotalElements());
     }
 
@@ -169,8 +169,7 @@ public class MemberServiceImpl implements MemberService, UserDetailsService {
     @Override
     @Transactional
     public void updateMemberByAdmin(Long memberId, UpdateMemberRequest request) {
-        Member member = memberRepository.findById(memberId)
-                .orElseThrow(() -> new NoSuchElementException(MemberMessage.NOT_FOUND_MEMBER.getMessage()));
+        Member member = findMemberById(memberId);
 
         // 이름이 변경되었다면 변경
         if (!request.getName().equals(member.getName())) {
@@ -194,24 +193,25 @@ public class MemberServiceImpl implements MemberService, UserDetailsService {
     @Override
     @Transactional
     public void changeMemberInfo(Long memberId, UpdateMemberRequest request) {
-        Member member = memberRepository.findById(memberId)
-                .orElseThrow(() -> new NoSuchElementException(MemberMessage.NOT_FOUND_MEMBER.getMessage()));
+        Member member = findMemberById(memberId);
         String newName = request.getName();
         String newPassword = request.getPassword();
+        boolean isChangedName = !newName.equals(member.getName());
+        boolean isChangedPassword = !newPassword.isEmpty() && !passwordEncoder.matches(newPassword, member.getPassword());
+
+        // 이름과 비밀번호 모두 변경되지 않은 경우
+        if (!isChangedName && !isChangedPassword) {
+            throw new IllegalStateException(MemberMessage.NOT_CHANGED_ANYTHING.getMessage());
+        }
 
         // 이름이 변경되었다면 변경
-        if (!newName.equals(member.getName())) {
+        if (isChangedName) {
             member.changeName(newName);
         }
-        // 새 비밀번호가 없다면 이름만 변경
-        if (request.getPassword().isEmpty()) {
-            return;
-        }
-        // 새 비밀번호가 기존 비밀번호와 다르다면 변경
-        if (!passwordEncoder.matches(newPassword, member.getPassword())) {
+
+        // 비밀번호가 변경되었다면 변경
+        if (isChangedPassword) {
             member.changePassword(passwordEncoder.encode(newPassword));
-        } else {
-            throw new IllegalStateException(MemberMessage.NOT_CHANGED_PASSWORD.getMessage());
         }
     }
 

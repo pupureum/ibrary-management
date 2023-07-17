@@ -18,6 +18,7 @@ import com.plee.library.dto.book.condition.BookSearchCondition;
 import com.plee.library.dto.book.request.*;
 import com.plee.library.dto.book.response.*;
 import com.plee.library.repository.book.BookCategoryRepository;
+import com.plee.library.util.constant.Constant;
 import com.plee.library.util.message.BookMessage;
 import com.plee.library.util.message.MemberMessage;
 import com.plee.library.repository.book.BookInfoRepository;
@@ -37,8 +38,6 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
-
-import static com.plee.library.util.constant.Constant.LOANABLE_BOOK_LIMIT;
 
 @Slf4j
 @Service
@@ -167,7 +166,7 @@ public class BookServiceImpl implements BookService {
         }
 
         // 대출 가능한 도서의 수를 초과한 경우
-        if (memberLoanHisRepository.countByMemberIdAndReturnedAtIsNull(member.getId()) >= LOANABLE_BOOK_LIMIT) {
+        if (memberLoanHisRepository.countByMemberIdAndReturnedAtIsNull(member.getId()) >= Constant.LOANABLE_BOOK_LIMIT) {
             throw new IllegalStateException(BookMessage.MAX_LOAN_BOOK.getMessage());
         }
 
@@ -247,6 +246,7 @@ public class BookServiceImpl implements BookService {
         for (Book book : booksToUpdate) {
             int loanableCountIncrease = bookInfoCount.getOrDefault(book.getBookInfo().getIsbn(), 0);
             book.increaseLoanableCnt(loanableCountIncrease);
+            log.info("SUCCESS increaseLoanableCnt book = {}, count = {}", book.getBookInfo().getTitle(), loanableCountIncrease);
         }
     }
 
@@ -264,10 +264,11 @@ public class BookServiceImpl implements BookService {
                     .map(book -> book.getBookInfo().getIsbn())
                     .collect(Collectors.toSet());
 
+            // book이 존재하지 않는 isbn값만을 추출
             Set<String> notFoundBooks = bookInfoCount.keySet().stream()
                     .filter(isbn -> !foundBooks.contains(isbn))
                     .collect(Collectors.toSet());
-            // book이 존재 하지 않는 isbn값만을 추출하여 메세지에 추가
+
             throw new NoSuchElementException(notFoundBooks + BookMessage.NOT_FOUND_BOOK.getMessage());
         }
     }
@@ -686,11 +687,11 @@ public class BookServiceImpl implements BookService {
      */
     @Override
     @Transactional(readOnly = true)
-    public Page<com.plee.library.dto.book.response.LoanHistoryResponse> findLoanHistory(Long memberId, Pageable pageable) {
+    public Page<LoanHistoryResponse> findLoanHistory(Long memberId, Pageable pageable) {
         Page<MemberLoanHistory> histories = memberLoanHisRepository.findAllByMemberId(memberId, pageable);
 
         // 대출 기록을 LoanHistoryResponse 객체의 리스트로 변환
-        List<com.plee.library.dto.book.response.LoanHistoryResponse> response = com.plee.library.dto.book.response.LoanHistoryResponse.from(histories.getContent());
+        List<LoanHistoryResponse> response = LoanHistoryResponse.from(histories.getContent());
         return new PageImpl<>(response, pageable, histories.getTotalElements());
     }
 
@@ -703,14 +704,14 @@ public class BookServiceImpl implements BookService {
      */
     @Override
     @Transactional(readOnly = true)
-    public Page<com.plee.library.dto.book.response.LoanHistoryResponse> findOnLoanHistory(Long memberId) {
+    public Page<LoanHistoryResponse> findOnLoanHistory(Long memberId) {
         //대출중인 기록 조회
         List<MemberLoanHistory> histories = memberLoanHisRepository.searchHistory(LoanHistorySearchCondition.builder()
                 .memberId(memberId).notReturned(true).build());
-        Collections.sort(histories, Comparator.comparing(MemberLoanHistory::getCreatedAt).reversed());
+        histories.sort(Comparator.comparing(MemberLoanHistory::getCreatedAt).reversed());
 
         // 대출 기록을 LoanHistoryResponse 객체의 리스트로 변환
-        List<com.plee.library.dto.book.response.LoanHistoryResponse> response = com.plee.library.dto.book.response.LoanHistoryResponse.from(histories);
+        List<LoanHistoryResponse> response = LoanHistoryResponse.from(histories);
 
         Pageable pageable = PageRequest.of(0, 5);
         return new PageImpl<>(response, pageable, histories.size());
@@ -850,6 +851,13 @@ public class BookServiceImpl implements BookService {
                 .orElseThrow(() -> new NoSuchElementException(BookMessage.NOT_FOUND_BOOK.getMessage()));
     }
 
+    /**
+     * 주어진 bookId로 책을 조회합니다.
+     *
+     * @param categoryId 카테고리 ID
+     * @return 조회된 BookCategory 객체
+     * @throws NoSuchElementException 카테고리를 찾을 수 없는 경우
+     */
     private BookCategory findByCategoryId(Long categoryId) {
         return bookCategoryRepository.findById(categoryId)
                 .orElseThrow(() -> new NoSuchElementException(BookMessage.NOT_FOUND_CATEGORY.getMessage()));

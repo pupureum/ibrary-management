@@ -8,8 +8,6 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
-import java.time.LocalDateTime;
-
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Entity
@@ -42,7 +40,6 @@ public class Book extends BaseTimeEntity {
         this.quantity = quantity;
         this.loanableCnt = quantity;
         this.bookCategory = category;
-        this.createdAt = LocalDateTime.now();
     }
 
     public void setQuantity(int quantity) {
@@ -53,10 +50,6 @@ public class Book extends BaseTimeEntity {
             return;
         }
         this.loanableCnt += diff;
-    }
-
-    public void setBookCategory(BookCategory bookCategory) {
-        this.bookCategory = bookCategory;
     }
 
     public void decreaseLoanableCnt() {
@@ -78,6 +71,10 @@ public class Book extends BaseTimeEntity {
             throw new IllegalStateException(BookMessage.INVALID_LOANABLE_CNT.getMessage());
         }
         this.loanableCnt += cnt;
+    }
+
+    public void setBookCategory(BookCategory bookCategory) {
+        this.bookCategory = bookCategory;
     }
 
     public void setBookInfo(BookInfo bookInfo) {

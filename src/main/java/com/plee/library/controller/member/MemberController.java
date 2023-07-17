@@ -9,15 +9,16 @@ import com.plee.library.util.message.MemberMessage;
 import com.plee.library.service.member.MemberService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.authentication.logout.SecurityContextLogoutHandler;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
-import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 @Slf4j
@@ -57,13 +58,13 @@ public class MemberController {
 
     // 회원가입 요청을 처리하고 로그인 페이지로 리다이렉트합니다.
     @PostMapping("/signup")
-    public String signup(@Validated @ModelAttribute SignUpMemberRequest request, BindingResult bindingResult) {
+    public String signup(@Valid @ModelAttribute("signUpMemberRequest") SignUpMemberRequest request, BindingResult bindingResult) {
         log.info("POST signup request");
 
         memberService.validateSignupRequest(request, bindingResult);
         // 검증에 실패하면 다시 회원가입 뷰 반환
         if (bindingResult.hasErrors()) {
-            log.info("binding errors = {} ", bindingResult);
+            log.info("binding errors = {} ", bindingResult.getFieldError().getDefaultMessage());
             return "member/signup";
         }
 
@@ -93,8 +94,16 @@ public class MemberController {
 
     // 회원 정보 변경 요청을 처리합니다.
     @PutMapping("/edit/{memberId}")
-    public ResponseEntity<String> editInfo(@PathVariable Long memberId, @Validated  @RequestBody UpdateMemberRequest request, @CurrentMember Member member) {
+    public ResponseEntity<String> editInfo(@PathVariable Long memberId, @Valid @RequestBody UpdateMemberRequest request,
+                                           BindingResult bindingResult, @CurrentMember Member member) {
         log.info("PUT editInfo request member = {}", member.getLoginId());
+
+        // 유효성 검증 실패 시 에러 메시지 반환
+        if (bindingResult.hasErrors()) {
+            log.warn("ADMIN POST addBook validation error = {}", bindingResult.getFieldError().getDefaultMessage());
+            String errorMessage = bindingResult.getFieldError().getDefaultMessage();
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorMessage);
+        }
 
         // 현재 접속된 회원과 수정하려는 회원이 같은지 확인
         if (!member.getId().equals(memberId)) {

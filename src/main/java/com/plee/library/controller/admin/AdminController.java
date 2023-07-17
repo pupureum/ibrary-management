@@ -9,7 +9,7 @@ import com.plee.library.dto.admin.response.LoanDailyStatusResponse;
 import com.plee.library.dto.admin.response.RequestStatusResponse;
 import com.plee.library.dto.book.request.SaveBookRequest;
 import com.plee.library.dto.admin.response.BooksResponse;
-import com.plee.library.dto.admin.response.MemberInfoResponse;
+import com.plee.library.dto.admin.response.MemberStatusResponse;
 import com.plee.library.dto.book.response.CategoryResponse;
 import com.plee.library.util.message.BookMessage;
 import com.plee.library.util.message.MemberMessage;
@@ -239,7 +239,7 @@ public class AdminController {
     @GetMapping("/members")
     public String manageMember(@PageableDefault(size = 10, sort = "createdAt", direction = DESC) Pageable pageable, Model model) {
         log.info("ADMIN GET manageMember request");
-        Page<MemberInfoResponse> response = memberService.findAllMembers(pageable);
+        Page<MemberStatusResponse> response = memberService.findAllMembers(pageable);
 
         model.addAttribute("members", response);
         model.addAttribute("selectedMenu", "admin-member-management");
@@ -248,8 +248,15 @@ public class AdminController {
 
     // 회원 정보 수정 요청을 처리합니다.
     @PutMapping("/members/{memberId}")
-    public ResponseEntity<String> updateMemberInfo(@PathVariable Long memberId, @RequestBody UpdateMemberRequest request) {
+    public ResponseEntity<String> updateMemberInfo(@PathVariable Long memberId, @Valid @RequestBody UpdateMemberRequest request, BindingResult bindingResult) {
         log.info("ADMIN PUT updateMemberInfo request, memberId = {}", memberId);
+        // 유효성 검증 실패 시 에러 메시지 반환
+        if (bindingResult.hasErrors()) {
+            log.warn("ADMIN POST addBook validation error = {}", bindingResult.getFieldError().getDefaultMessage());
+            String errorMessage = bindingResult.getFieldError().getDefaultMessage();
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorMessage);
+        }
+
         try {
             memberService.updateMemberByAdmin(memberId, request);
         } catch (Exception e) {

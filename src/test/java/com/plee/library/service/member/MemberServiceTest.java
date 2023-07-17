@@ -6,7 +6,7 @@ import com.plee.library.domain.member.Member;
 import com.plee.library.domain.member.MemberLoanHistory;
 import com.plee.library.domain.member.Role;
 import com.plee.library.dto.admin.request.UpdateMemberRequest;
-import com.plee.library.dto.admin.response.MemberInfoResponse;
+import com.plee.library.dto.admin.response.MemberStatusResponse;
 import com.plee.library.dto.member.request.SignUpMemberRequest;
 import com.plee.library.util.message.MemberMessage;
 import com.plee.library.repository.book.BookRepository;
@@ -183,10 +183,10 @@ class MemberServiceTest {
         given(memberRepository.findAll(pageable)).willReturn(new PageImpl<>(members, pageable, members.size()));
 
         // when
-        Page<MemberInfoResponse> foundMembers = memberService.findAllMembers(pageable);
+        Page<MemberStatusResponse> foundMembers = memberService.findAllMembers(pageable);
 
         // then
-        Page<MemberInfoResponse> expectedResponse = createAllMemberInfoResponsePage(members, pageable);
+        Page<MemberStatusResponse> expectedResponse = createAllMemberInfoResponsePage(members, pageable);
 
         assertThat(foundMembers).isNotNull();
         assertThat(foundMembers.getTotalElements()).isEqualTo(5);
@@ -195,9 +195,9 @@ class MemberServiceTest {
         then(memberRepository).should(times(1)).findAll(pageable);
     }
 
-    private Page<MemberInfoResponse> createAllMemberInfoResponsePage(List<Member> members, Pageable pageable) {
-        List<MemberInfoResponse> response = members.stream()
-                .map(member -> MemberInfoResponse.builder()
+    private Page<MemberStatusResponse> createAllMemberInfoResponsePage(List<Member> members, Pageable pageable) {
+        List<MemberStatusResponse> response = members.stream()
+                .map(member -> MemberStatusResponse.builder()
                         .name(member.getName())
                         .loginId(member.getLoginId())
                         .password(member.getPassword())
