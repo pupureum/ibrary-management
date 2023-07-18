@@ -9,6 +9,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.data.jpa.repository.config.EnableJpaAuditing;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -301,8 +302,7 @@ class BookRepositoryTest {
 
             // then
             assertThat(books.size()).isEqualTo(2);
-            assertThat(books).contains(book1);
-            assertThat(books).contains(book2);
+            assertThat(books).contains(book1, book2);
         }
 
         @Test

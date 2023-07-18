@@ -382,8 +382,8 @@ class MemberServiceTest {
         }
 
         @Test
-        @DisplayName("실패 테스트: 기존 비밀번호와 동일")
-        void updateMember_samePassword() {
+        @DisplayName("실패 테스트: 이름과 비밀번호 모두 변경사항이 없는 경우")
+        void updateMember_NotUpdate() {
             // given
             UpdateMemberRequest req = new UpdateMemberRequest(member.getName(), member.getPassword(), member.getRole());
             given(memberRepository.findById(anyLong())).willReturn(Optional.of(member));
@@ -392,7 +392,7 @@ class MemberServiceTest {
             // when, then
             assertThatThrownBy(() -> memberService.changeMemberInfo(1L, req))
                     .isInstanceOf(IllegalStateException.class)
-                    .hasMessageContaining(MemberMessage.NOT_CHANGED_PASSWORD.getMessage());
+                    .hasMessageContaining(MemberMessage.NOT_CHANGED_ANYTHING.getMessage());
         }
     }
 

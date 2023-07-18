@@ -2,16 +2,15 @@ package com.plee.library.repository.book;
 
 import com.plee.library.config.TestJPAConfig;
 import com.plee.library.domain.book.BookInfo;
-import jakarta.persistence.EntityManager;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
-import org.springframework.boot.test.autoconfigure.orm.jpa.TestEntityManager;
 import org.springframework.context.annotation.Import;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.orm.jpa.JpaSystemException;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -46,7 +45,6 @@ class BookInfoRepositoryTest {
 
             // then
             assertThat(savedBookInfo).isNotNull();
-            assertThat(savedBookInfo).isEqualTo(bookInfo);
             assertThat(savedBookInfo.getIsbn()).isEqualTo(bookInfo.getIsbn());
             assertThat(savedBookInfo.getTitle()).isEqualTo(bookInfo.getTitle());
             assertThat(savedBookInfo.getAuthor()).isEqualTo(bookInfo.getAuthor());
@@ -139,7 +137,6 @@ class BookInfoRepositoryTest {
 
             // then
             assertThat(foundBookInfo).isNotNull();
-            assertThat(foundBookInfo).isEqualTo(bookInfo);
             assertThat(foundBookInfo.getIsbn()).isEqualTo(bookInfo.getIsbn());
             assertThat(foundBookInfo.getTitle()).isEqualTo(bookInfo.getTitle());
             assertThat(foundBookInfo.getAuthor()).isEqualTo(bookInfo.getAuthor());
@@ -199,7 +196,13 @@ class BookInfoRepositoryTest {
 
             // then
             assertThat(bookInfos.size()).isEqualTo(2);
-            assertThat(bookInfos).contains(bookInfo1, bookInfo2);
+            assertThat(bookInfos).extracting("isbn").containsExactlyInAnyOrder(bookInfo1.getIsbn(), bookInfo2.getIsbn());
+            assertThat(bookInfos).extracting("title").containsExactlyInAnyOrder(bookInfo1.getTitle(), bookInfo2.getTitle());
+            assertThat(bookInfos).extracting("author").containsExactlyInAnyOrder(bookInfo1.getAuthor(), bookInfo2.getAuthor());
+            assertThat(bookInfos).extracting("publisher").containsExactlyInAnyOrder(bookInfo1.getPublisher(), bookInfo2.getPublisher());
+            assertThat(bookInfos).extracting("image").containsExactlyInAnyOrder(bookInfo1.getImage(), bookInfo2.getImage());
+            assertThat(bookInfos).extracting("description").containsExactlyInAnyOrder(bookInfo1.getDescription(), bookInfo2.getDescription());
+            assertThat(bookInfos).extracting("pubDate").containsExactlyInAnyOrder(bookInfo1.getPubDate(), bookInfo2.getPubDate());
         }
 
         @Test
@@ -239,6 +242,7 @@ class BookInfoRepositoryTest {
     }
 
     @Test
+    @Transactional
     @DisplayName("도서 정보 삭제 테스트")
     void deleteBookInfoTest() {
         // given
@@ -254,9 +258,9 @@ class BookInfoRepositoryTest {
         bookInfoRepository.save(bookInfo);
 
         // when
-        bookInfoRepository.deleteById(bookInfo.getIsbn());
+        bookInfoRepository.deleteById(bookInfo.getId());
 
         // then
-        assertThat(bookInfoRepository.existsById(bookInfo.getIsbn())).isFalse();
+        assertThat(bookInfoRepository.existsById(bookInfo.getId())).isFalse();
     }
 }
