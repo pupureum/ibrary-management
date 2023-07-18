@@ -29,7 +29,7 @@ public class AddBookRequest {
 
     private String pubDate;
 
-    @NotEmpty
+    @NotBlank(message = "요청 사유를 입력해주세요")
     @Size(min = 10, max = 200, message = "요청 사유를 최소 10자 이상 200자 이내로 입력해주세요.")
     private String reqReason;
 

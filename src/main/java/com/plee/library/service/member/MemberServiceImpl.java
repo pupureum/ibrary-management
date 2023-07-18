@@ -1,12 +1,16 @@
 package com.plee.library.service.member;
 
 import com.plee.library.domain.book.Book;
+import com.plee.library.domain.book.BookInfo;
 import com.plee.library.domain.member.Member;
 import com.plee.library.config.MemberAdapter;
 import com.plee.library.domain.member.MemberLoanHistory;
+import com.plee.library.domain.member.MemberRequestHistory;
 import com.plee.library.dto.admin.request.UpdateMemberRequest;
 import com.plee.library.dto.member.request.SignUpMemberRequest;
 import com.plee.library.dto.admin.response.MemberStatusResponse;
+import com.plee.library.repository.book.BookInfoRepository;
+import com.plee.library.repository.member.MemberRequestHistoryRepository;
 import com.plee.library.util.message.MemberMessage;
 import com.plee.library.repository.book.BookRepository;
 import com.plee.library.repository.member.MemberLoanHistoryRepository;
@@ -36,7 +40,9 @@ public class MemberServiceImpl implements MemberService, UserDetailsService {
 
     private final MemberRepository memberRepository;
     private final MemberLoanHistoryRepository memberLoanHisRepository;
+    private final MemberRequestHistoryRepository memberReqHisRepository;
     private final BookRepository bookRepository;
+    private final BookInfoRepository bookInfoRepository;
     private final BCryptPasswordEncoder passwordEncoder;
 
     /**
@@ -218,6 +224,7 @@ public class MemberServiceImpl implements MemberService, UserDetailsService {
     /**
      * 특정 회원을 삭제합니다.
      * 대출중인 도서가 있다면 강제 반납 처리합니다.
+     * 입고 처리 되지 않았으며, 해당 회원만 신청한 도서가 있는 경우, 해당 도서 정보도 삭제합니다.
      *
      * @param memberId 회원 ID
      * @throws NoSuchElementException 요청한 회원이 존재하지 않을 경우
@@ -238,6 +245,18 @@ public class MemberServiceImpl implements MemberService, UserDetailsService {
             history.doReturn();
             bookRepository.findByBookInfoIsbn(history.getBookInfo().getIsbn())
                     .ifPresent(Book::increaseLoanableCnt);
+        });
+
+        // 입고처리 되지 않은 내역 중, 해당 사용자만 신청했던 도서 신청 내역이 있는 경우, 해당 도서의 정보도 제거
+        List<MemberRequestHistory> histories = memberReqHisRepository.findByMemberIdAndIsApprovedFalse(memberId);
+        histories.forEach(history -> {
+            BookInfo bookInfo = history.getBookInfo();
+            boolean isRequestedOnlyByMember = memberReqHisRepository.countByBookInfo(bookInfo) == 1;
+            if (isRequestedOnlyByMember) {
+                bookInfoRepository.delete(bookInfo);
+                log.info("SUCCESS delete bookInfo : {}", bookInfo.getTitle());
+
+            }
         });
 
         memberRepository.delete(member);

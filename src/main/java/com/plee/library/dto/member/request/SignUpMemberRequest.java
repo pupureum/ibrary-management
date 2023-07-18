@@ -8,7 +8,9 @@ import lombok.*;
 
 @Getter
 @Setter
-@NoArgsConstructor
+@Builder
+@RequiredArgsConstructor
+@AllArgsConstructor
 public class SignUpMemberRequest {
 
     @Size(min = 1, max = 25, message = "이름은 1~25자 이내여야 합니다.")

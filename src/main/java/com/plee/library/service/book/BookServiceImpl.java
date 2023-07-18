@@ -523,7 +523,6 @@ public class BookServiceImpl implements BookService {
     /**
      * 관리자 페이지의 사내 도서 목록을 요청된 카테고리 혹은 검색어로 조회합니다.
      * 검색어는 제목과 저자와 일치하는 정보를 반환합니다.
-     * 페이지네이션 하여 신규 도서순으로 해당 페이지를 조회합니다.
      *
      * @param request 검색 조건
      * @param pageable 페이지 정보
@@ -696,7 +695,7 @@ public class BookServiceImpl implements BookService {
     }
 
     /**
-     * 특정 회원의 대출 중인 기록을 대여일로부터 내림차순하여 반환합니다.
+     * 특정 회원의 대출 중인 기록만을 조회하여 반환합니다.
      * 최대 3건이 조회됩니다.
      *
      * @param memberId 회원의 ID

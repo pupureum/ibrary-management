@@ -2,15 +2,11 @@ package com.plee.library.domain.book;
 
 import com.plee.library.domain.BaseTimeEntity;
 import jakarta.persistence.*;
-import jakarta.validation.constraints.NotNull;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.springframework.data.domain.Persistable;
-
-import java.time.LocalDateTime;
-import java.util.Objects;
 
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
@@ -49,7 +45,6 @@ public class BookInfo extends BaseTimeEntity implements Persistable<String> {
         this.image = image;
         this.description = description;
         this.pubDate = pubDate;
-        this.createdAt = LocalDateTime.now();
     }
 
     public void updateAuthor(String author) {

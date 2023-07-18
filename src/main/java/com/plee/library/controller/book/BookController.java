@@ -62,7 +62,7 @@ public class BookController {
             model.addAttribute("response", response);
         } catch (NoSuchElementException e) {
             // 도서 정보를 찾을 수 없는 경우, 에러 메세지를 담아 리다이렉트
-            log.error("bookDetail error", e);
+            log.error("bookDetail error", e.getMessage());
             redirectAttributes.addFlashAttribute("errorMessage", e.getMessage());
             return "redirect:/books";
         }
@@ -72,7 +72,7 @@ public class BookController {
     // 도서 검색 결과를 반환합니다.
     @GetMapping("/search")
     public String searchBookByKeyword(@Valid @ModelAttribute("searchBookRequest") SearchKeywordBookRequest request, BindingResult bindingResult,
-                                      @PageableDefault(size = 5, sort = "createdAt", direction = DESC) Pageable pageable,
+                                      @PageableDefault(size = 5) Pageable pageable,
                                       @CurrentMember Member member, RedirectAttributes redirectAttributes, Model model) {
         log.info("GET searchBookByKeyword keyword = {}", request.getKeyword());
         if (bindingResult.hasErrors()) {
@@ -141,7 +141,6 @@ public class BookController {
     @PostMapping("/loan")
     public String loanBook(@RequestParam("bookId") Long bookId, @CurrentMember Member member, RedirectAttributes redirectAttributes) {
         log.info("POST loanBook request bookId = {}, loginId = {}", bookId, member.getLoginId());
-        System.out.println("here===========");
         try {
             bookService.loanBook(bookId, member.getId());
             redirectAttributes.addFlashAttribute("successMessage", BookMessage.SUCCESS_LOAN_BOOK.getMessage());

@@ -115,7 +115,7 @@ public class AdminController {
     // 키워드 및 카테고리 내 도서 검색 결과를 반환합니다.
     @GetMapping("/books/search")
     public String searchBook(@Valid @ModelAttribute("searchBookRequest") SearchBookRequest request, BindingResult bindingResult,
-                             @PageableDefault(size = 10, sort = "createdAt", direction = DESC) Pageable pageable, RedirectAttributes redirectAttributes, Model model) {
+                             @PageableDefault(size = 10) Pageable pageable, RedirectAttributes redirectAttributes, Model model) {
         log.info("ADMIN GET searchBook request, keyword = {} category = {}", request.getKeyword(), request.getCategoryId());
         // 유효성 검증 실패 시, 에러 메시지를 반환합니다.
         if (bindingResult.hasErrors()) {

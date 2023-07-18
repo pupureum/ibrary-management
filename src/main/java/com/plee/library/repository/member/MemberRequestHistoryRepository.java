@@ -23,6 +23,10 @@ public interface MemberRequestHistoryRepository extends JpaRepository<MemberRequ
 
     Page<MemberRequestHistory> findAllByMemberId(Long memberId, Pageable pageable);
 
+    List<MemberRequestHistory> findByMemberIdAndIsApprovedFalse(Long memberId);
+
+    long countByBookInfo(BookInfo bookInfo);
+
     @Transactional
     @Modifying(clearAutomatically = true)
     @Query("UPDATE MemberRequestHistory m SET m.isApproved = true WHERE m.bookInfo.isbn = :isbn AND m.isApproved = false")
