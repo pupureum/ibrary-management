@@ -210,7 +210,9 @@ public class BookServiceImpl implements BookService {
     @Transactional
     public int processDailyBookReturn(LocalDateTime scheduledAt) {
         // 요청된 시간 기준으로 연체된 대출 기록 조회
-        List<MemberLoanHistory> overdueHistory = memberLoanHisRepository.searchOverdueHistory(LoanHistorySearchCondition.builder()
+        List<MemberLoanHistory> overdueHistory = memberLoanHisRepository.searchOverdueHistory(
+                LoanHistorySearchCondition
+                .builder()
                 .time(scheduledAt)
                 .build());
 
@@ -274,7 +276,7 @@ public class BookServiceImpl implements BookService {
     }
 
     /**
-     * 도서 별 그룹화 및 대출 기록 반납 처리를 수행합니다.
+     * 도서 별 그룹화 및 대출 반납을 처리합니다.
      *
      * @param overdueHistory  연체된 대출 기록
      * @param scheduledAt 일정 시간
@@ -515,7 +517,7 @@ public class BookServiceImpl implements BookService {
                         .author(request.isAuthor())
                         .build(), pageable);
 
-        // 조회된 책들을 AllBooksMarkInfoResponse 객체의 리스트로 변환
+        // 조회된 책들을 BooksMarkResponse 객체의 리스트로 변환
         List<BooksMarkResponse> response = books.map(book -> mapToAllBooksMarkResponse(book, memberId)).toList();
         return new PageImpl<>(response, pageable, books.getTotalElements());
     }
@@ -549,7 +551,7 @@ public class BookServiceImpl implements BookService {
                         .categoryId(request.getCategoryId())
                         .build(), pageable);
 
-        // 조회된 책들을 AllBooksResponse 객체의 리스트로 변환
+        // 조회된 책들을 BooksResponse 객체의 리스트로 변환
         List<BooksResponse> response = BooksResponse.from(books);
         return new PageImpl<>(response, pageable, books.getTotalElements());
     }
@@ -579,7 +581,7 @@ public class BookServiceImpl implements BookService {
         // 책들을 최신순으로 페이지네이션 하여 조회
         Page<Book> books = bookRepository.findAll(pageable);
 
-        // 조회된 책들을 AllBooksResponse 객체의 리스트로 변환
+        // 조회된 책들을 BooksResponse 객체의 리스트로 변환
         List<BooksResponse> response = BooksResponse.from(books);
         return new PageImpl<>(response, pageable, books.getTotalElements());
     }
@@ -597,9 +599,12 @@ public class BookServiceImpl implements BookService {
         if (!bookCategoryRepository.existsById(categoryId)) {
             throw new NoSuchElementException(BookMessage.NOT_FOUND_CATEGORY.getMessage());
         }
-        Page<Book> books = bookRepository.findAllByBookCategoryId(categoryId, pageable);
+        Page<Book> books = bookRepository.search(
+                BookSearchCondition.builder()
+                        .categoryId(categoryId)
+                        .build(), pageable);
 
-        // 조회된 책들을 AllBooksResponse 객체의 리스트로 변환
+        // 조회된 책들을 BooksResponse 객체의 리스트로 변환
         List<BooksResponse> response = BooksResponse.from(books);
         return new PageImpl<>(response, pageable, books.getTotalElements());
     }
@@ -616,7 +621,7 @@ public class BookServiceImpl implements BookService {
     public Page<BooksMarkResponse> findBooksWithMark(Long memberId, Pageable pageable) {
         Page<Book> books = bookRepository.findAll(pageable);
 
-        // 조회된 책들을 찜 여부 정보를 포함한 AllBooksMarkResponse 객체의 리스트로 변환
+        // 조회된 책들을 찜 여부 정보를 포함한 BooksMarkResponse 객체의 리스트로 변환
         List<BooksMarkResponse> response = books.map(book -> mapToAllBooksMarkResponse(book, memberId)).toList();
         return new PageImpl<>(response, pageable, books.getTotalElements());
     }
@@ -636,19 +641,22 @@ public class BookServiceImpl implements BookService {
         if (!bookCategoryRepository.existsById(categoryId)) {
             throw new NoSuchElementException(BookMessage.NOT_FOUND_CATEGORY.getMessage());
         }
-        Page<Book> books = bookRepository.findByBookCategoryId(categoryId, pageable);
+        // 부합하는 도서를 검색하고, 페이지네이션하여 조회
+        Page<Book> books = bookRepository.search(BookSearchCondition.builder()
+                        .categoryId(categoryId)
+                        .build(), pageable);
 
-        // 조회된 책들을 찜 여부 정보를 포함한 AllBooksMarkResponse 객체의 리스트로 변환
+        // 조회된 책들을 찜 여부 정보를 포함한 BooksMarkResponse 객체의 리스트로 변환
         List<BooksMarkResponse> response = books.map(book -> mapToAllBooksMarkResponse(book, memberId)).toList();
         return new PageImpl<>(response, pageable, books.getTotalElements());
     }
 
     /**
-     * 도서 별 회원의 찜 등록 여부 정보를 포함한 AllBooksMarkResponse 객체로 변환합니다.
+     * 도서 별 회원의 찜 등록 여부 정보를 포함한 BooksMarkResponse 객체로 변환합니다.
      *
      * @param book     도서 객체
      * @param memberId 회원 ID
-     * @return AllBooksMarkResponse 객체
+     * @return BooksMarkResponse 객체
      */
     private BooksMarkResponse mapToAllBooksMarkResponse(Book book, Long memberId) {
         return BooksMarkResponse.builder()
@@ -706,7 +714,9 @@ public class BookServiceImpl implements BookService {
     public Page<LoanHistoryResponse> findOnLoanHistory(Long memberId) {
         //대출중인 기록 조회
         List<MemberLoanHistory> histories = memberLoanHisRepository.searchHistory(LoanHistorySearchCondition.builder()
-                .memberId(memberId).notReturned(true).build());
+                .memberId(memberId)
+                .notReturned(true)
+                .build());
         histories.sort(Comparator.comparing(MemberLoanHistory::getCreatedAt).reversed());
 
         // 대출 기록을 LoanHistoryResponse 객체의 리스트로 변환
@@ -775,7 +785,7 @@ public class BookServiceImpl implements BookService {
     public Page<MarkedBooksResponse> findBookmarked(Long memberId, Pageable pageable) {
         Page<MemberBookmark> bookmarkedBooks = memberBookmarkRepository.findAllByMemberId(memberId, pageable);
 
-        // 조회된 책들을 AllBooksResponse 객체의 리스트로 변환
+        // 조회된 책들을 MarkedBooksResponse 객체의 리스트로 변환
         List<MarkedBooksResponse> response = MarkedBooksResponse.from(bookmarkedBooks);
 
         // 변환된 리스트와 페이지 정보를 포함한 Page 객체를 생성하여 반환합니다.

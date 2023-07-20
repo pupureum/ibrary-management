@@ -22,7 +22,7 @@
                 <h6 style="margin-top: 50px; margin-bottom: 30px; margin-left: 20px; font-family: SeoulNamsanM">이름 혹은 비밀번호 변경을 원하시면, 현재 비밀번호 확인이 필요합니다.</h6>
             </div>
             <form id="updateInfoForm" th:object="${member}">
-                <div class="center-content">
+                <div class="center-content" style="padding-top: 50px">
                     <div class="form-group">
                         <label for="email" style="margin-bottom: 17px" margin>이메일</label>
                         <input type="text" id="email" name="email" th:value="${member.loginId}" readonly

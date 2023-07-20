@@ -32,10 +32,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.*;
 import org.springframework.security.test.context.support.WithUserDetails;
 
 import java.time.LocalDate;
@@ -919,7 +916,7 @@ class BookServiceTest {
             books.add(book);
             Pageable pageable = PageRequest.of(0, 10);
             Page<Book> bookPage = new PageImpl<>(books, pageable, 4);
-            given(bookRepository.findByBookCategoryId(categoryId, pageable)).willReturn(bookPage);
+            given(bookRepository.search(any(BookSearchCondition.class), any(Pageable.class))).willReturn(bookPage);
 
             // 찜 정보 생성
             given(memberBookmarkRepository.existsByMemberIdAndBookId(1L, null)).willReturn(true);
@@ -934,7 +931,7 @@ class BookServiceTest {
             assertThat(result.getContent()).allSatisfy(book -> assertThat(book.isMarked()).isEqualTo(true));
 
             then(bookCategoryRepository).should(times(1)).existsById(categoryId);
-            then(bookRepository).should(times(1)).findByBookCategoryId(categoryId, pageable);
+            then(bookRepository).should(times(1)).search(any(BookSearchCondition.class), any(Pageable.class));
             then(memberBookmarkRepository).should(times(5)).existsByMemberIdAndBookId(1L, null);
         }
 

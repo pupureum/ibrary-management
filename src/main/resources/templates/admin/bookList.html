@@ -27,8 +27,7 @@
         <div th:replace="~{fragments/sidebar :: sidebar(${selectedMenu})}"/>
         <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
             <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
-                <h3 style="margin-top: 50px; margin-bottom: 30px; margin-left: 20px; font-family: SeoulNamsanM">사내 도서
-                    목록</h3>
+                <h3 style="margin-top: 50px; margin-bottom: 30px; margin-left: 20px; font-family: SeoulNamsanM">사내 도서 목록</h3>
                 <h6>
                     <span th:text="'총 ' + ${books.totalElements} + '권의 도서가 있습니다.'"></span>
                 </h6>
@@ -105,8 +104,9 @@
                                 </button>
                             </form>
                         </td>
-                        <td th:text="${book.bookInfo.title}" th:href="@{/books/{bookId}(bookId=${book.id})}"
-                            class="text-center"></td>
+                        <td class="text-center">
+                            <a th:href="@{/books/{bookId}(bookId=${book.id})}" th:text="${book.bookInfo.title}" style="text-decoration: none; color: inherit"></a>
+                        </td>
                         <td th:text="${book.bookInfo.author}" class="text-center"></td>
                         <td th:text="${book.bookInfo.publisher}" class="text-center"></td>
                         <td style="text-align: center">

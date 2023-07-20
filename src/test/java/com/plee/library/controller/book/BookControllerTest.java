@@ -275,7 +275,7 @@ class BookControllerTest {
                             .param("bookId", "1")
                             .with(csrf()))
                     .andExpect(status().is3xxRedirection())
-                    .andExpect(redirectedUrl("/books/loan"))
+                    .andExpect(redirectedUrl("/books/1"))
                     .andExpect(flash().attributeExists("successMessage"))
                     .andExpect(flash().attribute("successMessage", BookMessage.SUCCESS_LOAN_BOOK.getMessage()));
         }
@@ -291,7 +291,7 @@ class BookControllerTest {
                             .param("bookId", "1")
                             .with(csrf()))
                     .andExpect(status().is3xxRedirection())
-                    .andExpect(redirectedUrl("/books/loan"))
+                    .andExpect(redirectedUrl("/books/on-loan"))
                     .andExpect(flash().attributeExists("errorMessage"))
                     .andExpect(flash().attribute("errorMessage", BookMessage.NOT_FOUND_BOOK.getMessage()));
         }

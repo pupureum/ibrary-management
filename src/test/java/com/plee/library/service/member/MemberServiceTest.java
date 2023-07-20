@@ -8,6 +8,7 @@ import com.plee.library.domain.member.Role;
 import com.plee.library.dto.admin.request.UpdateMemberRequest;
 import com.plee.library.dto.admin.response.MemberStatusResponse;
 import com.plee.library.dto.member.request.SignUpMemberRequest;
+import com.plee.library.repository.member.MemberRequestHistoryRepository;
 import com.plee.library.util.message.MemberMessage;
 import com.plee.library.repository.book.BookRepository;
 import com.plee.library.repository.member.MemberLoanHistoryRepository;
@@ -44,6 +45,8 @@ class MemberServiceTest {
     private MemberRepository memberRepository;
     @Mock
     private MemberLoanHistoryRepository memberLoanHisRepository;
+    @Mock
+    private MemberRequestHistoryRepository memberReqHisRepository;
     @Mock
     private BookRepository bookRepository;
     @Mock
@@ -423,6 +426,7 @@ class MemberServiceTest {
                             .memberId(any())
                             .notReturned(true)
                             .build())).willReturn(Collections.emptyList());
+            given(memberReqHisRepository.findByMemberIdAndIsApprovedFalse(anyLong())).willReturn(Collections.emptyList());
 
             // when
             memberService.deleteMember(1L);
@@ -459,6 +463,7 @@ class MemberServiceTest {
                             .notReturned(true)
                             .build())).willReturn(memberLoanHistoryList);
             given(bookRepository.findByBookInfoIsbn(anyString())).willReturn(Optional.of(book));
+            given(memberReqHisRepository.findByMemberIdAndIsApprovedFalse(anyLong())).willReturn(Collections.emptyList());
 
             // when
             memberService.deleteMember(1L);

@@ -72,7 +72,7 @@ public class BookController {
     // 도서 검색 결과를 반환합니다.
     @GetMapping("/search")
     public String searchBookByKeyword(@Valid @ModelAttribute("searchBookRequest") SearchKeywordBookRequest request, BindingResult bindingResult,
-                                      @PageableDefault(size = 5) Pageable pageable,
+                                      @PageableDefault(size = 5, sort = "createdAt", direction = DESC) Pageable pageable,
                                       @CurrentMember Member member, RedirectAttributes redirectAttributes, Model model) {
         log.info("GET searchBookByKeyword keyword = {}", request.getKeyword());
         if (bindingResult.hasErrors()) {
@@ -147,9 +147,10 @@ public class BookController {
         } catch (Exception e) {
             log.warn("loanBook error = {}", e.getMessage());
             redirectAttributes.addFlashAttribute("errorMessage", e.getMessage());
+            return "redirect:/books/on-loan";
         }
-        // 대출 요청 처리 후, 대출 기록 페이지로 리다이렉트
-        return "redirect:/books/loan";
+        // 대출 요청 처리 후, 해당 도서 상세 페이지로 리다이렉트
+        return "redirect:/books/" + bookId;
     }
 
     // 대출 도서 반납 요청을 처리합니다.

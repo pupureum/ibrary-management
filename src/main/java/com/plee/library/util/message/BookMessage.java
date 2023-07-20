@@ -30,6 +30,5 @@ public enum BookMessage implements Message {
     API_ERROR("네이버 도서 검색에 오류가 발생했습니다. 잠시 후에 다시 시도해주세요."),
     MAX_LOAN_BOOK("대출 가능한 도서의 수를 초과하였습니다. 최대 3권까지 가능합니다.");
 
-
     private final String message;
 }
