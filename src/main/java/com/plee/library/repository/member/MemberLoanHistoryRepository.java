@@ -1,7 +1,5 @@
 package com.plee.library.repository.member;
 
-import com.plee.library.domain.book.BookInfo;
-import com.plee.library.domain.member.Member;
 import com.plee.library.domain.member.MemberLoanHistory;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -11,7 +9,6 @@ import org.springframework.data.querydsl.QuerydslPredicateExecutor;
 import org.springframework.data.repository.query.Param;
 
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 

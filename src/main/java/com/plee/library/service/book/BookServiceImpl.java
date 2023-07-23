@@ -55,9 +55,8 @@ public class BookServiceImpl implements BookService {
 
     /**
      * 도서 입고처리를 위해 저장합니다.
-     * 도서 정보와 수량을 받아서 새로운 도서를 저장합니다.
      *
-     * @param request 도서 정보와 수량을 담고 있는 요청 객체
+     * @param request 도서 정보와 수량, 카테고리 정보
      * @throws IllegalStateException  이미 동일한 도서가 존재하는 경우
      * @throws NoSuchElementException 없는 카테고리로 저장하려는 경우
      */
@@ -111,7 +110,6 @@ public class BookServiceImpl implements BookService {
 
     /**
      * 회원의 신규 도서 추가 요청을 등록합니다.
-     * 이미 등록된 도서거나, 회원이 추가 요청을 한 도서라면 예외 처리합니다.
      *
      * @param request  추가 요청 정보
      * @param memberId 회원 ID
@@ -607,7 +605,7 @@ public class BookServiceImpl implements BookService {
     }
 
     /**
-     * 특정 카테고리의 도서를 페이지네이션 하여 신규 도서순으로 조회합니다.
+     * 특정 카테고리의 도서를 신규 도서순으로 페이지네이션 하여 조회합니다.
      *
      * @param pageable 페이지 정보
      * @return 전체 도서 정보를 담은 Page 객체
@@ -673,7 +671,7 @@ public class BookServiceImpl implements BookService {
     }
 
     /**
-     * 모든 대출 이력을 페이지네이션하여 최신순으로 조회합니다.
+     * 모든 대출 이력을 최신순으로 페이지네이션하여 조회합니다.
      *
      * @param pageable 페이지 정보
      * @return 대출 이력 정보 담은 Page 객체
@@ -689,7 +687,7 @@ public class BookServiceImpl implements BookService {
     }
 
     /**
-     * 특정 회원의 대출 기록을 페이지네이션 하여 최신순으로 조회합니다.
+     * 특정 회원의 대출 기록을 최신순으로 페이지네이션하여 조회합니다.
      *
      * @param memberId 회원의 ID
      * @param pageable 페이지 정보
@@ -730,7 +728,7 @@ public class BookServiceImpl implements BookService {
     }
 
     /**
-     * 특정 회원의 신규 도서 신청 내역을 페이지네이션하여 최신순으로 조회합니다.
+     * 특정 회원의 신규 도서 신청 내역을 최신순으로 페이지네이션하여 조회합니다.
      *
      * @param memberId 회원 ID
      * @param pageable 페이지 정보
@@ -747,7 +745,7 @@ public class BookServiceImpl implements BookService {
     }
 
     /**
-     * 모든 신규 도서 요청 내역을 페이지네이션하여 최신순으로 조회합니다.
+     * 모든 신규 도서 요청 내역을 최신순으로 페이지네이션하여 조회합니다.
      *
      * @param pageable 페이지 정보
      * @return 신규 도서 요청 내역을 담은 Page 객체
@@ -777,7 +775,7 @@ public class BookServiceImpl implements BookService {
     }
 
     /**
-     * 특정 회원이 찜한 도서들을 페이지네이션하여 조회합니다.
+     * 특정 회원이 찜한 도서들을 최신순으로 페이지네이션하여 조회합니다.
      *
      * @param memberId 회원 ID
      * @param pageable 페이지 정보

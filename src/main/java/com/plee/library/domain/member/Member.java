@@ -32,7 +32,7 @@ public class Member extends BaseTimeEntity {
     @Column(name = "login_id", nullable = false)
     private String loginId;
 
-    @Column(name = "password", nullable = false)
+    @Column(name = "password", length = 20, nullable = false)
     private String password;
 
     @Enumerated(EnumType.STRING)

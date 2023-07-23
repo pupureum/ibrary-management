@@ -1,7 +1,6 @@
 package com.plee.library.repository.member;
 
 import com.plee.library.domain.book.BookInfo;
-import com.plee.library.domain.member.Member;
 import com.plee.library.domain.member.MemberRequestHistory;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -11,7 +10,6 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
-import java.util.Optional;
 
 public interface MemberRequestHistoryRepository extends JpaRepository<MemberRequestHistory, Long> {
 

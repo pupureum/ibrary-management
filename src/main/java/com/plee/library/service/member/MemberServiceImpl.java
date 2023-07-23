@@ -69,7 +69,7 @@ public class MemberServiceImpl implements MemberService, UserDetailsService {
     /**
      * 회원 정보를 저장합니다.
      *
-     * @param request 회원가입 요청 객체 (SignUpMemberRequest)
+     * @param request 회원가입 정보를 담은 요청 객체
      * @return 저장된 회원
      */
     @Override
