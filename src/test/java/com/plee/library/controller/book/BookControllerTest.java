@@ -307,7 +307,7 @@ class BookControllerTest {
             // given
             ReturnBookRequest req = ReturnBookRequest.builder()
                     .historyId(1L)
-                    .status(true) // 대출중인 도서만 보기 페이지로 리다이렉트 되도록 true로 설정
+                    .onLoan(true) // 대출중인 도서만 보기 페이지로 리다이렉트 되도록 true로 설정
                     .build();
             willDoNothing().given(bookService).returnBook(req, 1L);
 
@@ -327,7 +327,7 @@ class BookControllerTest {
             // given
             ReturnBookRequest req = ReturnBookRequest.builder()
                     .historyId(1L)
-                    .status(false)
+                    .onLoan(false)
                     .build();
             willThrow(new NoSuchElementException(BookMessage.NOT_FOUND_LOAN_HISTORY.getMessage())).given(bookService).returnBook(any(ReturnBookRequest.class), anyLong());
 
