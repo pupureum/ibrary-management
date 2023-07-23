@@ -4,15 +4,17 @@
 ## 기술 스택
 <img src="https://img.shields.io/badge/JAVA-007396?style=for-the-badge&logo=java&logoColor=white"></a>
 <img src="https://img.shields.io/badge/spring_boot-6DB33F?style=for-the-badge&logo=springboot&logoColor=white">
+<img src="https://img.shields.io/badge/gradle-02303A?style=for-the-badge&logo=gradle&logoColor=white">
 <img src="https://img.shields.io/badge/spring_security-6DB33F?style=for-the-badge&logo=springsecurity&logoColor=white">
-<img src="https://img.shields.io/badge/mariadb-003545?style=for-the-badge&logo=mysql&logoColor=white">
-<img src="https://img.shields.io/badge/junit5-25A162?style=for-the-badge&logo=mysql&logoColor=white">
+<img src="https://img.shields.io/badge/mariadb-003545?style=for-the-badge&logo=mariadb&logoColor=white">
+<img src="https://img.shields.io/badge/junit5-25A162?style=for-the-badge&logo=junit5&logoColor=white">
 
-<img src="https://img.shields.io/badge/html5-E34F26?style=for-the-badge&logo=prometheus&logoColor=white"></a>
-<img src="https://img.shields.io/badge/css3-1572B6?style=for-the-badge&logo=prometheus&logoColor=white">
-<img src="https://img.shields.io/badge/javascript-F7DF1E?style=for-the-badge&logo=prometheus&logoColor=white">
-<img src="https://img.shields.io/badge/jquery-0769AD?style=for-the-badge&logo=prometheus&logoColor=white">
-<img src="https://img.shields.io/badge/thymeleaf-005F0F?style=for-the-badge&logo=prometheus&logoColor=white">
+<img src="https://img.shields.io/badge/html5-E34F26?style=for-the-badge&logo=html5&logoColor=white"></a>
+<img src="https://img.shields.io/badge/css3-1572B6?style=for-the-badge&logo=css3&logoColor=white">
+<img src="https://img.shields.io/badge/javascript-F7DF1E?style=for-the-badge&logo=javascript&logoColor=white">
+<img src="https://img.shields.io/badge/thymeleaf-005F0F?style=for-the-badge&logo=thymeleaf&logoColor=white">
+<img src="https://img.shields.io/badge/jquery-0769AD?style=for-the-badge&logo=jquery&logoColor=white">
+<img src="https://img.shields.io/badge/bootstrap-7952B3?style=for-the-badge&logo=bootstrap&logoColor=white">
 
 ## 개발 기간
 - 2023.06.12 ~ 2023.07.21
@@ -25,11 +27,23 @@
   <tr>
 </table>
 
-## 화면 설계
-- [Figma 링크](https://www.figma.com/file/3B1ze5FeMSOjZJ9GnaTb8F/Untitled?type=design&node-id=0%3A1&mode=design&t=z5NX3aegOsdPJD4u-1)
+## 요구사항 정의서
+- [Google Sheets](https://docs.google.com/spreadsheets/d/1uiziHTc-ltIUclqIfs8QsNffROjpkNzISY2V-NiRQjQ/edit?usp=sharing)
+
+## 아키텍처
+<img alt="" src="https://github.com/pupureum/library-management-system/assets/48874494/0fb3fdb9-fe27-4f36-8bfa-b0c5e1e8d6c6" width="600" height="380"/>
+
+## 화면 설계서
+- [Figma](https://www.figma.com/file/3B1ze5FeMSOjZJ9GnaTb8F/Untitled?type=design&node-id=0%3A1&mode=design&t=z5NX3aegOsdPJD4u-1)
+
+## 테이블 정의서
+- [Google Sheets](https://docs.google.com/spreadsheets/d/1uiziHTc-ltIUclqIfs8QsNffROjpkNzISY2V-NiRQjQ/edit?usp=sharing)
 
 ## ERD
-![ERD](https://github.com/pupureum/library-management-system/assets/48874494/8fd06923-bcf0-4b0d-a3d5-2a383477eda9)
+![ERD](https://github.com/pupureum/library-management-system/assets/48874494/1d28d2db-bba9-4065-8205-bcf9b42e3bb7)
+
+## 통합테스트 시나리오
+- [Google Sheets](https://docs.google.com/spreadsheets/d/1N8FzFY0yuUYJivHo9VzMtJ_sH9pRhwNP5CiTSfwUvDs/edit?usp=sharing)
 
 ## 일반 회원 화면
 | ✔ 메인페이지 | ✔ 전체 도서 목록 |
