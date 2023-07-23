@@ -1,11 +1,12 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
+<html xmlns:th="http://www.thymeleaf.org" xmlns="http://www.w3.org/1999/html">
 <head>
     <meta charset="UTF-8">
     <title>현인의 서재</title>
     <link rel="stylesheet" th:href="@{/css/bootstrap.min.css}">
     <link rel="stylesheet" th:href="@{/css/main.css}">
     <link rel="stylesheet" th:href="@{/css/sidebar.css}">
+    <script th:src="@{/js/jquery-3.7.0.js}"></script>
     <script th:src="@{/js/bootstrap.min.js}"></script>
 </head>
 
@@ -29,4 +30,18 @@
         </div>
     </div>
 </div>
+</div>
+<script>
+    // 앨범의 높이 일정하게 맞추기 위한 최대 높이 구하기
+    $(document).ready(function () {
+        let maxHeight = 0;
+        $('.card').each(function () {
+            if ($(this).height() > maxHeight) {
+                maxHeight = $(this).height();
+            }
+        });
+        $('.card').height(maxHeight);
+    });
+</script>
 </body>
+</html>

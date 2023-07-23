@@ -1,92 +1,108 @@
 package com.plee.library.repository.member;
 
+import com.plee.library.config.TestJPAConfig;
 import com.plee.library.domain.member.Member;
 import com.plee.library.domain.member.Role;
-import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
+import org.springframework.context.annotation.Import;
+import org.springframework.dao.DataIntegrityViolationException;
 
 import java.util.List;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.assertj.core.api.Assertions.*;
 
 @DataJpaTest
-@AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
+@Import(TestJPAConfig.class)
 @DisplayName("MemberRepository 테스트")
 class MemberRepositoryTest {
     @Autowired
     private MemberRepository memberRepository;
 
-    @Test
+    @Nested
     @DisplayName("회원 생성")
-    void signUpMember() {
-        // given
-        Member member = Member.builder()
-                .name("이푸름")
-                .loginId("plee@gmail.com")
-                .password("test1234")
-                .build();
+    public class saveMemberTest {
+        @Test
+        @DisplayName("회원 생성 성공")
+        void signUpMember() {
+            // given
+            Member member = Member.builder()
+                    .name("이푸름")
+                    .loginId("plee@gmail.com")
+                    .password("test1234")
+                    .build();
 
-        // when
-        Member savedMember = memberRepository.save(member);
+            // when
+            Member savedMember = memberRepository.save(member);
 
-        // then
-        assertNotNull(savedMember);
-        assertEquals(member, savedMember);
-        assertEquals(member.getId(), savedMember.getId());
-        assertEquals(member.getName(), savedMember.getName());
-        assertEquals(member.getLoginId(), savedMember.getLoginId());
-        assertEquals(member.getPassword(), savedMember.getPassword());
-        assertEquals(member.getRole(), savedMember.getRole());
-        // TODO 확인하기
-        Assertions.assertThat(savedMember.getMemberLoanHistories())
-                .hasSize(member.getMemberLoanHistories().size())
-                .containsAll(member.getMemberLoanHistories());
-        Assertions.assertThat(savedMember.getMemberRequestHistories())
-                .hasSize(member.getMemberRequestHistories().size())
-                .containsAll(member.getMemberRequestHistories());
+            // then
+            assertThat(savedMember).isNotNull().usingRecursiveComparison().isEqualTo(member);
+        }
+
+        @Test
+        @DisplayName("실패: 이미 존재하는 loginId")
+        void saveFailWithNotUniqueLoginId() {
+            // given
+            Member member = Member.builder()
+                    .name("이푸름")
+                    .loginId("plee@gmail.com")
+                    .password("test1234")
+                    .build();
+            memberRepository.save(member);
+            Member member2 = Member.builder()
+                    .name("이푸름")
+                    .loginId("plee@gmail.com")
+                    .password("test12345")
+                    .build();
+
+            // when, then
+            assertThatThrownBy(() -> memberRepository.save(member2)).isInstanceOf(DataIntegrityViolationException.class);
+        }
     }
 
-    @Test
-    @DisplayName("loginId로 회원 조회")
-    void findMemberByLoginId() {
-        // given
-        Member member1 = Member.builder()
-                .name("test")
-                .loginId("test1@gmail.com")
-                .password("test1234")
-                .build();
-        memberRepository.save(member1);
+    @Nested
+    @DisplayName("특정 회원 조회")
+    public class findMemberByLoginIdTest {
+        @Test
+        @DisplayName("loginId로 회원 조회")
+        void findMemberByLoginId() {
+            // given
+            Member member1 = Member.builder()
+                    .name("test")
+                    .loginId("test1@gmail.com")
+                    .password("test1234")
+                    .build();
+            memberRepository.save(member1);
 
-        Member member2 = Member.builder()
-                .name("test2")
-                .loginId("test2@gmail.com")
-                .password("test1234")
-                .build();
-        memberRepository.save(member1);
+            Member member2 = Member.builder()
+                    .name("test2")
+                    .loginId("test2@gmail.com")
+                    .password("test1234")
+                    .build();
+            memberRepository.save(member1);
 
-        // when
-        Member foundMember = memberRepository.findByLoginId(member1.getLoginId())
-                .orElse(null);
+            // when
+            Member foundMember = memberRepository.findByLoginId(member1.getLoginId()).orElse(null);
 
-        // then
-        assertNotNull(foundMember);
-        assertEquals(member1, foundMember);
-        assertEquals(member1.getId(), foundMember.getId());
-        assertEquals(member1.getName(), foundMember.getName());
-        assertEquals(member1.getLoginId(), foundMember.getLoginId());
-        assertEquals(member1.getPassword(), foundMember.getPassword());
-        assertEquals(member1.getRole(), foundMember.getRole());
-        // TODO 확인하기
-        Assertions.assertThat(foundMember.getMemberLoanHistories())
-                .hasSize(member1.getMemberLoanHistories().size())
-                .containsAll(member1.getMemberLoanHistories());
-        Assertions.assertThat(foundMember.getMemberRequestHistories())
-                .hasSize(member1.getMemberRequestHistories().size())
-                .containsAll(member1.getMemberRequestHistories());
+            // then
+            assertThat(foundMember).isNotNull().usingRecursiveComparison().isEqualTo(member1);
+        }
+
+        @Test
+        @DisplayName("loginId로 존재 여부 확인")
+        void findFailWithNotExistLoginId() {
+            // given
+            String loginId = "no@gmail.com";
+
+            // when
+            Boolean result = memberRepository.existsByLoginId(loginId);
+
+            // then
+            assertThat(result).isFalse();
+        }
     }
 
     @Test
@@ -111,69 +127,71 @@ class MemberRepositoryTest {
         List<Member> foundMembers = memberRepository.findAll();
 
         // then
-        assertEquals(2, foundMembers.size());
-        assertTrue(foundMembers.contains(member1));
-        assertTrue(foundMembers.contains(member2));
+        assertThat(foundMembers).size().isEqualTo(2);
+        assertThat(foundMembers).contains(member1, member2);
     }
 
+    @Nested
+    @DisplayName("회원 정보 수정")
+    public class updateMemberTest {
+        @Test
+        @DisplayName("회원 권한 변경")
+        void changeMemberRole() {
+            // given
+            Member member = Member.builder()
+                    .name("이푸름")
+                    .loginId("plee@gmail.com")
+                    .password("test1234")
+                    .build();
+            memberRepository.save(member);
 
-    @Test
-    @DisplayName("회원 권한 변경")
-    void changeMemberRole() {
-        // given
-        Member member = Member.builder()
-                .name("이푸름")
-                .loginId("plee@gmail.com")
-                .password("test1234")
-                .build();
-        memberRepository.save(member);
+            // when
+            member.changeRole(Role.ADMIN);
+            Member updatedMember = memberRepository.save(member);
 
-        // when
-        member.changeRole(Role.Admin);
-        Member updatedMember = memberRepository.save(member);
+            // then
+            assertThat(updatedMember.getRole()).isEqualTo(Role.ADMIN);
+        }
 
-        // then
-        assertEquals(Role.Admin, updatedMember.getRole());
-    }
+        @Test
+        @DisplayName("회원 이름 수정")
+        void changeMemberName() {
+            // given
+            Member member = Member.builder()
+                    .name("이푸름")
+                    .loginId("plee@gmail.com")
+                    .password("test1234")
+                    .build();
+            memberRepository.save(member);
 
-    @Test
-    @DisplayName("회원 이름 수정")
-    void changeMemberName() {
-        // given
-        Member member = Member.builder()
-                .name("이푸름")
-                .loginId("plee@gmail.com")
-                .password("test1234")
-                .build();
-        memberRepository.save(member);
+            // when
+            String newName = "이푸름름";
+            member.changeName(newName);
+            Member updatedMember = memberRepository.save(member);
 
-        // when
-        String newName = "이푸름름";
-        member.changeName(newName);
-        Member updatedMember = memberRepository.save(member);
+            // then
+            assertThat(updatedMember.getName()).isEqualTo(newName);
+        }
 
-        // then
-        assertEquals(newName, updatedMember.getName());
-    }
+        @Test
+        @DisplayName("회원 비밀번호 수정")
+        void changeMemberPwd() {
+            // given
+            Member member = Member.builder()
+                    .name("이푸름")
+                    .loginId("plee@gmail.com")
+                    .password("test1234")
+                    .build();
+            memberRepository.save(member);
 
-    @Test
-    @DisplayName("회원 비밀번호 수정")
-    void changeMemberPwd() {
-        // given
-        Member member = Member.builder()
-                .name("이푸름")
-                .loginId("plee@gmail.com")
-                .password("test1234")
-                .build();
-        memberRepository.save(member);
+            // when
+            String newPwd = "testtest";
+            member.changePassword(newPwd);
+            Member updatedMember = memberRepository.save(member);
 
-        // when
-        String newPwd = "testtest";
-        member.changePassword(newPwd);
-        Member updatedMember = memberRepository.save(member);
-
-        // then
-        assertEquals(newPwd, updatedMember.getPassword());
+            // then
+            assertThat(updatedMember.getPassword()).isEqualTo(newPwd);
+        }
     }
 
     @Test
@@ -191,6 +209,6 @@ class MemberRepositoryTest {
         memberRepository.delete(member);
 
         // then
-        assertFalse(memberRepository.existsById(member.getId()));
+        assertThat(memberRepository.existsById(member.getId())).isFalse();
     }
 }

@@ -1,18 +1,18 @@
 package com.plee.library.domain.book;
 
+import com.plee.library.domain.BaseTimeEntity;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-
-import java.util.Objects;
+import org.springframework.data.domain.Persistable;
 
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Entity
 @Table(name = "book_info")
-public class BookInfo {
+public class BookInfo extends BaseTimeEntity implements Persistable<String> {
 
     @Id
     @Column(name = "book_info_isbn", length = 13, nullable = false, updatable = false)
@@ -36,12 +36,8 @@ public class BookInfo {
     @Column(name = "pub_date")
     private String pubDate;
 
-    @Enumerated(EnumType.STRING)
-    @Column(name = "category")
-    private BookCategory category;
-
     @Builder
-    public BookInfo(String isbn, String title, String author, String publisher, String image, String description, String pubDate, BookCategory category) {
+    public BookInfo(String isbn, String title, String author, String publisher, String image, String description, String pubDate) {
         this.isbn = isbn;
         this.title = title;
         this.author = author;
@@ -49,7 +45,6 @@ public class BookInfo {
         this.image = image;
         this.description = description;
         this.pubDate = pubDate;
-        this.category = category;
     }
 
     public void updateAuthor(String author) {
@@ -57,15 +52,12 @@ public class BookInfo {
     }
 
     @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        BookInfo bookInfo = (BookInfo) o;
-        return Objects.equals(isbn, bookInfo.isbn);
+    public String getId() {
+        return isbn;
     }
 
     @Override
-    public int hashCode() {
-        return Objects.hash(isbn);
+    public boolean isNew() {
+        return createdAt == null;
     }
 }

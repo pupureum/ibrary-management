@@ -2,6 +2,8 @@
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
+    <meta name="_csrf" th:content="${_csrf.token}"/>
+    <meta name="_csrf_header" th:content="${_csrf.headerName}"/>
     <title>현인의 서재</title>
     <link rel="stylesheet" th:href="@{/css/bootstrap.min.css}" href="../../static/css/bootstrap.min.css">
     <link rel="stylesheet" th:href="@{/css/main.css}">
@@ -40,10 +42,10 @@
                         <td class="text-center">
                             <div class="btn-group me-2" style="margin-top: 15px;">
                                 <div th:if="${!request.isApproved}">
-                                    <button type="button" class="btn btn-sm btn-outline-primary" disabled>요청중</button>
+                                    <button type="button" class="btn btn-sm btn-primary" disabled>요청중</button>
                                 </div>
                                 <div th:if="${request.isApproved}">
-                                    <button type="button" class="btn btn-sm btn-outline-success" disabled>입고완료
+                                    <button type="button" class="btn btn-sm btn-success" disabled>입고완료
                                     </button>
                                 </div>
                                 <button type="button" class="btn btn-sm btn-outline-secondary view-details-btn"
@@ -80,7 +82,7 @@
     </div>
 </div>
 
-<!--도서 요청 입고 처리시 재고 수량 입력 모달창-->
+<!--도서 요청 입고 처리시 입고 수량 및 카테고리 입력 모달창-->
 <div class="modal fade" id="stockModal" tabindex="-1" role="dialog" aria-labelledby="stockModalLabel"
      aria-hidden="true">
     <div class="modal-dialog" role="document">
@@ -93,13 +95,20 @@
             </div>
             <div class="modal-body">
                 <form id="stockForm" method="post">
-<!--                    <input type="hidden" id="addRequestId">-->
                     <input type="hidden" id="addBookIsbn" , name="isbn">
                     <div class="mb-3">
-                        <label for="quantity" class="form-label">수량: </label>
+                        <label for="quantity" class="form-label">입고 수량: </label>
                         <input type="number" class="label-style" id="quantity" name="quantity" min="1" max="9999"
                                required>
                     </div>
+                    <div class="form-group">
+                        <label for="selectedBookCategory" class="label-style">카테고리:</label>
+                        <select class="form-control" id="selectedBookCategory" name="categoryId">
+                            <option value="">카테고리 선택</option>
+                            <option th:each="category : ${categories}" th:value="${category.id}" th:text="${category.categoryName}"></option>
+                        </select>
+                    </div>
+                    <input type="hidden" id="selectedCategory" name="categoryId">
                     <div class="modal-footer">
                         <button type="button" class="btn btn-primary" id="confirmButton">확인</button>
                         <button type="button" class="btn btn-secondary" data-dismiss="modal">닫기</button>
@@ -148,18 +157,24 @@
 <nav aria-label="Page navigation">
     <ul class="pagination justify-content-center">
         <li th:class="${requestHistory.getNumber() == 0 ? 'page-item disabled' : 'page-item'}">
-            <a class="page-link" th:if="${requestHistory.getNumber() != 0}" th:href="@{/books(page=${requestHistory.getNumber() - 1})}" aria-label="Previous">
+            <a class="page-link" th:if="${requestHistory.getNumber() != 0}" th:href="@{/admin/request(page=${requestHistory.getNumber() - 1})}" aria-label="Previous">
                 <span class="sr-only">Previous</span>
             </a>
             <span class="page-link" th:if="${requestHistory.getNumber() == 0}" aria-disabled="true" aria-label="Previous">
                 <span class="sr-only">Previous</span>
             </span>
         </li>
-        <li th:each="page : ${requestHistory.getTotalPages() > 0 ? #numbers.sequence(1, requestHistory.getTotalPages()) : null}" th:class="${page - 1 == requestHistory.getNumber() ? 'page-item active' : 'page-item'}">
-            <a class="page-link" th:href="@{/admin/request(page=${page - 1})}" th:text="${page}"></a>
-        </li>
+        <th:block th:with="startPage=${(requestHistory.getNumber() / 10) * 10 + 1},
+        endPage=${requestHistory.getTotalPages() > 0 ? ((startPage + 9) < requestHistory.getTotalPages() ? (startPage + 9) : requestHistory.getTotalPages()) : 0}">
+            <li th:if="${endPage > 0}" th:each="page : ${#numbers.sequence(startPage, endPage)}"
+                th:class="${page - 1 == requestHistory.getNumber() ? 'page-item active' : 'page-item'}">
+                <a th:if="${requestHistory.getTotalPages() != null}" th:href="@{/admin/request(page=${page - 1})}" class="page-link"
+                   th:text="${page}"></a>
+            </li>
+        </th:block>
         <li th:class="${requestHistory.getNumber() == requestHistory.getTotalPages() - 1 && requestHistory.getTotalPages() > 1 ? 'page-item disabled' : 'page-item'}">
-            <a class="page-link" th:if="${requestHistory.getNumber() != requestHistory.getTotalPages() - 1 && requestHistory.getTotalPages() > 1}" th:href="@{/admin/request(page=${requestHistory.getNumber() + 1})}" aria-label="Next">
+            <a class="page-link" th:if="${requestHistory.getNumber() != requestHistory.getTotalPages() - 1 && requestHistory.getTotalPages() > 1}"
+               th:href="@{/admin/request(page=${requestHistory.getNumber() + 1})}" aria-label="Next">
                 <span class="sr-only">Next</span>
             </a>
             <span class="page-link" th:if="${requestHistory.getNumber() == requestHistory.getTotalPages() - 1 && requestHistory.getTotalPages() > 1}" aria-disabled="true" aria-label="Next">
@@ -170,6 +185,10 @@
 </nav>
 
 <script>
+    const token = $("meta[name='_csrf']").attr("content")
+    const header = $("meta[name='_csrf_header']").attr("content");
+    const name = $("#userName").val();
+
     $(document).ready(function () {
         $('.view-details-btn').click(function () {
             let memberName = $(this).data('member-name');
@@ -198,55 +217,71 @@
                 $('#requestStatus').text('요청중');
             }
         });
+
         $('.stock-modal-trigger').click(function () {
-            // let addRequestId = $(this).data('request-id');
             let addBookIsbn = $(this).data('book-isbn');
 
-            // $('#addRequestId').val(addRequestId);
             $('#addBookIsbn').val(addBookIsbn);
             $('#quantity').val('');
             $('#stockModal').modal('show');
         });
-        // $('#stockModal').modal({
-        //     backdrop: true,
-        //     keyboard: true
-        // });
+
+        // 모달 초기화
         $('#stockModal').on('hidden.bs.modal', function () {
             $('#addBookIsbn').val('');
             $('#quantity').val('');
+            $('#selectedBookCategory').val('').trigger('change');
         });
+
         $('.close, [data-dismiss="modal"]').click(function () {
             hideModal();
         });
+
         function hideModal() {
             $('#stockModal').modal('hide');
         }
-        $('#stockModal').on('click', '#confirmButton', function () {
-            let quantity = $('#quantity').val();
-            if (quantity === '') {
-                alert('입고 수량을 입력해주세요.');
-                return;
-            }
 
-            $.ajax({
-                type: 'POST',
-                url: '/admin/new-book',
-                data: {
-                    isbn: $('#addBookIsbn').val(),
-                    quantity: quantity
-                },
-                success: function (response) {
-                    alert('도서가 추가되었습니다.');
-                    hideModal();
-                    location.reload();
-                },
-                error: function (xhr, status) {
-                    console.log('도서 추가 오류 발생:', xhr);
-                    console.log(status);
-                    alert(xhr.responseText);
-                }
-            });
+        $('#selectedBookCategory').on('change', function() {
+            let selectedCategoryId = $(this).val();
+            $('#selectedCategory').val(selectedCategoryId);
         });
+
+       $('#stockModal').on('click', '#confirmButton', function () {
+           let quantity = $('#quantity').val();
+           let categoryId = $('#selectedCategory').val();
+           if (quantity === '') {
+               alert('입고 수량을 입력해주세요.');
+               return;
+           }
+           if (categoryId === '') {
+               alert('카테고리를 선택해주세요.');
+               return;
+           }
+           let formData = {
+               isbn: $('#addBookIsbn').val(),
+               quantity: quantity,
+               categoryId: categoryId
+           };
+           $.ajax({
+               type: 'POST',
+               url: '/admin/new-book',
+               data: JSON.stringify(formData),
+               contentType : 'application/json; charset=utf-8',
+               beforeSend : function(xhr) {
+                   xhr.setRequestHeader(header, token);
+               },
+               success: function (response) {
+                   alert('도서가 추가되었습니다.');
+                   hideModal();
+                   location.reload();
+               },
+               error: function (xhr, status) {
+                   console.log('도서 추가 오류 발생:', xhr);
+                   console.log(xhr.responseText);
+                   alert(xhr.responseText);
+               }
+           });
+       });
     });
 </script>
 </body>

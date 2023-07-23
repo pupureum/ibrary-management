@@ -2,6 +2,8 @@
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
+    <meta name="_csrf" th:content="${_csrf.token}"/>
+    <meta name="_csrf_header" th:content="${_csrf.headerName}"/>
     <title>현인의 서재</title>
     <link rel="stylesheet" th:href="@{/css/bootstrap.min.css}">
     <link rel="stylesheet" th:href="@{/css/main.css}">
@@ -9,7 +11,7 @@
     <link rel="stylesheet" th:href="@{/css/search.css}">
     <script th:src="@{/js/jquery-3.7.0.js}"></script>
     <script th:src="@{/js/bootstrap.min.js}"></script>
-    <script th:src="@{/js/search.js}"></script>
+    <script th:src="@{/js/apiSearch.js}"></script>
 </head>
 <body>
 <div th:replace="~{fragments/header :: ~{header}}"/>
@@ -50,7 +52,6 @@
             <div class="center-content">
                 <form id="selectedBookForm" method="post" class="form-group">
                     <div class="form-group center-content">
-<!--                    <div class="form-group center-content" style="font-family: 'SeoulNamsanM', sans-serif">-->
                         <div>
                             <label for="selectedBookIsbn" class="label-style">ISBN:</label>
                             <input type="text" id="selectedBookIsbn" name="isbn" value="${saveBookRequest.isbn}"
@@ -97,15 +98,28 @@
     </div>
 </div>
 <script>
+const token = $("meta[name='_csrf']").attr("content")
+const header = $("meta[name='_csrf_header']").attr("content");
+const name = $("#userName").val();
+
     $(document).ready(function () {
         $('#selectedBookForm').on('submit', function (event) {
             event.preventDefault();
-            let formData = $(this).serialize();
+            let formData = $(this).serializeArray();
+            let jsonData = {}
+
+            $(formData).each(function(index, obj){
+                jsonData[obj.name] = obj.value;
+            });
 
             $.ajax({
                 type: 'POST',
                 url: '/books/request',
-                data: formData,
+                data: JSON.stringify(jsonData),
+                contentType : 'application/json; charset=utf-8',
+                beforeSend : function(xhr) {
+                xhr.setRequestHeader(header, token);
+                },
                 success: function (response) {
                     console.log('도서 신청 성공:', response);
                     alert('도서 신청이 완료되었습니다.');
@@ -119,6 +133,7 @@
             });
         });
     });
+
 </script>
 
 </body>

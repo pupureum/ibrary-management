@@ -1,7 +1,9 @@
 package com.plee.library.service.member;
 
+import com.plee.library.domain.member.Member;
 import com.plee.library.dto.admin.request.UpdateMemberRequest;
 import com.plee.library.dto.member.request.SignUpMemberRequest;
+import com.plee.library.dto.admin.response.MemberStatusResponse;
 import com.plee.library.dto.member.response.MemberInfoResponse;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -14,7 +16,7 @@ public interface MemberService {
 
     MemberInfoResponse findMember(Long memberId);
 
-    Page<MemberInfoResponse> findAllMembers(Pageable pageable);
+    Page<MemberStatusResponse> findAllMembers(Pageable pageable);
 
     boolean checkCurrentPassword(String currentPassword, Long memberId);
 

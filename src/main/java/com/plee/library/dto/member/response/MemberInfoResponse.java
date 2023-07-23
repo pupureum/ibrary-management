@@ -1,5 +1,6 @@
 package com.plee.library.dto.member.response;
 
+import com.plee.library.domain.member.Member;
 import com.plee.library.domain.member.Role;
 import lombok.Builder;
 import lombok.Getter;
@@ -24,5 +25,16 @@ public class MemberInfoResponse {
         this.password = password;
         this.role = role;
         this.createdAt = createdAt;
+    }
+
+    public static MemberInfoResponse from(Member member) {
+        return MemberInfoResponse.builder()
+                        .id(member.getId())
+                        .name(member.getName())
+                        .loginId(member.getLoginId())
+                        .password(member.getPassword())
+                        .role(member.getRole())
+                        .createdAt(member.getCreatedAt().toLocalDate())
+                        .build();
     }
 }

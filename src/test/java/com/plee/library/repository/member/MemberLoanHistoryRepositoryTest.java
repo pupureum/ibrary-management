@@ -1,97 +1,128 @@
 package com.plee.library.repository.member;
 
+import com.plee.library.config.TestJPAConfig;
 import com.plee.library.domain.book.BookInfo;
 import com.plee.library.domain.member.Member;
 import com.plee.library.domain.member.MemberLoanHistory;
 import com.plee.library.repository.book.BookInfoRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
+import org.springframework.context.annotation.Import;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 
-import java.util.List;
-
-import static org.junit.jupiter.api.Assertions.*;
+import static org.assertj.core.api.Assertions.*;
 
 @DataJpaTest
-@AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
+@Import(TestJPAConfig.class)
 @DisplayName("MemberLoanHistoryRepository 테스트")
 class MemberLoanHistoryRepositoryTest {
     @Autowired
     private MemberLoanHistoryRepository memberLoanHisRepository;
     @Autowired
     private MemberRepository memberRepository;
-
     @Autowired
     private BookInfoRepository bookInfoRepository;
 
-    Member member;
-    BookInfo bookInfo1;
-    BookInfo bookInfo2;
+    private Member member;
+    private BookInfo bookInfo;
 
     @BeforeEach
     void setUp() {
-        Member member = Member.builder()
+        member = Member.builder()
                 .name("이푸름")
-                .loginId("plee@gmail.com")
-                .password("test1234")
+                .loginId("test@gmail.com")
+                .password("test12")
                 .build();
         memberRepository.save(member);
 
-        bookInfo1 = BookInfo.builder()
-                .isbn("9788994492032")
-                .title("Java의 정석")
-                .author("남궁성")
-                .publisher("도우출판")
-                .image("https://shopping-phinf.pstatic.net/main_3246668/32466681076.20230622071100.jpg")
+        bookInfo = BookInfo.builder()
+                .isbn("9788994492081")
+                .title("bookInfo")
+                .author("info")
+                .publisher("info")
                 .description("책 소개입니다")
-                .pubDate("20160201")
+                .pubDate("20221211")
                 .build();
-        bookInfoRepository.save(bookInfo1);
-
-        bookInfo2 = BookInfo.builder()
-                .isbn("9788966261208")
-                .title("HTTP 완벽 가이드")
-                .author("안슈 아가왈")
-                .publisher("인사이트")
-                .image("https://shopping-phinf.pstatic.net/main_3246114/32461143685.20230606105115.jpg")
-                .description("책 소개입니다")
-                .pubDate("20141215")
-                .build();
-        bookInfoRepository.save(bookInfo2);
-
+        bookInfoRepository.save(bookInfo);
     }
 
     @Test
     @DisplayName("회원 대출 내역 생성")
-    void createMemberLoanHistory() {
+    void saveMemberLoanHistory() {
         // given
         MemberLoanHistory loanHistory = MemberLoanHistory.builder()
                 .member(member)
-                .bookInfo(bookInfo1)
+                .bookInfo(bookInfo)
                 .build();
 
         // when
         MemberLoanHistory savedLoanHistory = memberLoanHisRepository.save(loanHistory);
 
         // then
-        assertNotNull(savedLoanHistory);
-        assertEquals(loanHistory.getId(), savedLoanHistory.getId());
-        assertEquals(loanHistory.isRenew(), savedLoanHistory.isRenew());
-        assertEquals(loanHistory.getReturnDate(), savedLoanHistory.getReturnDate());
+        assertThat(savedLoanHistory).isNotNull().usingRecursiveComparison().isEqualTo(loanHistory);
     }
 
     @Test
-    @DisplayName("회원의 대출 내역 조회")
-    void findLoanHistoryByMember() {
+    @DisplayName("도서 정보로 대출중인 도서 존재 여부 확인")
+    void existsByBookInfoIsbnAndReturnedAtIsNull() {
         // given
         MemberLoanHistory loanHistory = MemberLoanHistory.builder()
                 .member(member)
-                .bookInfo(bookInfo1)
+                .bookInfo(bookInfo)
                 .build();
+        loanHistory.doReturn();
         memberLoanHisRepository.save(loanHistory);
+
+        // when
+        boolean result = memberLoanHisRepository.existsByBookInfoIsbnAndReturnedAtIsNull(bookInfo.getIsbn());
+
+        // then
+        assertThat(result).isFalse();
+    }
+
+    @Test
+    @DisplayName("회원과 도서 정보로 대출중인 기록 확인")
+    void findByMemberIdAndBookInfoIsbnAndReturnedAtIsNull() {
+        // given
+        MemberLoanHistory loanHistory = MemberLoanHistory.builder()
+                .member(member)
+                .bookInfo(bookInfo)
+                .build();
+        loanHistory.doReturn();
+        memberLoanHisRepository.save(loanHistory);
+
+        // when
+        boolean result = memberLoanHisRepository.findByMemberIdAndBookInfoIsbnAndReturnedAtIsNull(member.getId(), bookInfo.getIsbn()).isPresent();
+
+        // then
+        assertThat(result).isFalse();
+    }
+
+    @Test
+    @DisplayName("회원의 모든 대출 내역 최신순 조회")
+    void findAllByMemberId() {
+        // given
+        MemberLoanHistory loanHistory1 = MemberLoanHistory.builder()
+                .member(member)
+                .bookInfo(bookInfo)
+                .build();
+        memberLoanHisRepository.save(loanHistory1);
+
+        BookInfo bookInfo2 = BookInfo.builder()
+                .isbn("9788994492083")
+                .title("bookInfo2")
+                .author("info")
+                .publisher("info")
+                .description("책 소개입니다")
+                .build();
+        bookInfoRepository.save(bookInfo2);
         MemberLoanHistory loanHistory2 = MemberLoanHistory.builder()
                 .member(member)
                 .bookInfo(bookInfo2)
@@ -99,13 +130,31 @@ class MemberLoanHistoryRepositoryTest {
         memberLoanHisRepository.save(loanHistory2);
 
         // when
-        List<MemberLoanHistory> foundLoanHistories = memberLoanHisRepository.findAllByMember(member);
+        Pageable pageable = PageRequest.of(0, 5, Sort.by("createdAt").descending());
+        Page<MemberLoanHistory> result = memberLoanHisRepository.findAllByMemberId(member.getId(), pageable);
 
         // then
-        assertNotNull(foundLoanHistories);
-        assertEquals(2, foundLoanHistories.size());
-        assertTrue(foundLoanHistories.contains(loanHistory));
-        assertTrue(foundLoanHistories.contains(loanHistory2));
+
+        assertThat(result).isNotNull();
+        assertThat(result.getTotalElements()).isEqualTo(2);
+        assertThat(result.getContent()).containsExactly(loanHistory2, loanHistory1);
+    }
+
+    @Test
+    @DisplayName("특정 회원의 미반납 대출 기록 개수 조회")
+    void countByMemberIdAndReturnedAtIsNull() {
+        // given
+        MemberLoanHistory loanHistory1 = MemberLoanHistory.builder()
+                .member(member)
+                .bookInfo(bookInfo)
+                .build();
+        memberLoanHisRepository.save(loanHistory1);
+
+        // when
+        long result = memberLoanHisRepository.countByMemberIdAndReturnedAtIsNull(member.getId());
+
+        // then
+        assertThat(result).isEqualTo(1);
     }
 
     @Test
@@ -114,7 +163,7 @@ class MemberLoanHistoryRepositoryTest {
         // given
         MemberLoanHistory loanHistory = MemberLoanHistory.builder()
                 .member(member)
-                .bookInfo(bookInfo1)
+                .bookInfo(bookInfo)
                 .build();
         memberLoanHisRepository.save(loanHistory);
 
@@ -123,8 +172,7 @@ class MemberLoanHistoryRepositoryTest {
         MemberLoanHistory updatedLoanHistory = memberLoanHisRepository.save(loanHistory);
 
         // then
-        assertEquals(true, updatedLoanHistory.isRenew());
-        assertEquals(loanHistory.getReturnDate(), updatedLoanHistory.getReturnDate());
+        assertThat(updatedLoanHistory.isRenew()).isTrue();
     }
 
     @Test
@@ -133,7 +181,7 @@ class MemberLoanHistoryRepositoryTest {
         // given
         MemberLoanHistory loanHistory = MemberLoanHistory.builder()
                 .member(member)
-                .bookInfo(bookInfo1)
+                .bookInfo(bookInfo)
                 .build();
         memberLoanHisRepository.save(loanHistory);
 
@@ -142,24 +190,7 @@ class MemberLoanHistoryRepositoryTest {
         MemberLoanHistory updatedLoanHistory = memberLoanHisRepository.save(loanHistory);
 
         // then
-        assertNotNull(loanHistory.getReturnDate());
+        assertThat(updatedLoanHistory.getReturnedAt()).isNotNull();
+        assertThat(updatedLoanHistory.getReturnedAt()).isEqualTo(loanHistory.getReturnedAt());
     }
-
-    @Test
-    @DisplayName("회원의 대출 내역 삭제")
-    void deleteLoanHistoryByMember() {
-        // given
-        MemberLoanHistory loanHistory = MemberLoanHistory.builder()
-                .member(member)
-                .bookInfo(bookInfo1)
-                .build();
-        memberLoanHisRepository.save(loanHistory);
-
-        // when
-        memberLoanHisRepository.delete(loanHistory);
-
-        // then
-        assertFalse(memberLoanHisRepository.existsById(loanHistory.getId()));
-    }
-
 }

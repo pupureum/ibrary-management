@@ -11,6 +11,7 @@ import lombok.NoArgsConstructor;
 import org.hibernate.annotations.ColumnDefault;
 import org.hibernate.annotations.DynamicInsert;
 
+import java.time.LocalDateTime;
 import java.util.*;
 
 @Getter
@@ -28,7 +29,7 @@ public class Member extends BaseTimeEntity {
     @Column(name = "name", length = 25, nullable = false)
     private String name;
 
-    @Column(name = "login_id", length = 40, nullable = false)
+    @Column(name = "login_id", nullable = false)
     private String loginId;
 
     @Column(name = "password", nullable = false)
@@ -49,10 +50,13 @@ public class Member extends BaseTimeEntity {
     private Set<MemberBookmark> memberBookmarks = new HashSet<>();
 
     @Builder
-    public Member(String name, String loginId, String password) {
+    public Member(Long id, String name, String loginId, String password, Role role) {
+        this.id = id;
         this.name = name;
         this.loginId = loginId;
         this.password = password;
+        this.role = role;
+        this.createdAt = LocalDateTime.now();
     }
 
     public void addBookRequest(BookInfo bookInfo, String reqReason) {
@@ -65,14 +69,6 @@ public class Member extends BaseTimeEntity {
 
     public void loanBook(Book book) {
         this.memberLoanHistories.add(new MemberLoanHistory(this, book.getBookInfo()));
-    }
-
-    public void returnBook(BookInfo bookInfo) {
-        MemberLoanHistory targetHistory = this.memberLoanHistories.stream()
-                .filter(history -> history.getBookInfo().getIsbn().equals(bookInfo.getIsbn()) && !history.isReturned())
-                .findFirst()
-                .orElseThrow(() -> new NoSuchElementException("대출 내역이 없습니다."));
-        targetHistory.doReturn();
     }
 
     public void changeRole(Role role) {

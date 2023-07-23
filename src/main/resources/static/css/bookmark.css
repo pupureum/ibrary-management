@@ -1,0 +1,12 @@
+.btn-outline-danger:hover {
+    background-color: hotpink;
+    border-color: hotpink;
+    color: white;
+}
+
+.like-book-btn:hover .like-book-icon,
+.like-book-btn:hover .like-book-text,
+.unlike-book-btn:hover .unlike-book-icon,
+.unlike-book-btn:hover .unlike-book-text {
+    color: white !important;
+}

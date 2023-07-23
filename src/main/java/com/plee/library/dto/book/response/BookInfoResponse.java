@@ -1,27 +1,29 @@
 package com.plee.library.dto.book.response;
 
+import com.plee.library.domain.book.Book;
 import lombok.Builder;
 import lombok.Getter;
 
+import java.util.List;
+import java.util.stream.Collectors;
+
 @Getter
 public class BookInfoResponse {
-
-    private String isbn;
-    private String title;
-    private String author;
-    private String publisher;
-    private String image;
-    private String description;
-    private String pubDate;
+    private final String title;
+    private final String image;
 
     @Builder
-    public BookInfoResponse(String isbn, String title, String author, String publisher, String image, String description, String pubDate) {
-        this.isbn = isbn;
+    public BookInfoResponse(String title, String image) {
         this.title = title;
-        this.author = author;
-        this.publisher = publisher;
         this.image = image;
-        this.description = description;
-        this.pubDate = pubDate;
+    }
+
+    public static List<BookInfoResponse> from(List<Book> books) {
+        return books.stream()
+                .map(book -> BookInfoResponse.builder()
+                        .image(book.getBookInfo().getImage())
+                        .title(book.getBookInfo().getTitle())
+                        .build())
+                .collect(Collectors.toList());
     }
 }
