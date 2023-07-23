@@ -20,5 +20,5 @@ public class ReturnBookRequest {
     private String bookInfoIsbn;
 
     @NotNull
-    private boolean status;
+    private boolean onLoan;
 }

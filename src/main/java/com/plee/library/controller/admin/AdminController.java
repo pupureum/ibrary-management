@@ -61,8 +61,8 @@ public class AdminController {
         log.info("ADMIN POST addBook request, book = {}", request.getIsbn());
         // 유효성 검증 실패 시 에러 메시지 반환
         if (bindingResult.hasErrors()) {
-            log.warn("ADMIN POST addBook validation error = {}", bindingResult.getFieldError().getDefaultMessage());
             String errorMessage = bindingResult.getFieldError().getDefaultMessage();
+            log.warn("ADMIN POST addBook validation error = {}", errorMessage);
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorMessage);
         }
 
@@ -85,7 +85,6 @@ public class AdminController {
 
         model.addAttribute("books", response);
         model.addAttribute("categories", categories);
-
         model.addAttribute("selectedMenu", "admin-book-list");
         return "admin/bookList";
     }
@@ -144,7 +143,7 @@ public class AdminController {
         return "admin/bookList";
     }
 
-    // 신규 도서 추가 요청을 처리합니다.
+    // 도서의 재고 수량 변경 요청을 처리합니다.
     @PutMapping("/books/{bookId}")
     public String updateBookQuantity(@PathVariable Long bookId, @Valid @ModelAttribute("updateBookRequest") UpdateBookRequest request,
                                      BindingResult bindingResult, RedirectAttributes redirectAttributes) {
@@ -166,7 +165,7 @@ public class AdminController {
             redirectAttributes.addFlashAttribute("errorMessage", e.getMessage());
         }
 
-        return redirectBasedOnRequest(request.getCategoryId(), request.getKeyword(), request.getPage());
+        return determineRedirectPage(request.getCategoryId(), request.getKeyword(), request.getPage());
     }
 
     // 도서 삭제 요청을 처리합니다.
@@ -181,16 +180,16 @@ public class AdminController {
             log.warn("ADMIN DELETE deleteBook failed = {}", e.getMessage());
             redirectAttributes.addFlashAttribute("errorMessage", e.getMessage());
         }
-        return redirectBasedOnRequest(request.getCategoryId(), request.getKeyword(), request.getPage());
+        return determineRedirectPage(request.getCategoryId(), request.getKeyword(), request.getPage());
     }
 
     // 요청한 뷰에 따라 리다이렉트할 url을 반환합니다.
-    private String redirectBasedOnRequest(Long categoryId, String keyword, int page) {
+    private String determineRedirectPage(Long categoryId, String keyword, int page) {
         // 카테고리 뷰에서 요청이 들어온 경우, 해당 페이지로 리다이렉트
         if (categoryId != null && keyword.isEmpty()) {
-
             return "redirect:/admin/books/category/" + categoryId + "?page=" + page;
         }
+
         // 검색 뷰에서 요청이 들어온 경우, 해당 페이지로 리다이렉트
         if (!keyword.isEmpty()) {
             UriComponentsBuilder builder = UriComponentsBuilder.fromPath("/admin/books/search")
@@ -201,9 +200,9 @@ public class AdminController {
             String redirectUrl = builder.toUriString();
             return "redirect:" + redirectUrl;
         }
+
         // 전체 도서 목록뷰에서 요청이 들어온 경우, 해당 페이지로 리다이렉트
         return "redirect:/admin/books" + "?page=" + page;
-
     }
 
     // 대출 현황 페이지를 반환합니다.

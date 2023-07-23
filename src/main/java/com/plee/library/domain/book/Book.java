@@ -43,12 +43,16 @@ public class Book extends BaseTimeEntity {
     }
 
     public void setQuantity(int quantity) {
+        // 기존 재고 수량과 차이 계산
         int diff = quantity - this.quantity;
         this.quantity = quantity;
+
+        // 재고 수량이 감소한 경우
         if (diff < 0) {
             this.loanableCnt -= Math.abs(diff);
             return;
         }
+        // 재고 수량이 증가한 경우
         this.loanableCnt += diff;
     }
 
@@ -71,10 +75,6 @@ public class Book extends BaseTimeEntity {
             throw new IllegalStateException(BookMessage.INVALID_LOANABLE_CNT.getMessage());
         }
         this.loanableCnt += cnt;
-    }
-
-    public void setBookCategory(BookCategory bookCategory) {
-        this.bookCategory = bookCategory;
     }
 
     public void setBookInfo(BookInfo bookInfo) {

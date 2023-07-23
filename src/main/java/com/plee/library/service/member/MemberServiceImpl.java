@@ -9,6 +9,7 @@ import com.plee.library.domain.member.MemberRequestHistory;
 import com.plee.library.dto.admin.request.UpdateMemberRequest;
 import com.plee.library.dto.member.request.SignUpMemberRequest;
 import com.plee.library.dto.admin.response.MemberStatusResponse;
+import com.plee.library.dto.member.response.MemberInfoResponse;
 import com.plee.library.repository.book.BookInfoRepository;
 import com.plee.library.repository.member.MemberRequestHistoryRepository;
 import com.plee.library.util.message.MemberMessage;
@@ -47,9 +48,9 @@ public class MemberServiceImpl implements MemberService, UserDetailsService {
 
     /**
      * 회원가입 요청의 유효성을 검증합니다.
-     * 비밀번호와 확인 비밀번호가 일치하는지, 로그인 아이디가 중복되는지를 확인하여 BindingResult에 오류를 추가합니다.
+     * 비밀번호와 비밀번호 확인이 일치하는지, 로그인 아이디가 중복되는지를 확인하여 BindingResult에 오류를 추가합니다.
      *
-     * @param request       회원가입 요청 객체 (SignUpMemberRequest)
+     * @param request       회원가입 요청 정보를 담은 객체
      * @param bindingResult 검증 결과를 담는 BindingResult 객체
      */
     @Override
@@ -69,11 +70,11 @@ public class MemberServiceImpl implements MemberService, UserDetailsService {
      * 회원 정보를 저장합니다.
      *
      * @param request 회원가입 요청 객체 (SignUpMemberRequest)
-     * @return 저장된 회원 정보 (Member 객체)
+     * @return 저장된 회원
      */
     @Override
     @Transactional
-    public Member saveMember(SignUpMemberRequest request) {
+    public void saveMember(SignUpMemberRequest request) {
         // 비밀번호 암호화
         BCryptPasswordEncoder encoder = new BCryptPasswordEncoder();
 
@@ -83,7 +84,7 @@ public class MemberServiceImpl implements MemberService, UserDetailsService {
                 .password(encoder.encode(request.getPassword()))
                 .name(request.getName())
                 .build();
-        return memberRepository.save(member);
+        memberRepository.save(member);
     }
 
     /**
@@ -108,15 +109,15 @@ public class MemberServiceImpl implements MemberService, UserDetailsService {
      *
      * @param memberId 회원 ID
      * @return 조회된 회원의 정보 (MemberInfoResponse 객체)
-     * @throws NoSuchElementException 요청한 회원이 존재하지 않을 경우
+     * @throws NoSuchElementException 요청한 회원을 찾을 수 없는 경우
      */
     @Override
     @Transactional(readOnly = true)
-    public com.plee.library.dto.member.response.MemberInfoResponse findMember(Long memberId) {
+    public MemberInfoResponse findMember(Long memberId) {
         Member foundMember = findMemberById(memberId);
 
         // 회원 정보를 MemberInfoResponse 객체로 변환
-        return com.plee.library.dto.member.response.MemberInfoResponse.from(foundMember);
+        return MemberInfoResponse.from(foundMember);
     }
 
     /**
@@ -133,7 +134,7 @@ public class MemberServiceImpl implements MemberService, UserDetailsService {
     }
 
     /**
-     * 모든 회원을 페이지네이션하여 조회합니다.
+     * 모든 회원을 최신순으로 페이지네이션하여 조회합니다.
      *
      * @param pageable 페이지 정보
      * @return 회원 정보를 담은 Page 객체
@@ -141,7 +142,6 @@ public class MemberServiceImpl implements MemberService, UserDetailsService {
     @Override
     @Transactional(readOnly = true)
     public Page<MemberStatusResponse> findAllMembers(Pageable pageable) {
-        // 회원들을 최신순으로 Pagination 하여 조회
         Page<Member> members = memberRepository.findAll(pageable);
 
         // 조회된 회원들을 MemberInfoResponse 객체 리스트로 변환
@@ -194,7 +194,7 @@ public class MemberServiceImpl implements MemberService, UserDetailsService {
      * @param memberId 회원 ID
      * @param request  변경할 회원 정보
      * @throws NoSuchElementException 요청한 회원이 존재하지 않을 경우
-     * @throws IllegalStateException  새 비밀번호가 기존 비밀번호와 동일한 경우
+     * @throws IllegalStateException  이름과 비밀번호 모두 변경되지 않은 경우
      */
     @Override
     @Transactional
@@ -202,6 +202,7 @@ public class MemberServiceImpl implements MemberService, UserDetailsService {
         Member member = findMemberById(memberId);
         String newName = request.getName();
         String newPassword = request.getPassword();
+
         boolean isChangedName = !newName.equals(member.getName());
         boolean isChangedPassword = !newPassword.isEmpty() && !passwordEncoder.matches(newPassword, member.getPassword());
 

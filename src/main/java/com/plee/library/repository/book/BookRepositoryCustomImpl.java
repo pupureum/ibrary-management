@@ -73,9 +73,6 @@ public class BookRepositoryCustomImpl implements BookRepositoryCustom {
                 case "createdAt" -> {
                     return new OrderSpecifier<>(direction, book.createdAt);
                 }
-                case "title" -> {
-                    return new OrderSpecifier<>(direction, book.bookInfo.title);
-                }
             }
         }
         return OrderByNull.getDefault();

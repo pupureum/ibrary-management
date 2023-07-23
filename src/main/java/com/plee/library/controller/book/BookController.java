@@ -120,7 +120,7 @@ public class BookController {
         Page<LoanHistoryResponse> loanHistory = bookService.findLoanHistory(member.getId(), pageable);
 
         model.addAttribute("loanHistory", loanHistory);
-        model.addAttribute("status", false);
+        model.addAttribute("onLoan", false);
         model.addAttribute("selectedMenu", "member-loan-history");
         return "book/loanHistory";
     }
@@ -132,7 +132,7 @@ public class BookController {
         Page<LoanHistoryResponse> loanHistory = bookService.findOnLoanHistory(member.getId());
 
         model.addAttribute("loanHistory", loanHistory);
-        model.addAttribute("status", true);
+        model.addAttribute("onLoan", true);
         model.addAttribute("selectedMenu", "member-loan-history");
         return "book/loanHistory";
     }
@@ -165,7 +165,7 @@ public class BookController {
             redirectAttributes.addFlashAttribute("errorMessage", e.getMessage());
         }
         // 대출중인 도서만 보기에서 반납처리 한 경우 해당 페이지로 리다이렉트
-        if (request.isStatus()) {
+        if (request.isOnLoan()) {
             return "redirect:/books/on-loan";
         }
         return "redirect:/books/loan";
@@ -173,7 +173,7 @@ public class BookController {
 
     // 대출 도서 연장 요청을 처리합니다.
     @PutMapping("/renewal")
-    public String renewBook(@RequestParam("historyId") Long historyId, @RequestParam("status") boolean status, RedirectAttributes redirectAttributes) {
+    public String renewBook(@RequestParam("historyId") Long historyId, @RequestParam("onLoan") boolean onLoan, RedirectAttributes redirectAttributes) {
         log.info("PUT renewBook historyId = {}", historyId);
         try {
             bookService.renewBook(historyId);
@@ -183,7 +183,7 @@ public class BookController {
             redirectAttributes.addFlashAttribute("errorMessage", e.getMessage());
         }
         // 대출중인 도서만 보기에서 반납처리 한 경우 해당 페이지로 리다이렉트
-        if (status) {
+        if (onLoan) {
             return "redirect:/books/on-loan";
         }
         return "redirect:/books/loan";
@@ -259,7 +259,7 @@ public class BookController {
             return "redirect:/books/" + bookId;
         }
 
-        // 기존 페이지 쿼리 파라미터로 전달
+        // 기존 페이지 정보를 쿼리 파라미터로 전달
         redirectAttributes.addAttribute("page", request.getPage());
 
         // 카테고리 선택된 경우에 찜 요청한 경우 해당 카테고리 페이지로 리다이렉트
@@ -283,12 +283,17 @@ public class BookController {
             redirectAttributes.addFlashAttribute("errorMessage", e.getMessage());
         }
 
+        return determineRedirectPage(request, bookId, redirectAttributes);
+    }
+
+    // 요청한 뷰에 따라 리다이렉트할 url을 반환합니다.
+    private String determineRedirectPage(BookmarkRequest request, Long bookId, RedirectAttributes redirectAttributes) {
         // 도서 상세 페이지에서 요청이 들어온경우, 도서 상세 페이지로 리다이렉트
         if (request.getPageInfo().equals("bookDetail")) {
             return "redirect:/books/" + bookId;
         }
 
-        // 현재 페이지 번호를 쿼리 파라미터로 전달
+        // 기존 페이지 번호를 쿼리 파라미터로 전달
         redirectAttributes.addAttribute("page", request.getPage());
 
         // 찜한 도서 페이지에서 요청이 들어온경우, 찜한 도서 페이지로 리다이렉트

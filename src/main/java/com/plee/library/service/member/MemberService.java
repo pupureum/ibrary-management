@@ -10,7 +10,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.validation.BindingResult;
 
 public interface MemberService {
-    Member saveMember(SignUpMemberRequest request);
+    void saveMember(SignUpMemberRequest request);
 
     void validateSignupRequest(SignUpMemberRequest request, BindingResult bindingResult);
 

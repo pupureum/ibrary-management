@@ -13,7 +13,7 @@ import org.hibernate.validator.constraints.ISBN;
 public class AddBookRequest {
 
     @NotBlank
-    @ISBN
+    @ISBN(message = "ISBN 값이 올바르지 않습니다.")
     private String isbn;
 
     @NotEmpty
@@ -30,7 +30,7 @@ public class AddBookRequest {
     private String pubDate;
 
     @NotBlank(message = "요청 사유를 입력해주세요")
-    @Size(min = 10, max = 200, message = "요청 사유를 최소 10자 이상 200자 이내로 입력해주세요.")
+    @Size(min = 10, max = 200, message = "요청 사유를 최소 10자 이상 200자 이내로 입력해주세요")
     private String reqReason;
 
     @Builder

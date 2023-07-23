@@ -32,13 +32,13 @@
                 <h6>
                     <span th:text="'총 ' + ${loanHistory.totalElements} + '번의 대출 기록이 있어요!'"></span>
                 </h6>
-                <form th:unless="${status}" th:action="@{/books/on-loan}"
+                <form th:unless="${onLoan}" th:action="@{/books/on-loan}"
                       method="get">
                     <button type="submit" class="btn btn-sm btn-outline-secondary"
                             style="margin-top: 70px; margin-left: 10px">대출중인 도서만 보기
                     </button>
                 </form>
-                <form th:if="${status}" th:action="@{/books/loan}"
+                <form th:if="${onLoan}" th:action="@{/books/loan}"
                       method="get">
                     <button type="submit" class="btn btn-sm btn-outline-secondary"
                             style="margin-top: 70px; margin-left: 10px">전체 내역 보기
@@ -85,7 +85,7 @@
                                 <input type="hidden" name="_method" value="put"/>
                                 <input type="hidden" name="historyId" th:value="${history.id}"/>
                                 <input type="hidden" name="bookInfoIsbn" th:value="${history.bookInfo.isbn}"/>
-                                <input type="hidden" name="status" th:value="${status}"/>
+                                <input type="hidden" name="onLoan" th:value="${onLoan}"/>
                                 <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
                                 <button type="submit" class="btn btn-sm btn-outline-primary"
                                         style="margin-top: 70px; margin-left: 10px">반납
@@ -96,7 +96,7 @@
                                     <input type="hidden" name="_method" value="put"/>
                                     <input type="hidden" name="historyId" th:value="${history.id}"/>
                                     <input type="hidden" name="bookInfoIsbn" th:value="${history.bookInfo.isbn}"/>
-                                    <input type="hidden" name="status" th:value="${status}"/>
+                                    <input type="hidden" name="onLoan" th:value="${onLoan}"/>
                                     <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
                                     <button type="submit" class="btn btn-sm btn-outline-primary"
                                             style="margin-top: 70px;margin-left: 10px">반납
@@ -105,7 +105,7 @@
                                 <form th:action="@{/books/renewal}" method="post">
                                     <input type="hidden" name="_method" value="put"/>
                                     <input type="hidden" name="historyId" th:value="${history.id}"/>
-                                    <input type="hidden" name="status" th:value="${status}"/>
+                                    <input type="hidden" name="onLoan" th:value="${onLoan}"/>
                                     <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
                                     <button type="submit" class="btn btn-sm btn-outline-secondary"
                                             style="margin-top: 70px;margin-left: 10px">연장

@@ -170,6 +170,7 @@ public class BookServiceImpl implements BookService {
             throw new IllegalStateException(BookMessage.MAX_LOAN_BOOK.getMessage());
         }
 
+        // 대출 처리 및 대출 가능한 수량 감소
         member.loanBook(book);
         book.decreaseLoanableCnt();
         log.info("SUCCESS loanBook bookId = {}, loginId = {}", bookId, memberId);
@@ -203,7 +204,7 @@ public class BookServiceImpl implements BookService {
      *
      * @param scheduledAt 일정 시간
      * @return 처리된 연체된 대출 기록의 수
-     * @throws NoSuchElementException 대출 기록에 해당하는 도서가 존재하지 않는경우
+     * @throws NoSuchElementException 대출 기록에 해당하는 도서가 없는 경우
      * @throws IllegalStateException  도서의 대출 가능한 수가 올바르지 않은 경우
      */
     @Override
@@ -226,7 +227,7 @@ public class BookServiceImpl implements BookService {
             // 도서 정보를 통해 반납 처리한 도서 조회
             List<Book> booksToUpdate = bookRepository.findByBookInfoIsbnIn(bookInfoCount.keySet());
 
-            // 반납 처리한 대출 기록에 존재하지 않는 도서가 있는 경우 예외 처리
+            // 반납 처리한 대출 기록에 보유하지 않는 도서가 있는 경우 예외 처리
             validateBookInfoCount(booksToUpdate, bookInfoCount);
 
             // 반납 처리한 도서의 대출 가능한 수량 증가
@@ -257,7 +258,7 @@ public class BookServiceImpl implements BookService {
      *
      * @param booksToUpdate 반납 처리된 도서 목록
      * @param bookInfoCount 각 도서별 증가시킬 수량
-     * @throws NoSuchElementException 반납 처리된 도서 중 존재하지 않는 도서가 있는 경우
+     * @throws NoSuchElementException 반납 처리된 도서 중 보유하지 않은 도서가 있는 경우
      */
     private void validateBookInfoCount(List<Book> booksToUpdate, Map<String, Integer> bookInfoCount) {
         // 대출 기록에서 가져온 도서 정보와 반납 처리한 도서 정보의 수가 일치하지 않는 경우
@@ -328,9 +329,9 @@ public class BookServiceImpl implements BookService {
      * 도서의 수량을 수정합니다.
      *
      * @param bookId  도서 ID
-     * @param request 수정할 도서의 정보 (수량)
-     * @throws IllegalArgumentException 현재 수량과 같은 수량으로 수정하거나, 대출중인 도서 수보다 적은 수량으로 수정할 경우 예외 발생
-     * @throws NoSuchElementException   존재하지 않는 도서인 경우
+     * @param request 수정 정보
+     * @throws IllegalArgumentException 현재 수량과 같은 수량으로 수정하거나, 대출중인 도서 수보다 적은 수량으로 수정할 경우
+     * @throws NoSuchElementException   도서를 찾을 수 없는 경우
      */
     @Override
     @Transactional
@@ -355,10 +356,10 @@ public class BookServiceImpl implements BookService {
 
     /**
      * 더이상 보유하지 않은 도서를 삭제합니다.
-     * 대출 중인 도서는 반납처리 됩니다.
+     * 대출 중인 도서는 반납 처리 됩니다.
      *
      * @param bookId 도서 ID
-     * @throws NoSuchElementException 존재하지 않는 도서인 경우
+     * @throws NoSuchElementException 도서를 찾을 수 없는 경우
      */
     @Override
     @Transactional
@@ -379,7 +380,7 @@ public class BookServiceImpl implements BookService {
         List<MemberBookmark> bookmarks = memberBookmarkRepository.findAllByBookId(bookId);
         if (!bookmarks.isEmpty()) {
             memberBookmarkRepository.deleteAll(bookmarks);
-            log.info("SUCCESS deleteBook bookmarks = {}", bookmarks.size());
+            log.info("SUCCESS delete bookmarks = {}", bookmarks.size());
         }
 
         // 도서 및 도서 정보 삭제
@@ -410,7 +411,7 @@ public class BookServiceImpl implements BookService {
      *
      * @param memberId 회원 ID
      * @param bookId   도서 ID
-     * @throws NoSuchElementException 회원 정보를 찾을 수 없는 경우, 존재하지 않는 도서인 경우,
+     * @throws NoSuchElementException 회원 정보 또는 도서를 찾을 수 없는 경우
      * @throws IllegalStateException  이미 찜한 경우
      */
     @Override
@@ -443,13 +444,13 @@ public class BookServiceImpl implements BookService {
      *
      * @param memberId 회원 ID
      * @param bookId   도서 ID
-     * @throws NoSuchElementException 회원 정보를 찾을 수 없는 경우, 존재하지 않는 도서인 경우,
-     * @throws IllegalStateException  이미 찜한 경우
+     * @throws NoSuchElementException 회원 정보 또는 도서를 찾을 수 없는 경우
+     * @throws IllegalStateException  찜하지 않은 경우
      */
     @Override
     @Transactional
     public void removeBookmark(Long memberId, Long bookId) {
-        // 존재하지 않는 도서인 경우
+        // 보유하지 않은 도서인 경우
         if (!bookRepository.existsById(bookId)) {
             throw new NoSuchElementException(BookMessage.NOT_FOUND_BOOK.getMessage());
         }
@@ -496,11 +497,11 @@ public class BookServiceImpl implements BookService {
     }
 
     /**
-     * 주어진 검색 키워드를 사용하여 부합하는 도서를 검색하고, 페이지네이션 하여 조회합니다.
+     * 주어진 검색 키워드를 사용하여 부합하는 도서를 조회합니다.
      * 제목과 저자와 일치하는 정보를 반환합니다.
      * 해당하는 회원의 찜 등록 여부를 포함해 반환합니다.
      *
-     * @param request  검색 요청 정보 (키워드)
+     * @param request  검색 요청 정보
      * @param memberId 회원 ID
      * @param pageable 페이지 정보
      * @return 검색된 책 정보와 찜 등록 여부 정보를 담은 Page 객체
@@ -523,12 +524,31 @@ public class BookServiceImpl implements BookService {
     }
 
     /**
+     * 도서 별 회원의 찜 등록 여부 정보를 포함한 BooksMarkResponse 객체로 변환합니다.
+     *
+     * @param book     도서 객체
+     * @param memberId 회원 ID
+     * @return BooksMarkResponse 객체
+     */
+    private BooksMarkResponse mapToAllBooksMarkResponse(Book book, Long memberId) {
+        return BooksMarkResponse.builder()
+                .id(book.getId())
+                .quantity(book.getQuantity())
+                .loanableCnt(book.getLoanableCnt())
+                .bookCategory(book.getBookCategory())
+                .bookInfo(book.getBookInfo())
+                .isMarked(isBookMarked(memberId, book.getId()))
+                .build();
+    }
+
+    /**
      * 관리자 페이지의 사내 도서 목록을 요청된 카테고리 혹은 검색어로 조회합니다.
      * 검색어는 제목과 저자와 일치하는 정보를 반환합니다.
      *
      * @param request 검색 조건
      * @param pageable 페이지 정보
      * @return 검색된 도서 정보를 담은 Page 객체
+     * @throws NoSuchElementException 해당 카테고리가 없는 경우
      */
     @Override
     @Transactional(readOnly = true)
@@ -587,11 +607,11 @@ public class BookServiceImpl implements BookService {
     }
 
     /**
-     * 특정 카테고리의 도서를 페이지네이션 하여 신규 도서순으로 조서회합니다.
+     * 특정 카테고리의 도서를 페이지네이션 하여 신규 도서순으로 조회합니다.
      *
      * @param pageable 페이지 정보
      * @return 전체 도서 정보를 담은 Page 객체
-     * @throws NoSuchElementException 카테고리가 존재하지 않는 경우
+     * @throws NoSuchElementException 해당 카테고리가 없는 경우
      */
     @Override
     @Transactional(readOnly = true)
@@ -610,7 +630,7 @@ public class BookServiceImpl implements BookService {
     }
 
     /**
-     * 특정 회원의 찜 여부 정보와 전체 도서를 페이지네이션하여 신규 도서순으로 조회합니다.
+     * 특정 회원의 찜 여부 정보와 전체 도서를 신규 도서순으로 페이지네이션하여 조회합니다.
      *
      * @param memberId 회원의 ID
      * @param pageable 페이지 정보
@@ -627,12 +647,13 @@ public class BookServiceImpl implements BookService {
     }
 
     /**
-     * 특정 카테고리의 도서 정보와 찜 여부 정보를 페이지네이션하여 신규 도서순으로 조회합니다.
+     * 특정 카테고리의 도서 정보와 찜 여부 정보를 신규 도서순으로 페이지네이션하여 조회합니다.
      *
      * @param categoryId 카테고리 ID
      * @param memberId   회원의 ID
      * @param pageable   페이지 정보
      * @return 특정 회원의 찜 정보와 도서 정보를 담은 Page 객체
+     * @throws NoSuchElementException 해당 카테고리가 없는 경우
      */
     @Override
     @Transactional(readOnly = true)
@@ -652,25 +673,7 @@ public class BookServiceImpl implements BookService {
     }
 
     /**
-     * 도서 별 회원의 찜 등록 여부 정보를 포함한 BooksMarkResponse 객체로 변환합니다.
-     *
-     * @param book     도서 객체
-     * @param memberId 회원 ID
-     * @return BooksMarkResponse 객체
-     */
-    private BooksMarkResponse mapToAllBooksMarkResponse(Book book, Long memberId) {
-        return BooksMarkResponse.builder()
-                .id(book.getId())
-                .quantity(book.getQuantity())
-                .loanableCnt(book.getLoanableCnt())
-                .bookCategory(book.getBookCategory())
-                .bookInfo(book.getBookInfo())
-                .isMarked(isBookMarked(memberId, book.getId()))
-                .build();
-    }
-
-    /**
-     * 모든 대출 이력을 페이지네이션하여 조회합니다.
+     * 모든 대출 이력을 페이지네이션하여 최신순으로 조회합니다.
      *
      * @param pageable 페이지 정보
      * @return 대출 이력 정보 담은 Page 객체
@@ -703,7 +706,7 @@ public class BookServiceImpl implements BookService {
     }
 
     /**
-     * 특정 회원의 대출 중인 기록만을 조회하여 반환합니다.
+     * 특정 회원의 대출 중인 기록만을 조회하여 최신순으로 반환합니다.
      * 최대 3건이 조회됩니다.
      *
      * @param memberId 회원의 ID
@@ -877,7 +880,7 @@ public class BookServiceImpl implements BookService {
      *
      * @param memberId 회원 ID
      * @return 조회된 Member 객체
-     * @throws NoSuchElementException 회원을 찾을 수 없을 경우 예외 발생
+     * @throws NoSuchElementException 회원을 찾을 수 없을 경우
      */
     private Member findMemberById(Long memberId) {
         return memberRepository.findById(memberId)
