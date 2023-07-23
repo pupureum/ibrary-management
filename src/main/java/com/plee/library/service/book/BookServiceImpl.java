@@ -588,7 +588,7 @@ public class BookServiceImpl implements BookService {
     }
 
     /**
-     * 전체 도서를 페이지네이션 하여 신규 도서순으로 조회합니다.
+     * 전체 도서를 페이지네이션하여 신규 도서순으로 조회합니다.
      *
      * @param pageable 페이지 정보
      * @return 전체 도서 정보를 담은 Page 객체
@@ -596,7 +596,7 @@ public class BookServiceImpl implements BookService {
     @Override
     @Transactional(readOnly = true)
     public Page<BooksResponse> findBooks(Pageable pageable) {
-        // 책들을 최신순으로 페이지네이션 하여 조회
+        // 책들을 최신순으로 페이지네이션하여 조회
         Page<Book> books = bookRepository.findAll(pageable);
 
         // 조회된 책들을 BooksResponse 객체의 리스트로 변환
@@ -605,7 +605,7 @@ public class BookServiceImpl implements BookService {
     }
 
     /**
-     * 특정 카테고리의 도서를 신규 도서순으로 페이지네이션 하여 조회합니다.
+     * 특정 카테고리의 도서를 신규 도서순으로 페이지네이션하여 조회합니다.
      *
      * @param pageable 페이지 정보
      * @return 전체 도서 정보를 담은 Page 객체
