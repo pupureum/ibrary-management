@@ -58,10 +58,10 @@ class MemberRequestHistoryRepositoryTest {
     }
 
     @Nested
-    @DisplayName("도서 추가 요청 생성 테스트")
+    @DisplayName("도서 추가 요청 생성")
     public class SaveBookRequestTest {
         @Test
-        @DisplayName("성공 테스트")
+        @DisplayName("요청 생성 성공")
         void save() {
             // given
             MemberRequestHistory memberReqHis = MemberRequestHistory.builder()
@@ -74,15 +74,11 @@ class MemberRequestHistoryRepositoryTest {
             MemberRequestHistory savedMemberReqHis = memberReqHisRepository.save(memberReqHis);
 
             // then
-            assertThat(savedMemberReqHis).isNotNull();
-            assertThat(savedMemberReqHis).isEqualTo(memberReqHis);
-            assertThat(savedMemberReqHis.getId()).isEqualTo(memberReqHis.getId());
-            assertThat(savedMemberReqHis.getRequestReason()).isEqualTo(memberReqHis.getRequestReason());
-            assertThat(savedMemberReqHis.isApproved()).isEqualTo(memberReqHis.isApproved());
+            assertThat(savedMemberReqHis).isNotNull().usingRecursiveComparison().isEqualTo(memberReqHis);
         }
 
         @Test
-        @DisplayName("실패 테스트: 신청 사유가 null인 경우")
+        @DisplayName("실패: 신청 사유가 null 인 경우")
         void saveWithoutRequestReason() {
             // given
             MemberRequestHistory memberReqHis = MemberRequestHistory.builder()
@@ -92,16 +88,15 @@ class MemberRequestHistoryRepositoryTest {
                     .build();
 
             // when, then
-            assertThatThrownBy(() -> memberReqHisRepository.save(memberReqHis))
-                    .isInstanceOf(DataIntegrityViolationException.class);
+            assertThatThrownBy(() -> memberReqHisRepository.save(memberReqHis)).isInstanceOf(DataIntegrityViolationException.class);
         }
     }
 
     @Nested
-    @DisplayName("특정 추가 요청 존재 여부 확인 테스트")
+    @DisplayName("특정 추가 요청 확인")
     public class findMemberRequestHistoryTest {
         @Test
-        @DisplayName("회원 ID와 도서 정보 ISBN으로 조회")
+        @DisplayName("회원 ID와 도서 정보 ISBN 으로 조회")
         void existsByMemberIdAndBookInfoIsbnTest() {
             // given
             MemberRequestHistory memberReqHis = MemberRequestHistory.builder()
@@ -139,7 +134,7 @@ class MemberRequestHistoryRepositoryTest {
     }
 
     @Nested
-    @DisplayName("모든 기록 조회 테스트")
+    @DisplayName("모든 기록 조회")
     public class FindAllMemberRequestHistoryTest {
 
         MemberRequestHistory memberReqHis1;
@@ -199,8 +194,7 @@ class MemberRequestHistoryRepositoryTest {
 
             // then
             assertThat(foundMemberReqHis).isNotNull();
-            assertThat(foundMemberReqHis.getTotalElements()).isEqualTo(2);
-            assertThat(foundMemberReqHis.toList()).contains(memberReqHis1, memberReqHis2);
+            assertThat(foundMemberReqHis).hasSize(2).contains(memberReqHis1, memberReqHis2);
         }
 
         @Test
@@ -215,13 +209,13 @@ class MemberRequestHistoryRepositoryTest {
             // then
             assertThat(foundMemberReqHis).isNotNull();
             assertThat(foundMemberReqHis.getTotalElements()).isEqualTo(3);
-            assertThat(foundMemberReqHis.toList()).contains(memberReqHis1, memberReqHis2, memberReqHis3);
+            assertThat(foundMemberReqHis.toList()).hasSize(3).contains(memberReqHis1, memberReqHis2, memberReqHis3);
         }
 
     }
 
     @Nested
-    @DisplayName("도서 추가 요청 승인 테스트")
+    @DisplayName("도서 추가 요청 승인")
     public class ApproveMemberRequestHistoryTest {
         @Test
         @DisplayName("하나의 요청 승인")
@@ -271,13 +265,16 @@ class MemberRequestHistoryRepositoryTest {
             memberReqHisRepository.approveByBookInfoIsbn(bookInfo.getIsbn());
 
             // then
-            assertThat(memberReqHisRepository.findById(memberReqHis1.getId()).orElse(null).isApproved()).isTrue();
-            assertThat(memberReqHisRepository.findById(memberReqHis2.getId()).orElse(null).isApproved()).isTrue();
+            assertThat(memberReqHisRepository.findById(memberReqHis1.getId())).isNotEmpty()
+                    .get().extracting(MemberRequestHistory::isApproved).isEqualTo(true);
+
+            assertThat(memberReqHisRepository.findById(memberReqHis2.getId())).isNotEmpty()
+                    .get().extracting(MemberRequestHistory::isApproved).isEqualTo(true);
         }
     }
 
     @Test
-    @DisplayName("도서 요청 기록 삭제 테스트")
+    @DisplayName("도서 요청 기록 삭제")
     void deleteTest() {
         // given
         MemberRequestHistory memberReqHis = MemberRequestHistory.builder()

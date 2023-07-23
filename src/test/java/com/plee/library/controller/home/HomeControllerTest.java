@@ -47,7 +47,7 @@ class HomeControllerTest {
 
     @Test
     @WithAnonymousUser
-    @DisplayName("메인 페이지 반환 (익명의 사용자)")
+    @DisplayName("GET / 메인 페이지 반환 (익명의 사용자)")
     void home() throws Exception {
         // given
         List<BookInfoResponse> response = List.of(BookInfoResponse.builder()

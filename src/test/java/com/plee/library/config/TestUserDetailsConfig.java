@@ -1,6 +1,6 @@
 package com.plee.library.config;
 
-import com.plee.library.customUserDetails.CustomUserDetailsService;
+import com.plee.library.config.testUserDetails.TestUserDetailsService;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.context.annotation.Bean;
 
@@ -8,7 +8,7 @@ import org.springframework.context.annotation.Bean;
 public class TestUserDetailsConfig {
 
     @Bean
-    public CustomUserDetailsService testUserDetailService() {
-        return new CustomUserDetailsService();
+    public TestUserDetailsService testUserDetailService() {
+        return new TestUserDetailsService();
     }
 }

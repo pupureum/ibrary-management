@@ -4,6 +4,7 @@ import com.plee.library.config.TestJPAConfig;
 import com.plee.library.domain.book.Book;
 import com.plee.library.domain.book.BookCategory;
 import com.plee.library.domain.book.BookInfo;
+import com.plee.library.util.message.BookMessage;
 import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
@@ -31,7 +32,6 @@ class BookRepositoryTest {
 
     private BookInfo bookInfo1;
     private BookInfo bookInfo2;
-
     private BookCategory category;
 
     @BeforeEach
@@ -65,10 +65,10 @@ class BookRepositoryTest {
     }
 
     @Nested
-    @DisplayName("도서 생성 테스트")
+    @DisplayName("도서 생성")
     public class SaveBookTest {
         @Test
-        @DisplayName("성공 테스트")
+        @DisplayName("도서 생성 성공")
         void save() {
             // given
             Book book = Book.builder()
@@ -81,15 +81,11 @@ class BookRepositoryTest {
             Book savedBook = bookRepository.save(book);
 
             // then
-            assertThat(savedBook).isNotNull();
-            assertThat(savedBook.getId()).isEqualTo(book.getId());
-            assertThat(savedBook.getBookInfo()).isEqualTo(book.getBookInfo());
-            assertThat(savedBook.getQuantity()).isEqualTo(book.getQuantity());
-            assertThat(savedBook.getLoanableCnt()).isEqualTo(book.getLoanableCnt());
+            assertThat(savedBook).isNotNull().usingRecursiveComparison().isEqualTo(book);
         }
 
         @Test
-        @DisplayName("실패 테스트: 이미 도서 정보 존재")
+        @DisplayName("실패: 이미 도서 존재")
         void saveFailWithDuplicatedBookInfo() {
             // given
             Book book1 = Book.builder()
@@ -106,16 +102,15 @@ class BookRepositoryTest {
                     .build();
 
             // when, then
-            assertThatThrownBy(() -> bookRepository.save(book2))
-                    .isInstanceOf(DataIntegrityViolationException.class);
+            assertThatThrownBy(() -> bookRepository.save(book2)).isInstanceOf(DataIntegrityViolationException.class);
         }
     }
 
     @Nested
-    @DisplayName("ID로 도서 조회 테스트")
+    @DisplayName("ID로 도서 조회")
     public class FindByIdTest {
         @Test
-        @DisplayName("성공 테스트")
+        @DisplayName("도서 조회")
         void findById() {
             //given
             Book book1 = Book.builder()
@@ -135,11 +130,7 @@ class BookRepositoryTest {
             Book findBook1 = bookRepository.findById(book1.getId()).orElse(null);
 
             // then
-            assertThat(findBook1).isNotNull();
-            assertThat(findBook1.getId()).isEqualTo(book1.getId());
-            assertThat(findBook1.getBookInfo()).isEqualTo(book1.getBookInfo());
-            assertThat(findBook1.getQuantity()).isEqualTo(book1.getQuantity());
-            assertThat(findBook1.getLoanableCnt()).isEqualTo(book1.getLoanableCnt());
+            assertThat(findBook1).isNotNull().usingRecursiveComparison().isEqualTo(book1);
         }
 
         @Test
@@ -157,10 +148,10 @@ class BookRepositoryTest {
     }
 
     @Nested
-    @DisplayName("ISBN 값으로 도서 조회 테스트")
+    @DisplayName("ISBN 값으로 도서 조회")
     public class FindByIsbnTest {
         @Test
-        @DisplayName("성공 테스트")
+        @DisplayName("있는 ISBN 값으로 도서 조회")
         void findByIsbn() {
             //given
             Book book1 = Book.builder()
@@ -180,11 +171,7 @@ class BookRepositoryTest {
             Book findBook1 = bookRepository.findByBookInfoIsbn(book1.getBookInfo().getIsbn()).orElse(null);
 
             // then
-            assertThat(findBook1).isNotNull();
-            assertThat(findBook1.getId()).isEqualTo(book1.getId());
-            assertThat(findBook1.getBookInfo()).isEqualTo(book1.getBookInfo());
-            assertThat(findBook1.getQuantity()).isEqualTo(book1.getQuantity());
-            assertThat(findBook1.getLoanableCnt()).isEqualTo(book1.getLoanableCnt());
+            assertThat(findBook1).isNotNull().usingRecursiveComparison().isEqualTo(book1);
         }
 
         @Test
@@ -202,7 +189,7 @@ class BookRepositoryTest {
     }
 
     @Nested
-    @DisplayName("신규 도서 4권 최근 입고순으로 조회 테스트")
+    @DisplayName("신규 도서 4권 최근 입고순으로 조회")
     public class FindTop4ByOrderByCreatedAtDescTest {
         @Test
         @DisplayName("도서가 4권보다 적은 경우")
@@ -225,13 +212,12 @@ class BookRepositoryTest {
             List<Book> books = bookRepository.findTop4ByOrderByCreatedAtDesc();
 
             // then
-            assertThat(books.size()).isEqualTo(2);
-            assertThat(books).containsExactly(book2, book1);
+            assertThat(books).hasSize(2).containsExactly(book2, book1);
         }
 
         @Test
         @DisplayName("도서가 4권보다 많은 경우")
-        void findTop4ByOrderByCreatedAtDesc() throws Exception{
+        void findTop4ByOrderByCreatedAtDesc() {
             //given
             Book book1 = Book.builder()
                     .bookInfo(bookInfo1)
@@ -246,6 +232,7 @@ class BookRepositoryTest {
                     .build();
             bookRepository.save(book2);
 
+            // 도서 3권 추가
             List<Book> books = new ArrayList<>();
             for (int i = 3; i <= 5; i++) {
                 BookInfo bookInfo = BookInfo.builder()
@@ -270,18 +257,18 @@ class BookRepositoryTest {
 
             // when
             List<Book> latestBooks = bookRepository.findTop4ByOrderByCreatedAtDesc();
+
             // then
-            assertThat(latestBooks.size()).isEqualTo(4);
-            assertThat(latestBooks).containsExactly(books.get(2), books.get(1), books.get(0), book2);
+            assertThat(latestBooks).hasSize(4).containsExactly(books.get(2), books.get(1), books.get(0), book2);
             assertThat(latestBooks).doesNotContain(book1);
         }
     }
 
     @Nested
-    @DisplayName("도서 전체 조회 테스트")
+    @DisplayName("도서 전체 조회")
     public class FindAllTest {
         @Test
-        @DisplayName("성공 테스트")
+        @DisplayName("모든 도서 조회")
         void findAllBooks() {
             //given
             Book book1 = Book.builder()
@@ -301,8 +288,7 @@ class BookRepositoryTest {
             List<Book> books = bookRepository.findAll();
 
             // then
-            assertThat(books.size()).isEqualTo(2);
-            assertThat(books).contains(book1, book2);
+            assertThat(books).hasSize(2).contains(book1, book2);
         }
 
         @Test
@@ -319,7 +305,7 @@ class BookRepositoryTest {
     }
 
     @Test
-    @DisplayName("도서 재고 수정 테스트")
+    @DisplayName("도서 재고 수정")
     void updateStockAmt() {
         //given
         Book book1 = Book.builder()
@@ -337,48 +323,53 @@ class BookRepositoryTest {
         assertThat(updatedBook.getQuantity()).isEqualTo(10);
     }
 
-    @Test
-    @DisplayName("대출 가능한 도서 수량 감소 테스트")
-    void decreaseLoanableCnt() {
-        //given
-        Book book1 = Book.builder()
-                .bookInfo(bookInfo1)
-                .quantity(3)
-                .category(category)
-                .build();
-        bookRepository.save(book1);
+    @Nested
+    @DisplayName("대출 가능한 수량 변경")
+    class LoanableUpdateTest {
+        private Book book;
 
-        // when
-        book1.decreaseLoanableCnt();
-        Book updatedBook = bookRepository.save(book1);
+        @BeforeEach
+        void setUp() {
+            //를 위한 도서 2권 생성
+            book = Book.builder()
+                    .bookInfo(bookInfo1)
+                    .quantity(3)
+                    .category(category)
+                    .build();
+            bookRepository.save(book);
+        }
 
-        // then
-        assertThat(updatedBook.getLoanableCnt()).isEqualTo(2);
+        @Test
+        @DisplayName("대출 가능한 도서 수량 감소")
+        void decreaseLoanableCnt() {
+            //given
+
+            // when
+            book.decreaseLoanableCnt();
+            Book updatedBook = bookRepository.save(book);
+
+            // then
+            assertThat(updatedBook.getLoanableCnt()).isEqualTo(2);
+        }
+
+        @Test
+        @DisplayName("대출 가능한 도서 수량 증가")
+        void increaseLoanableCnt() {
+            //given
+            book.decreaseLoanableCnt();
+            bookRepository.save(book);
+
+            // when
+            book.increaseLoanableCnt();
+            Book updatedBook = bookRepository.save(book);
+
+            // then
+            assertThat(updatedBook.getLoanableCnt()).isEqualTo(3);
+        }
     }
 
     @Test
-    @DisplayName("대출 가능한 도서 수량 증가 테스트")
-    void increaseLoanableCnt() {
-        //given
-        Book book2 = Book.builder()
-                .bookInfo(bookInfo2)
-                .quantity(1)
-                .category(category)
-                .build();
-        bookRepository.save(book2);
-        book2.decreaseLoanableCnt();
-        bookRepository.save(book2);
-
-        // when
-        book2.increaseLoanableCnt();
-        Book updatedBook = bookRepository.save(book2);
-
-        // then
-        assertThat(updatedBook.getLoanableCnt()).isEqualTo(1);
-    }
-
-    @Test
-    @DisplayName("도서 삭제 테스트")
+    @DisplayName("도서 삭제")
     void deleteBookTest() {
         //given
         Book book1 = Book.builder()
@@ -392,7 +383,6 @@ class BookRepositoryTest {
         bookRepository.delete(book1);
 
         // then
-        // 도서 삭제 확인
         assertThat(bookRepository.existsById(book1.getId())).isFalse();
         // 도서 정보는 삭제 X
         assertThat(bookInfoRepository.existsById(bookInfo1.getIsbn())).isTrue();

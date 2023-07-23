@@ -76,25 +76,20 @@ class AdminControllerTest {
 
     @Nested
     @WithUserDetails
-    @DisplayName("POST 도서 추가 요청")
+    @DisplayName("POST /admin/new-book 도서 추가 요청")
     class AddBookTest {
-        private SaveBookRequest req;
 
-        @BeforeEach
-        void setUp() {
-            req = SaveBookRequest.builder()
+        @Test
+        @DisplayName("도서 추가 성공")
+        void addBook_Success() throws Exception {
+            // given
+            SaveBookRequest req = SaveBookRequest.builder()
                     .isbn("9788994492032")
                     .title("자바의 정석")
                     .author("남궁성")
                     .categoryId(1L)
                     .quantity(2)
                     .build();
-        }
-
-        @Test
-        @DisplayName("도서 추가 성공")
-        void addBook_success() throws Exception {
-            // given
             willDoNothing().given(bookService).saveBook(req);
 
             // when, then
@@ -105,10 +100,56 @@ class AdminControllerTest {
         }
 
         @Test
-        @DisplayName("실패: 이미 존재하는 도서 요청")
-        void addBook_fail() throws Exception {
+        @DisplayName("실패: 수량이 0인 경우")
+        void addBook_FailQuantity() throws Exception {
             // given
-            willThrow(new IllegalStateException(BookMessage.ALREADY_EXIST_BOOK.getMessage())).given(bookService).saveBook(any(SaveBookRequest.class));
+            SaveBookRequest req = SaveBookRequest.builder()
+                    .isbn("9788994492032")
+                    .title("자바의 정석")
+                    .categoryId(1L)
+                    .quantity(0)
+                    .build();
+            willDoNothing().given(bookService).saveBook(req);
+
+            // when, then
+            mockMvc.perform(post("/admin/new-book")
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(objectMapper.writeValueAsString(req)))
+                    .andExpect(status().isBadRequest())
+                    .andExpect(content().string("1 ~ 9999 까지의 수량만 입력 가능합니다."));;
+        }
+
+        @Test
+        @DisplayName("실패: 카테고리 선택 없는 경우")
+        void addBook_FailCategory() throws Exception {
+            // given
+            SaveBookRequest req = SaveBookRequest.builder()
+                    .isbn("9788994492032")
+                    .title("자바의 정석")
+                    .quantity(1)
+                    .build();
+            willDoNothing().given(bookService).saveBook(req);
+
+            // when, then
+            mockMvc.perform(post("/admin/new-book")
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(objectMapper.writeValueAsString(req)))
+                    .andExpect(status().isBadRequest())
+                    .andExpect(content().string("카테고리를 선택해주세요."));;
+        }
+
+        @Test
+        @DisplayName("실패: 이미 존재하는 도서 요청")
+        void addBook_Fail() throws Exception {
+            // given
+            SaveBookRequest req = SaveBookRequest.builder()
+                    .isbn("9788994492032")
+                    .title("자바의 정석")
+                    .author("남궁성")
+                    .categoryId(1L)
+                    .quantity(2)
+                    .build();
+            willThrow(new IllegalStateException(BookMessage.ALREADY_EXIST_BOOK.getMessage())).given(bookService).saveBook((any(SaveBookRequest.class)));
 
             // when, then
             mockMvc.perform(post("/admin/new-book")
@@ -121,27 +162,24 @@ class AdminControllerTest {
 
     @Nested
     @WithUserDetails
-    @DisplayName("GET 카테고리별 도서 목록 조회 요청")
-    class getCategoryBooksTest {
+    @DisplayName("GET /admin/books/category/{categoryId} 카테고리별 도서 목록 조회 요청")
+    class CategoryBooksTest {
         private Page<BooksResponse> booksPage;
-        private List<CategoryResponse> categories;
 
         @BeforeEach
         void setUp() {
             List<BooksResponse> books = new ArrayList<>();
             Pageable pageable = PageRequest.of(0, 10, Sort.by("createdAt").descending());
             booksPage = new PageImpl<>(books, pageable, 0);
-            categories = new ArrayList<>();
-
         }
 
         @Test
         @DisplayName("카테고리 도서 목록 조회 성공")
-        void categoryBooks_success() throws Exception {
+        void categoryBooks_Success() throws Exception {
             // given
             Long categoryId = 1L;
             given(bookService.findBooksByCategory(anyLong(), any(Pageable.class))).willReturn(booksPage);
-            given(bookService.findCategories()).willReturn(categories);
+            given(bookService.findCategories()).willReturn(Collections.emptyList());
 
             // when, then
             mockMvc.perform(get("/admin/books/category/{categoryId}", categoryId)
@@ -150,7 +188,7 @@ class AdminControllerTest {
                     .andExpect(status().isOk())
                     .andExpect(view().name("admin/bookList"))
                     .andExpect(model().attribute("books", booksPage))
-                    .andExpect(model().attribute("categories", categories))
+                    .andExpect(model().attribute("categories", Collections.emptyList()))
                     .andExpect(model().attribute("selectedCategory", categoryId));
             then(bookService).should(times(1)).findBooksByCategory(anyLong(), any(Pageable.class));
             then(bookService).should(times(1)).findCategories();
@@ -158,10 +196,10 @@ class AdminControllerTest {
 
         @Test
         @DisplayName("실패: 카테고리가 없는 경우")
-        void searchBookByCategory_fail() throws Exception {
+        void searchBookByCategory_Fail() throws Exception {
             // given
             given(bookService.findBooksByCategory(anyLong(), any(Pageable.class))).willReturn(booksPage);
-            willThrow(new NoSuchElementException(BookMessage.NOT_FOUND_CATEGORY.getMessage())).given(bookService).findCategories();
+            given(bookService.findCategories()).willThrow(new NoSuchElementException(BookMessage.NOT_FOUND_CATEGORY.getMessage()));
 
             // when, then
             mockMvc.perform(get("/admin/books/category/{categoryId}", 1L)
@@ -175,11 +213,60 @@ class AdminControllerTest {
 
     @Nested
     @WithUserDetails
-    @DisplayName("도서 정보 수정 요청")
+    @DisplayName("GET /admin/books/search 도서 검색 요청")
+    class SearchBooksTest {
+        @Test
+        @DisplayName("도서 검색 성공")
+        void searchBooks_Success() throws Exception {
+            // given
+            SearchBookRequest req = SearchBookRequest.builder()
+                    .keyword("java")
+                    .categoryId(1L)
+                    .build();
+            Page<BooksResponse> res = new PageImpl<>(Collections.emptyList());
+            given(bookService.searchBooks(any(SearchBookRequest.class), any(Pageable.class))).willReturn(res);
+            given(bookService.findCategories()).willReturn(Collections.emptyList());
+
+            // when, then
+            mockMvc.perform(get("/admin/books/search")
+                            .flashAttr("searchBookRequest", req)
+                            .with(csrf()))
+                    .andExpect(status().isOk())
+                    .andExpect(view().name("admin/bookList"))
+                    .andExpect(model().attribute("books", res))
+                    .andExpect(model().attribute("categories", Collections.emptyList()))
+                    .andExpect(model().attribute("selectedCategory", req.getCategoryId()));
+            then(bookService).should(times(1)).searchBooks(any(SearchBookRequest.class), any(Pageable.class));
+            then(bookService).should(times(1)).findCategories();
+        }
+
+        @Test
+        @DisplayName("실패: 키워드가 공백인 경우")
+        void searchBooks_Fail() throws Exception {
+            // given
+            SearchBookRequest req = SearchBookRequest.builder()
+                    .keyword(" ")
+                    .before(0)
+                    .build();
+
+            // when, then
+            mockMvc.perform(get("/admin/books/search")
+                            .flashAttr("searchBookRequest", req)
+                            .with(csrf()))
+                    .andExpect(status().is3xxRedirection())
+                    .andExpect(flash().attributeExists("errorMessage"))
+                    .andExpect(redirectedUrl("/admin/books?page="+req.getBefore()))
+                    .andExpect(flash().attribute("errorMessage", "검색어를 입력해주세요."));
+        }
+    }
+
+    @Nested
+    @WithUserDetails
+    @DisplayName("PUT /admin/books/{bookId} 도서 재고 수량 수정 요청")
     class UpdateBookQuantityTest {
         @Test
         @DisplayName("도서 정보 수정 성공 (기본 사내 도서 목록 화면에서 요청)")
-        void updateBookQuantity_success() throws Exception {
+        void updateBookQuantity_Success() throws Exception {
             // given
             Long bookId = 1L;
             UpdateBookRequest req = UpdateBookRequest.builder()
@@ -201,7 +288,7 @@ class AdminControllerTest {
 
         @Test
         @DisplayName("실패: 대출중인 수량보다 적은 수량으로 수정 요청 (카테고리 선택 화면에서 요청)")
-        void updateBookQuantity_fail() throws Exception {
+        void updateBookQuantity_Fail() throws Exception {
             // given
             Long bookId = 1L;
             UpdateBookRequest req = UpdateBookRequest.builder()
@@ -224,7 +311,7 @@ class AdminControllerTest {
 
         @Test
         @DisplayName("실패: 기존 수량과 같은 수량으로 수정 요청 (키워드 검색 페이지에서 들어온 요청)")
-        void updateBookQuantity_fail_sameQuantity() throws Exception {
+        void updateBookQuantity_FailSameQuantity() throws Exception {
             // given
             Long bookId = 1L;
             UpdateBookRequest req = UpdateBookRequest.builder()
@@ -253,7 +340,7 @@ class AdminControllerTest {
 
     @Nested
     @WithUserDetails
-    @DisplayName("도서 삭제 요청")
+    @DisplayName("DELETE /admin/books/{bookId} 도서 삭제 요청")
     class DeleteBookTest {
         @Test
         @DisplayName("기본 사내 도서 목록 화면에서 들어온 요청")
@@ -277,7 +364,7 @@ class AdminControllerTest {
 
         @Test
         @DisplayName("키워드 검색 없이 카테고리 화면에서 들어온 요청")
-        void deleteBook_inCategory() throws Exception {
+        void deleteBook_InCategory() throws Exception {
             // given
             Long bookId = 1L;
             DeleteBookRequest req = DeleteBookRequest.builder()
@@ -297,7 +384,7 @@ class AdminControllerTest {
 
         @Test
         @DisplayName("키워드 검색 화면에서 들어온 요청")
-        void deleteBook_inSearch() throws Exception {
+        void deleteBook_InSearch() throws Exception {
             // given
             Long bookId = 1L;
             DeleteBookRequest req = DeleteBookRequest.builder()
@@ -323,7 +410,7 @@ class AdminControllerTest {
 
     @Test
     @WithUserDetails
-    @DisplayName("대출 현황 조회 요청")
+    @DisplayName("GET /admin/loan 대출 현황 조회 요청")
     void loanStatus() throws Exception {
         // given
         // 대출 기록 생성
@@ -361,71 +448,9 @@ class AdminControllerTest {
                 .andExpect(model().attributeExists("selectedMenu"));
     }
 
-    @Nested
-    @WithUserDetails
-    @DisplayName("도서 검색 요청")
-    class SearchBookTest {
-        @Test
-        @DisplayName("도서 검색 성공")
-        void searchBook_success() throws Exception {
-            // given
-            SearchBookRequest req = SearchBookRequest.builder()
-                    .keyword("Java")
-                    .categoryId(1L)
-                    .before(0)
-                    .build();
-
-            Page<BooksResponse> response = new PageImpl<>(Collections.emptyList());
-            List<CategoryResponse> categories = Collections.singletonList(CategoryResponse.builder()
-                    .id(1L)
-                    .categoryName("category")
-                    .build());
-
-            given(bookService.searchBooks(eq(req), any(Pageable.class))).willReturn(response);
-            given(bookService.findCategories()).willReturn(categories);
-
-            // when, then
-            mockMvc.perform(get("/admin/books/search")
-                            .flashAttr("searchBookRequest", req))
-                    .andExpect(status().isOk())
-                    .andExpect(view().name("admin/bookList"))
-                    .andExpect(model().attribute("books", response))
-                    .andExpect(model().attribute("categories", categories))
-                    .andExpect(model().attribute("selectedCategory", req.getCategoryId()))
-                    .andExpect(model().attribute("selectedMenu", "admin-book-list"));
-        }
-
-        @Test
-        @DisplayName("실패: 검색어가 없는 경우")
-        void searchBook_fail() throws Exception {
-            // given
-            SearchBookRequest req = SearchBookRequest.builder()
-                    .keyword("")
-                    .categoryId(1L)
-                    .before(0)
-                    .build();
-
-            Page<BooksResponse> response = new PageImpl<>(Collections.emptyList());
-            List<CategoryResponse> categories = Collections.singletonList(CategoryResponse.builder()
-                    .id(1L)
-                    .categoryName("category")
-                    .build());
-
-            given(bookService.searchBooks(eq(req), any(Pageable.class))).willReturn(response);
-            given(bookService.findCategories()).willReturn(categories);
-
-            // when, then
-            mockMvc.perform(get("/admin/books/search")
-                            .flashAttr("searchBookRequest", req))
-                    .andExpect(status().is3xxRedirection())
-                    .andExpect(redirectedUrl("/admin/books?page=" + req.getBefore()))
-                    .andExpect(flash().attributeExists("errorMessage"));
-        }
-    }
-
     @Test
     @WithUserDetails
-    @DisplayName("회원 정보 수정")
+    @DisplayName("PUT /admin/members/{memberId} 회원 정보 수정")
     void updateMemberInfo() throws Exception {
         // given
         UpdateMemberRequest req = new UpdateMemberRequest();
@@ -441,11 +466,11 @@ class AdminControllerTest {
     }
 
     @Nested
-    @DisplayName("회원 삭제 요청")
+    @DisplayName("DELETE /admin/members/{memberId} 회원 삭제 요청")
     class DeleteMemberTest {
         @Test
         @DisplayName("삭제 성공")
-        void deleteMember_success() throws Exception {
+        void deleteMember_Success() throws Exception {
             // given
             willDoNothing().given(memberService).deleteMember(anyLong());
 
@@ -458,8 +483,8 @@ class AdminControllerTest {
         }
 
         @Test
-        @DisplayName("실패: 요청한 회원이 존재하지 않을 경우")
-        void deleteMember_fail() throws Exception {
+        @DisplayName("실패: 요청한 회원이 없는 경우")
+        void deleteMember_Fail() throws Exception {
             // given
             willThrow(new NoSuchElementException(MemberMessage.NOT_FOUND_MEMBER.getMessage())).given(memberService).deleteMember(anyLong());
 
@@ -471,6 +496,5 @@ class AdminControllerTest {
                     .andExpect(flash().attribute("errorMessage", MemberMessage.NOT_FOUND_MEMBER.getMessage()));
             then(memberService).should(times(1)).deleteMember(anyLong());
         }
-
     }
 }

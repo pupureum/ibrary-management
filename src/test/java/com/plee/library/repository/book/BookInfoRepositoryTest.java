@@ -24,8 +24,8 @@ class BookInfoRepositoryTest {
     private BookInfoRepository bookInfoRepository;
 
     @Nested
-    @DisplayName("도서 정보 생성 테스트")
-    public class saveBookInfoTest {
+    @DisplayName("도서 정보 생성")
+    public class SaveBookInfoTest {
         @Test
         @DisplayName("도서 정보 생성 성공")
         void save() {
@@ -85,7 +85,7 @@ class BookInfoRepositoryTest {
         }
 
         @Test
-        @DisplayName("실패: ISBN 값이 null인 경우")
+        @DisplayName("실패: ISBN 값이 null 인 경우")
         void saveFailWithNullIsbn() {
             // given
             BookInfo bookInfo = BookInfo.builder()
@@ -99,7 +99,7 @@ class BookInfoRepositoryTest {
         }
 
         @Test
-        @DisplayName("실패: title 값이 null인 경우")
+        @DisplayName("실패: title 값이 null 인 경우")
         void saveFailWithNullTitle() {
             // given
             BookInfo bookInfo = BookInfo.builder()
@@ -114,8 +114,8 @@ class BookInfoRepositoryTest {
     }
 
     @Nested
-    @DisplayName("ISBN 값으로 도서 정보 조회 테스트")
-    public class findBookInfoByIsbnTest {
+    @DisplayName("ISBN 값으로 도서 정보 조회")
+    public class FindBookInfoByIsbnTest {
         @Test
         @DisplayName("조회 성공")
         void findBookInfoByIsbn() {
@@ -132,8 +132,7 @@ class BookInfoRepositoryTest {
             bookInfoRepository.save(bookInfo);
 
             // when
-            BookInfo foundBookInfo = bookInfoRepository.findById(bookInfo.getIsbn())
-                    .orElse(null);
+            BookInfo foundBookInfo = bookInfoRepository.findById(bookInfo.getIsbn()).orElse(null);
 
             // then
             assertThat(foundBookInfo).isNotNull();
@@ -153,17 +152,15 @@ class BookInfoRepositoryTest {
             String isbn = "9788994492032";
 
             // when
-            BookInfo foundBookInfo = bookInfoRepository.findById(isbn)
-                    .orElse(null);
+            BookInfo foundBookInfo = bookInfoRepository.findById(isbn).orElse(null);
 
             // then
             assertThat(foundBookInfo).isNull();
         }
-
     }
 
     @Nested
-    @DisplayName("도서 정보 전체 조회 테스트")
+    @DisplayName("도서 정보 전체 조회")
     public class FindAllTest {
         @Test
         @DisplayName("전체 조회 성공")
@@ -195,14 +192,7 @@ class BookInfoRepositoryTest {
             List<BookInfo> bookInfos = bookInfoRepository.findAll();
 
             // then
-            assertThat(bookInfos.size()).isEqualTo(2);
-            assertThat(bookInfos).extracting("isbn").containsExactlyInAnyOrder(bookInfo1.getIsbn(), bookInfo2.getIsbn());
-            assertThat(bookInfos).extracting("title").containsExactlyInAnyOrder(bookInfo1.getTitle(), bookInfo2.getTitle());
-            assertThat(bookInfos).extracting("author").containsExactlyInAnyOrder(bookInfo1.getAuthor(), bookInfo2.getAuthor());
-            assertThat(bookInfos).extracting("publisher").containsExactlyInAnyOrder(bookInfo1.getPublisher(), bookInfo2.getPublisher());
-            assertThat(bookInfos).extracting("image").containsExactlyInAnyOrder(bookInfo1.getImage(), bookInfo2.getImage());
-            assertThat(bookInfos).extracting("description").containsExactlyInAnyOrder(bookInfo1.getDescription(), bookInfo2.getDescription());
-            assertThat(bookInfos).extracting("pubDate").containsExactlyInAnyOrder(bookInfo1.getPubDate(), bookInfo2.getPubDate());
+            assertThat(bookInfos).hasSize(2).contains(bookInfo1, bookInfo2);
         }
 
         @Test
@@ -217,7 +207,7 @@ class BookInfoRepositoryTest {
     }
 
     @Test
-    @DisplayName("특정 도서 저자 수정 테스트")
+    @DisplayName("특정 도서 저자 수정")
     void updateTest() {
         // given
         BookInfo bookInfo = BookInfo.builder()
@@ -243,7 +233,7 @@ class BookInfoRepositoryTest {
 
     @Test
     @Transactional
-    @DisplayName("도서 정보 삭제 테스트")
+    @DisplayName("도서 정보 삭제")
     void deleteBookInfoTest() {
         // given
         BookInfo bookInfo = BookInfo.builder()

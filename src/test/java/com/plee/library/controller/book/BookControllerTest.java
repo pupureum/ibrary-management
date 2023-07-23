@@ -36,7 +36,6 @@ import java.nio.charset.StandardCharsets;
 import java.util.*;
 
 import static org.mockito.ArgumentMatchers.anyLong;
-import static org.mockito.BDDMockito.willThrow;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.mockito.BDDMockito.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -64,10 +63,10 @@ class BookControllerTest {
 
     @Test
     @WithUserDetails
-    @DisplayName("GET 전체 도서 목록 페이지를 반환")
+    @DisplayName("GET /books 전체 도서 목록 페이지를 반환")
     void allBooks() throws Exception {
         // given
-        // 도서 정보와 회원의 찜 등록 여부를 담은 도서 목록 페이지
+        // 도서 정보와 회원의 찜 등록 여부를 담은 도서 목록 페이지 생성
         BookInfo bookInfo = BookInfo
                 .builder()
                 .isbn("9788998274792")
@@ -109,7 +108,7 @@ class BookControllerTest {
 
     @Nested
     @WithUserDetails
-    @DisplayName("GET 도서 상세 페이지 요청")
+    @DisplayName("GET /books/{bookId} 도서 상세 페이지 요청")
     class BookDetailTest {
         private Book book;
 
@@ -133,7 +132,7 @@ class BookControllerTest {
 
         @Test
         @DisplayName("도서정보가 있는 경우")
-        void bookDetail_success() throws Exception {
+        void bookDetail_Success() throws Exception {
             // given
             BookDetailResponse res = BookDetailResponse.of(book, true, true);
             given(bookService.getBookDetails(anyLong(), anyLong())).willReturn(res);
@@ -149,7 +148,7 @@ class BookControllerTest {
 
         @Test
         @DisplayName("실패: 없는 도서인 경우")
-        void bookDetail_notFound() throws Exception {
+        void bookDetail_FailNotFound() throws Exception {
             // given
             String errorMessage = BookMessage.NOT_FOUND_BOOK.getMessage();
             BookDetailResponse res = BookDetailResponse.of(book, true, true);
@@ -166,11 +165,11 @@ class BookControllerTest {
 
     @Nested
     @WithUserDetails
-    @DisplayName("GET 도서 검색 결과 반환")
+    @DisplayName("GET /books/search 도서 검색 결과 반환")
     class SearchBookByKeywordTest {
         @Test
-        @DisplayName("검색어가 존재하는 경우")
-        void searchBookByKeyword_success() throws Exception {
+        @DisplayName("검색 성공")
+        void searchBookByKeyword_Success() throws Exception {
             // given
             given(bookService.findBySearchKeyword(any(SearchKeywordBookRequest.class), anyLong(), any(Pageable.class))).willReturn(Page.empty());
 
@@ -187,7 +186,7 @@ class BookControllerTest {
 
         @Test
         @DisplayName("실패: 검색어가 없는 경우")
-        void searchBookByKeyword_fail() throws Exception {
+        void searchBookByKeyword_Fail() throws Exception {
             // given
             // 키워드 정보 없는 검색 요청 dto 생성
             SearchKeywordBookRequest failReq = SearchKeywordBookRequest
@@ -209,7 +208,7 @@ class BookControllerTest {
 
     @Nested
     @WithUserDetails
-    @DisplayName("GET 카테고리별 도서 결과 반환")
+    @DisplayName("GET /books/category/{categoryId} 카테고리별 도서 결과 반환")
     class SearchBookByCategoryTest {
         private Page<BooksMarkResponse> booksPage;
         private List<CategoryResponse> categories;
@@ -224,7 +223,7 @@ class BookControllerTest {
 
         @Test
         @DisplayName("카테고리별 도서 반환 성공")
-        void searchBookByCategory_success() throws Exception {
+        void searchBookByCategory_Success() throws Exception {
             // given
             Long categoryId = 1L;
             given(bookService.findBooksByCategoryWithMark(anyLong(), anyLong(), any(Pageable.class))).willReturn(booksPage);
@@ -245,7 +244,7 @@ class BookControllerTest {
 
         @Test
         @DisplayName("실패: 카테고리가 없는 경우")
-        void searchBookByCategory_fail() throws Exception {
+        void searchBookByCategory_Fail() throws Exception {
             // given
             given(bookService.findBooksByCategoryWithMark(anyLong(), anyLong(), any(Pageable.class))).willReturn(booksPage);
             willThrow(new NoSuchElementException(BookMessage.NOT_FOUND_CATEGORY.getMessage())).given(bookService).findCategories();
@@ -262,27 +261,28 @@ class BookControllerTest {
 
     @Nested
     @WithUserDetails
-    @DisplayName("POST 도서 대출 요청")
+    @DisplayName("POST /books/loan 도서 대출 요청")
     class LoanBookTest {
         @Test
         @DisplayName("대출 성공")
-        void loanBook_success() throws Exception {
+        void loanBook_Success() throws Exception {
             // given
+            Long bookId = 1L;
             willDoNothing().given(bookService).loanBook(anyLong(), anyLong());
 
             // when, then
             mockMvc.perform(post("/books/loan")
-                            .param("bookId", "1")
+                            .param("bookId", bookId.toString())
                             .with(csrf()))
                     .andExpect(status().is3xxRedirection())
-                    .andExpect(redirectedUrl("/books/1"))
+                    .andExpect(redirectedUrl("/books/" + bookId))
                     .andExpect(flash().attributeExists("successMessage"))
                     .andExpect(flash().attribute("successMessage", BookMessage.SUCCESS_LOAN_BOOK.getMessage()));
         }
 
         @Test
         @DisplayName("실패: 대출 불가능한 경우")
-        void loanBook_fail() throws Exception {
+        void loanBook_Fail() throws Exception {
             // given
             willThrow(new NoSuchElementException(BookMessage.NOT_FOUND_BOOK.getMessage())).given(bookService).loanBook(anyLong(), anyLong());
 
@@ -299,11 +299,11 @@ class BookControllerTest {
 
     @Nested
     @WithUserDetails
-    @DisplayName("PUT 도서 반납 요청")
+    @DisplayName("PUT /books/return 도서 반납 요청")
     class ReturnBookTest {
         @Test
         @DisplayName("반납 성공")
-        void returnBook_success() throws Exception {
+        void returnBook_Success() throws Exception {
             // given
             ReturnBookRequest req = ReturnBookRequest.builder()
                     .historyId(1L)
@@ -323,13 +323,13 @@ class BookControllerTest {
 
         @Test
         @DisplayName("실패: 반납 불가능한 경우")
-        void returnBook_fail() throws Exception {
+        void returnBook_Fail() throws Exception {
             // given
             ReturnBookRequest req = ReturnBookRequest.builder()
                     .historyId(1L)
                     .status(false)
                     .build();
-            willThrow(new NoSuchElementException(BookMessage.NOT_FOUND_LOAN_HISTORY.getMessage())).given(bookService).returnBook(eq(req), anyLong());
+            willThrow(new NoSuchElementException(BookMessage.NOT_FOUND_LOAN_HISTORY.getMessage())).given(bookService).returnBook(any(ReturnBookRequest.class), anyLong());
 
             // when, then
             mockMvc.perform(put("/books/return")
@@ -344,18 +344,18 @@ class BookControllerTest {
 
     @Nested
     @WithUserDetails
-    @DisplayName("PUT 도서 연장 요청")
+    @DisplayName("PUT books/renewal 도서 연장 요청")
     class RenewBookTest {
         @Test
         @DisplayName("연장 성공")
-        void renewBook_success() throws Exception {
+        void renewBook_Success() throws Exception {
             // given
-            willDoNothing().given(bookService).renewBook(1L);
+            willDoNothing().given(bookService).renewBook(anyLong());
 
             // when, then
             mockMvc.perform(put("/books/renewal")
                             .param("historyId", "1")
-                            .param("status", "true")
+                            .param("onLoan", "true")
                             .with(csrf()))
                     .andExpect(status().is3xxRedirection())
                     .andExpect(redirectedUrl("/books/on-loan"))
@@ -365,14 +365,14 @@ class BookControllerTest {
 
         @Test
         @DisplayName("실패: 반납 불가능한 경우")
-        void renewBook_fail() throws Exception {
+        void renewBook_Fail() throws Exception {
             // given
             willThrow(new NoSuchElementException(BookMessage.NOT_FOUND_LOAN_HISTORY.getMessage())).given(bookService).renewBook(anyLong());
 
             // when, then
             mockMvc.perform(put("/books/renewal")
                             .param("historyId", "1")
-                            .param("status", "false")
+                            .param("onLoan", "false")
                             .with(csrf()))
                     .andExpect(status().is3xxRedirection())
                     .andExpect(redirectedUrl("/books/loan"))
@@ -383,24 +383,45 @@ class BookControllerTest {
 
     @Nested
     @WithUserDetails
-    @DisplayName("POST 신규 도서 요청")
+    @DisplayName("POST /books/request 신규 도서 요청")
     class RequestNewBookTest {
         @Test
-        void requestNewBook() throws Exception {
+        @DisplayName("도서 요청 성공")
+        void requestNewBook_Success() throws Exception {
             // given
-            AddBookRequest request = AddBookRequest.builder()
+            AddBookRequest req = AddBookRequest.builder()
                     .title("테스트")
                     .isbn("9791169210027")
                     .reqReason("test reason")
                     .build();
-            willDoNothing().given(bookService).addNewBookRequest(request, 1L);
+            willDoNothing().given(bookService).addNewBookRequest(req, 1L);
 
             // when, then
             mockMvc.perform(post("/books/request")
                             .with(csrf())
                             .contentType(MediaType.APPLICATION_JSON)
-                            .content(asJsonString(request)))
+                            .content(asJsonString(req)))
                     .andExpect(status().isOk());
+        }
+
+        @Test
+        @DisplayName("실패: 요청 사유가 유효하지 않은 경우")
+        void requestNewBook_Fail() throws Exception {
+            // given
+            AddBookRequest req = AddBookRequest.builder()
+                    .title("테스트")
+                    .isbn("9791169210027")
+                    .reqReason("요청")
+                    .build();
+            willDoNothing().given(bookService).addNewBookRequest(req, 1L);
+
+            // when, then
+            mockMvc.perform(post("/books/request")
+                            .with(csrf())
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(asJsonString(req)))
+                    .andExpect(status().isBadRequest())
+                    .andExpect(content().string("요청 사유를 최소 10자 이상 200자 이내로 입력해주세요"));
         }
     }
 
@@ -412,7 +433,7 @@ class BookControllerTest {
 
     @Nested
     @WithUserDetails
-    @DisplayName("POST 도서 찜 추가 요청")
+    @DisplayName("POST /books/like/{bookId} 도서 찜 추가 요청")
     class AddBookMarkTest {
         @Test
         @DisplayName("찜 추가 성공 (도서 상세 페이지에서 요청한 경우)")
@@ -434,9 +455,9 @@ class BookControllerTest {
 
         @Test
         @DisplayName("찜 추가 성공 (특정 카테고리 페이지에서 요청한 경우)")
-        void addBookmark_inCategory() throws Exception {
+        void addBookmark_InCategory() throws Exception {
             // given
-            BookmarkRequest request = BookmarkRequest.builder()
+            BookmarkRequest req = BookmarkRequest.builder()
                     .category("2")
                     .pageInfo("bookList")
                     .page(0)
@@ -447,17 +468,17 @@ class BookControllerTest {
 
             // when, then
             mockMvc.perform(post("/books/like/{bookId}", bookId)
-                            .flashAttr("bookmarkRequest", request)
+                            .flashAttr("bookmarkRequest", req)
                             .with(csrf()))
                     .andExpect(status().is3xxRedirection())
-                    .andExpect(redirectedUrl("/books/category/" + request.getCategory() + "?page=" + request.getPage()));
+                    .andExpect(redirectedUrl("/books/category/" + req.getCategory() + "?page=" + req.getPage()));
         }
 
         @Test
         @DisplayName("실패: 이미 찜한 도서인 경우 (전체 도서 목록 페이지에서 요청한 경우)")
-        void addBookmark_fail() throws Exception {
+        void addBookmark_Fail() throws Exception {
             // given
-            BookmarkRequest request = BookmarkRequest.builder()
+            BookmarkRequest req = BookmarkRequest.builder()
                     .category("")
                     .pageInfo("bookList")
                     .page(0)
@@ -468,7 +489,7 @@ class BookControllerTest {
 
             // when, then
             mockMvc.perform(post("/books/like/{bookId}", bookId)
-                            .flashAttr("bookmarkRequest", request)
+                            .flashAttr("bookmarkRequest", req)
                             .with(csrf()))
                     .andExpect(status().is3xxRedirection())
                     .andExpect(redirectedUrl("/books?page=0"))
@@ -479,13 +500,13 @@ class BookControllerTest {
 
     @Nested
     @WithUserDetails
-    @DisplayName("DELETE 도서 찜 해제 요청")
+    @DisplayName("DELETE books/unlike/{bookId} 도서 찜 해제 요청")
     class RemoveBookmark {
         @Test
         @DisplayName("찜 해제 성공 (도서 상세 페이지에서 요청한 경우)")
         void removeBookmark() throws Exception {
             // given
-            BookmarkRequest request = BookmarkRequest.builder()
+            BookmarkRequest req = BookmarkRequest.builder()
                     .category("2")
                     .pageInfo("bookDetail")
                     .page(0)
@@ -495,7 +516,7 @@ class BookControllerTest {
 
             // when, then
             mockMvc.perform(delete("/books/unlike/{bookId}", bookId)
-                            .flashAttr("bookmarkRequest", request)
+                            .flashAttr("bookmarkRequest", req)
                             .with(csrf()))
                     .andExpect(status().is3xxRedirection())
                     .andExpect(redirectedUrl("/books/" + bookId));
@@ -503,11 +524,10 @@ class BookControllerTest {
 
         @Test
         @DisplayName("찜 해제 성공 (특정 카테고리 페이지에서 요청한 경우)")
-        void removeBookmark_inCategory() throws Exception {
+        void removeBookmark_InCategory() throws Exception {
             // given
-            BookmarkRequest request = BookmarkRequest.builder()
+            BookmarkRequest req = BookmarkRequest.builder()
                     .category("1")
-                    .pageInfo("bookDetail")
                     .page(3)
                     .build();
 
@@ -516,18 +536,42 @@ class BookControllerTest {
 
             // when, then
             mockMvc.perform(delete("/books/unlike/{bookId}", bookId)
-                            .flashAttr("bookmarkRequest", request)
-                            .param("page", Integer.toString(request.getPage()))
+                            .flashAttr("bookmarkRequest", req)
+                            .param("page", Integer.toString(req.getPage()))
                             .param("pageInfo", "bookList")
-                            .param("category", request.getCategory())
+                            .param("category", req.getCategory())
                             .with(csrf()))
                     .andExpect(status().is3xxRedirection())
-                    .andExpect(redirectedUrl("/books/category/" + request.getCategory() + "?page=" + request.getPage()));
+                    .andExpect(redirectedUrl("/books/category/" + req.getCategory() + "?page=" + req.getPage()));
+        }
+
+        @Test
+        @DisplayName("찜 해제 성공 (찜한 페이지에서 요청한 경우)")
+        void removeBookmark_InBookmark() throws Exception {
+            // given
+            BookmarkRequest req = BookmarkRequest.builder()
+                    .category("1")
+                    .pageInfo("bookmarkList")
+                    .page(3)
+                    .build();
+
+            Long bookId = 1L;
+            willDoNothing().given(bookService).removeBookmark(anyLong(), anyLong());
+
+            // when, then
+            mockMvc.perform(delete("/books/unlike/{bookId}", bookId)
+                            .flashAttr("bookmarkRequest", req)
+                            .param("page", Integer.toString(req.getPage()))
+                            .param("pageInfo", req.getPageInfo())
+                            .param("category", req.getCategory())
+                            .with(csrf()))
+                    .andExpect(status().is3xxRedirection())
+                    .andExpect(redirectedUrl("/books/like" + "?page=" + req.getPage()));
         }
 
         @Test
         @DisplayName("실패: 찜하지 않은 경우 (찜 목록 페이지에서 요청한 경우)")
-        void removeBookmark_fail() throws Exception {
+        void removeBookmark_Fail() throws Exception {
             // given
             willThrow(new IllegalStateException(BookMessage.NOT_FOUND_BOOKMARK.getMessage()))
                     .given(bookService).removeBookmark(anyLong(), anyLong());

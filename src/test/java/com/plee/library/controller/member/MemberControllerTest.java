@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.plee.library.config.MemberAdapter;
 import com.plee.library.config.TestUserDetailsConfig;
 import com.plee.library.domain.member.Member;
+import com.plee.library.domain.member.Role;
 import com.plee.library.dto.admin.request.UpdateMemberRequest;
 import com.plee.library.dto.member.request.SignUpMemberRequest;
 import com.plee.library.dto.member.response.MemberInfoResponse;
@@ -62,10 +63,10 @@ class MemberControllerTest {
 
     @Nested
     @WithAnonymousUser
-    @DisplayName("GET 로그인 페이지 반환 (익명의 사용자)")
+    @DisplayName("GET /member/login 로그인 페이지 반환 (익명의 사용자)")
     class GetLoginFormTest {
         @Test
-        @DisplayName("에러 없는 경우")
+        @DisplayName("필드 에러가 없는 경우")
         void loginForm() throws Exception {
             // when, then
             mockMvc.perform(get("/member/login"))
@@ -75,7 +76,7 @@ class MemberControllerTest {
         }
 
         @Test
-        @DisplayName("에러 있는 경우")
+        @DisplayName("필드 에러가 있는 경우")
         void loginFormWithError() throws Exception {
             // given
             String error = "error";
@@ -91,7 +92,7 @@ class MemberControllerTest {
 
     @Test
     @WithMockUser
-    @DisplayName("GET 로그아웃 처리 후 홈 페이지로 리다이렉트")
+    @DisplayName("GET /member/logout 로그아웃 처리 후 홈 페이지로 리다이렉트")
     void logout() throws Exception {
         // when, then
         mockMvc.perform(get("/member/logout"))
@@ -101,7 +102,7 @@ class MemberControllerTest {
 
     @Test
     @WithAnonymousUser
-    @DisplayName("GET 회원가입 페이지 반환 (익명의 사용자)")
+    @DisplayName("GET /member/signup 회원가입 페이지 반환 (익명의 사용자)")
     void signupForm() throws Exception {
         // when, then
         mockMvc.perform(get("/member/signup"))
@@ -111,7 +112,7 @@ class MemberControllerTest {
 
     @Nested
     @WithAnonymousUser
-    @DisplayName("POST 회원가입 요청")
+    @DisplayName("POST /member/signup 회원가입 요청")
     class SignupTest {
         @Test
         @DisplayName("회원가입 성공")
@@ -134,9 +135,9 @@ class MemberControllerTest {
 
         @Test
         @DisplayName("실패: 유효하지 않은 요청")
-        void signupFail_invalidLoginId() throws Exception {
+        void signupFail_InvalidLoginId() throws Exception {
             // given
-            // 회원가입 요청 생성 (아이디 형식 오류)
+            // 유효하지 않은 아이디로 회원가입 요청 생성
             SignUpMemberRequest req = SignUpMemberRequest.builder()
                     .name("이푸름")
                     .loginId("test@test.com")
@@ -145,26 +146,22 @@ class MemberControllerTest {
                     .build();
 
             // when, then
-            // 검증 실패로 인해 회원가입 반환
+            // 검증 실패로 인해 회원가입 뷰 반환
             MvcResult result = mockMvc.perform(post("/member/signup")
                             .flashAttr("signUpMemberRequest", req))
                     .andExpect(view().name("member/signup"))
                     .andExpect(model().attributeExists("signUpMemberRequest"))
                     .andExpect(model().hasErrors())
+                    .andExpect(model().attributeHasFieldErrors("signUpMemberRequest", "loginId"))
                     .andExpect(view().name("member/signup"))
                     .andReturn();
-
-            // Field error의 default message 검증
-            BindingResult bindingResult = (BindingResult) result.getModelAndView().getModel().get("org.springframework.validation.BindingResult.signUpMemberRequest");
-            FieldError fieldError = bindingResult.getFieldError("loginId");
-            assertEquals("이메일은 @gmail.com 형식이어야 합니다.", fieldError.getDefaultMessage());
         }
     }
 
 
     @Test
     @WithUserDetails
-    @DisplayName("GET 회원 정보 수정 페이지 반환")
+    @DisplayName("GET /member/edit 회원 정보 수정 페이지 반환")
     void editInfoForm() throws Exception {
         // given
         Member member = ((MemberAdapter) SecurityContextHolder.getContext().getAuthentication().getPrincipal()).getMember();
@@ -176,14 +173,14 @@ class MemberControllerTest {
                         .with(csrf()))
                 .andExpect(status().isOk())
                 .andExpect(view().name("member/editInfo"))
-                // 모델에 담긴 member 객체의 타입이 MemberInfoResponse인지 검증
+                // 모델에 담긴 member 객체의 타입이 MemberInfoResponse 인지 검증
                 .andExpect(model().attribute("member", response))
                 .andExpect(model().attribute("selectedMenu", "member-edit-info"));
     }
 
     @Test
     @WithUserDetails
-    @DisplayName("GET 현재 비밀번호 확인 요청 처리")
+    @DisplayName("GET /member/edit/current-password 현재 비밀번호 확인 요청 처리")
     void checkCurrentPassword() throws Exception {
         // given
         given(memberService.checkCurrentPassword(anyString(), anyLong())).willReturn(true);
@@ -197,11 +194,11 @@ class MemberControllerTest {
 
     @Nested
     @WithUserDetails
-    @DisplayName("GET 회원 정보 변경 요청 처리")
+    @DisplayName("PUT /member/edit/{memberId} 회원 정보 변경 요청 처리")
     class EditInfoTest {
         @Test
         @DisplayName("정보 변경 성공")
-        void editInfo_success() throws Exception {
+        void editInfo_Success() throws Exception {
             // given
             UpdateMemberRequest req = new UpdateMemberRequest();
 
@@ -215,7 +212,7 @@ class MemberControllerTest {
 
         @Test
         @DisplayName("실패: 현재 접속된 회원과, 수정하려는 회원이 다른 경우")
-        void editInfo_fail() throws Exception {
+        void editInfo_Fail() throws Exception {
             // given
             UpdateMemberRequest req = new UpdateMemberRequest();
 
@@ -225,6 +222,20 @@ class MemberControllerTest {
                     .content(asJsonString(req)))
                     .andExpect(status().isBadRequest())
                     .andExpect(content().string(MemberMessage.INVALID_ACCESS.getMessage()));
+        }
+
+        @Test
+        @DisplayName("실패: 유효하지 않은 이름으로 요청한 경우")
+        void editInfo_FailValid() throws Exception {
+            // given
+            UpdateMemberRequest req = new UpdateMemberRequest("111", "password", Role.MEMBER);
+
+            // when, then
+            mockMvc.perform(put("/member/edit/{memberId}", 3L)
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(asJsonString(req)))
+                    .andExpect(status().isBadRequest())
+                    .andExpect(content().string("이름은 한글 또는 영어로만 입력해야 합니다."));
         }
     }
 

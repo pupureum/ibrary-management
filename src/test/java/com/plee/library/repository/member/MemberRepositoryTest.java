@@ -23,10 +23,10 @@ class MemberRepositoryTest {
     private MemberRepository memberRepository;
 
     @Nested
-    @DisplayName("회원 생성 테스트")
+    @DisplayName("회원 생성")
     public class saveMemberTest {
         @Test
-        @DisplayName("성공 테스트")
+        @DisplayName("회원 생성 성공")
         void signUpMember() {
             // given
             Member member = Member.builder()
@@ -39,23 +39,11 @@ class MemberRepositoryTest {
             Member savedMember = memberRepository.save(member);
 
             // then
-            assertThat(savedMember).isNotNull();
-            assertThat(savedMember).isEqualTo(member);
-            assertThat(savedMember.getId()).isEqualTo(member.getId());
-            assertThat(savedMember.getName()).isEqualTo(member.getName());
-            assertThat(savedMember.getLoginId()).isEqualTo(member.getLoginId());
-            assertThat(savedMember.getPassword()).isEqualTo(member.getPassword());
-            assertThat(savedMember.getRole()).isEqualTo(member.getRole());
-            assertThat(savedMember.getMemberLoanHistories())
-                    .hasSize(member.getMemberLoanHistories().size());
-            assertThat(savedMember.getMemberRequestHistories())
-                    .hasSize(member.getMemberRequestHistories().size());
-            assertThat(savedMember.getMemberBookmarks())
-                    .hasSize(member.getMemberBookmarks().size());
+            assertThat(savedMember).isNotNull().usingRecursiveComparison().isEqualTo(member);
         }
 
         @Test
-        @DisplayName("실패 테스트: 이미 존재하는 loginId")
+        @DisplayName("실패: 이미 존재하는 loginId")
         void saveFailWithNotUniqueLoginId() {
             // given
             Member member = Member.builder()
@@ -71,13 +59,12 @@ class MemberRepositoryTest {
                     .build();
 
             // when, then
-            assertThatThrownBy(() -> memberRepository.save(member2))
-                    .isInstanceOf(DataIntegrityViolationException.class);
+            assertThatThrownBy(() -> memberRepository.save(member2)).isInstanceOf(DataIntegrityViolationException.class);
         }
     }
 
     @Nested
-    @DisplayName("특정 회원 조회 테스트")
+    @DisplayName("특정 회원 조회")
     public class findMemberByLoginIdTest {
         @Test
         @DisplayName("loginId로 회원 조회")
@@ -98,23 +85,10 @@ class MemberRepositoryTest {
             memberRepository.save(member1);
 
             // when
-            Member foundMember = memberRepository.findByLoginId(member1.getLoginId())
-                    .orElse(null);
+            Member foundMember = memberRepository.findByLoginId(member1.getLoginId()).orElse(null);
 
             // then
-            assertThat(foundMember).isNotNull();
-            assertThat(foundMember).isEqualTo(member1);
-            assertThat(foundMember.getId()).isEqualTo(member1.getId());
-            assertThat(foundMember.getName()).isEqualTo(member1.getName());
-            assertThat(foundMember.getLoginId()).isEqualTo(member1.getLoginId());
-            assertThat(foundMember.getPassword()).isEqualTo(member1.getPassword());
-            assertThat(foundMember.getRole()).isEqualTo(member1.getRole());
-            assertThat(foundMember.getMemberLoanHistories())
-                    .hasSize(member1.getMemberLoanHistories().size())
-                    .containsAll(member1.getMemberLoanHistories());
-            assertThat(foundMember.getMemberRequestHistories())
-                    .hasSize(member1.getMemberRequestHistories().size())
-                    .containsAll(member1.getMemberRequestHistories());
+            assertThat(foundMember).isNotNull().usingRecursiveComparison().isEqualTo(member1);
         }
 
         @Test
@@ -132,7 +106,7 @@ class MemberRepositoryTest {
     }
 
     @Test
-    @DisplayName("전체 회원 조회 테스트")
+    @DisplayName("전체 회원 조회")
     void findAllMembers() {
         // given
         Member member1 = Member.builder()
@@ -158,7 +132,7 @@ class MemberRepositoryTest {
     }
 
     @Nested
-    @DisplayName("회원 정보 수정 테스트")
+    @DisplayName("회원 정보 수정")
     public class updateMemberTest {
         @Test
         @DisplayName("회원 권한 변경")
@@ -221,7 +195,7 @@ class MemberRepositoryTest {
     }
 
     @Test
-    @DisplayName("회원 삭제 테스트")
+    @DisplayName("회원 삭제")
     void deleteMember() {
         // given
         Member member = Member.builder()

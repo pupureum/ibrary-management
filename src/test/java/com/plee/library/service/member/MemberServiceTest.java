@@ -4,10 +4,13 @@ import com.plee.library.domain.book.Book;
 import com.plee.library.domain.book.BookInfo;
 import com.plee.library.domain.member.Member;
 import com.plee.library.domain.member.MemberLoanHistory;
+import com.plee.library.domain.member.MemberRequestHistory;
 import com.plee.library.domain.member.Role;
 import com.plee.library.dto.admin.request.UpdateMemberRequest;
 import com.plee.library.dto.admin.response.MemberStatusResponse;
 import com.plee.library.dto.member.request.SignUpMemberRequest;
+import com.plee.library.dto.member.response.MemberInfoResponse;
+import com.plee.library.repository.book.BookInfoRepository;
 import com.plee.library.repository.member.MemberRequestHistoryRepository;
 import com.plee.library.util.message.MemberMessage;
 import com.plee.library.repository.book.BookRepository;
@@ -50,16 +53,18 @@ class MemberServiceTest {
     @Mock
     private BookRepository bookRepository;
     @Mock
+    private BookInfoRepository bookInfoRepository;
+    @Mock
     private BCryptPasswordEncoder passwordEncoder;
     @InjectMocks
     private MemberServiceImpl memberService;
 
     @Nested
-    @DisplayName("회원가입 요청의 유효성 검증 테스트")
+    @DisplayName("회원가입 요청의 유효성 검증")
     class ValidateSignupRequest {
         @Test
         @DisplayName("회원가입 성공")
-        void successReq() {
+        void validateSignupRequest_Success() {
             // given
             SignUpMemberRequest req = SignUpMemberRequest.builder()
                     .loginId("plee@gmail.com")
@@ -77,8 +82,8 @@ class MemberServiceTest {
         }
 
         @Test
-        @DisplayName("실패 테스트: 비밀번호와 검증비밀번호가 일치하지 않는 경우")
-        void failReq_notMatchedPassword() {
+        @DisplayName("실패: 비밀번호와 비밀번호 확인이 일치하지 않는 경우")
+        void validateSignupRequest_FailPassword() {
             // given
             SignUpMemberRequest req = SignUpMemberRequest.builder()
                     .loginId("plee@gmail.com")
@@ -99,8 +104,8 @@ class MemberServiceTest {
         }
 
         @Test
-        @DisplayName("실패 테스트: 아이디가 중복되는 경우")
-        void failReq_dupLoginId() {
+        @DisplayName("실패: 아이디가 중복되는 경우")
+        void validateSignupRequest_FailDupLoginId() {
             // given
             when(memberRepository.existsByLoginId("plee@gmail.com")).thenReturn(true);
 
@@ -123,7 +128,7 @@ class MemberServiceTest {
     }
 
     @Test
-    @DisplayName("회원 정보 저장 테스트")
+    @DisplayName("회원 정보 저장")
     void saveMember() {
         // given
         SignUpMemberRequest req = SignUpMemberRequest.builder()
@@ -141,17 +146,14 @@ class MemberServiceTest {
         given(memberRepository.save(any(Member.class))).willReturn(member);
 
         // when
-        Member savedMember = memberService.saveMember(req);
+        memberService.saveMember(req);
 
         // then
-        assertThat(savedMember).isNotNull();
-        assertThat(savedMember).usingRecursiveComparison().isEqualTo(member);
-        then(memberRepository).should().save(any(Member.class));
         then(memberRepository).should(times(1)).save(any(Member.class));
     }
 
     @Test
-    @DisplayName("특정 회원 정보 조회 테스트")
+    @DisplayName("특정 회원 정보 조회")
     void findMember() {
         // given
         Member member = Member.builder()
@@ -164,23 +166,24 @@ class MemberServiceTest {
         given(memberRepository.findById(anyLong())).willReturn(Optional.of(member));
 
         // when
-        com.plee.library.dto.member.response.MemberInfoResponse foundMemberResponse = memberService.findMember(1L);
+        MemberInfoResponse foundMemberResponse = memberService.findMember(1L);
 
         // then
-        com.plee.library.dto.member.response.MemberInfoResponse expectedMemberRep = com.plee.library.dto.member.response.MemberInfoResponse.from(member);
+        MemberInfoResponse expectedMemberResponse = MemberInfoResponse.from(member);
 
         assertThat(foundMemberResponse).isNotNull();
-        assertThat(foundMemberResponse).isInstanceOf(com.plee.library.dto.member.response.MemberInfoResponse.class);
-        assertThat(foundMemberResponse).usingRecursiveComparison().isEqualTo(expectedMemberRep);
+        assertThat(foundMemberResponse).isInstanceOf(MemberInfoResponse.class);
+        assertThat(foundMemberResponse).usingRecursiveComparison().isEqualTo(expectedMemberResponse);
         then(memberRepository).should().findById(anyLong());
         then(memberRepository).should(times(1)).findById(anyLong());
     }
 
     @Test
-    @DisplayName("모든 회원 정보 조회 테스트")
+    @DisplayName("모든 회원 정보 조회")
     void findAllMembers() {
         // given
         Pageable pageable = PageRequest.of(0, 10, Sort.by("createdAt").descending());
+        // 5명의 회원 정보 생성
         List<Member> members = createMembers();
 
         given(memberRepository.findAll(pageable)).willReturn(new PageImpl<>(members, pageable, members.size()));
@@ -226,7 +229,7 @@ class MemberServiceTest {
     }
 
     @Test
-    @DisplayName("현재 비밀번호와 일치 여부 확인 테스트")
+    @DisplayName("현재 비밀번호와 일치 여부 확인")
     void checkCurrentPassword() {
         // given
         String password = "password";
@@ -252,7 +255,7 @@ class MemberServiceTest {
     }
 
     @Nested
-    @DisplayName("관리자에 의한 회원 정보 수정 테스트")
+    @DisplayName("관리자에 의한 회원 정보 수정")
     class UpdateMemberByAdminTest {
         private Member member;
 
@@ -268,7 +271,7 @@ class MemberServiceTest {
 
         @Test
         @DisplayName("이름만 변경")
-        void updateMember_name() {
+        void updateMemberName() {
             // given
             UpdateMemberRequest req = new UpdateMemberRequest("newName", member.getPassword(), member.getRole());
             given(memberRepository.findById(anyLong())).willReturn(Optional.of(member));
@@ -284,7 +287,7 @@ class MemberServiceTest {
 
         @Test
         @DisplayName("권한만 변경")
-        void updateMember_password() {
+        void updateMemberPassword() {
             // given
             UpdateMemberRequest req = new UpdateMemberRequest(member.getName(), member.getPassword(), Role.ADMIN);
             given(memberRepository.findById(anyLong())).willReturn(Optional.of(member));
@@ -300,7 +303,7 @@ class MemberServiceTest {
 
         @Test
         @DisplayName("이름, 권한 모두 변경")
-        void updateMember_password_role() {
+        void updateMemberAll() {
             // given
             UpdateMemberRequest req = new UpdateMemberRequest("newName", member.getPassword(), Role.ADMIN);
             given(memberRepository.findById(anyLong())).willReturn(Optional.of(member));
@@ -316,7 +319,7 @@ class MemberServiceTest {
     }
 
     @Nested
-    @DisplayName("회원에 의한 회원 정보 수정 테스트")
+    @DisplayName("회원에 의한 회원 정보 수정")
     class ChangeMemberInfo {
         private Member member;
 
@@ -332,7 +335,7 @@ class MemberServiceTest {
 
         @Test
         @DisplayName("이름만 변경")
-        void changeMember_name() {
+        void changeMemberName() {
             // given
             UpdateMemberRequest req = new UpdateMemberRequest("newName", "", member.getRole());
             given(memberRepository.findById(anyLong())).willReturn(Optional.of(member));
@@ -347,7 +350,7 @@ class MemberServiceTest {
 
         @Test
         @DisplayName("비밀번호만 변경")
-        void updateMember_password() {
+        void updateMemberPassword() {
             // given
             String newPassword = "newPassword";
             UpdateMemberRequest req = new UpdateMemberRequest(member.getName(), newPassword, member.getRole());
@@ -368,7 +371,7 @@ class MemberServiceTest {
 
         @Test
         @DisplayName("이름, 비밀번호 모두 변경")
-        void updateMember_name_password() {
+        void updateMemberAll() {
             // given
             String newPassword = "newPassword";
             UpdateMemberRequest req = new UpdateMemberRequest("newName", newPassword, member.getRole());
@@ -385,8 +388,8 @@ class MemberServiceTest {
         }
 
         @Test
-        @DisplayName("실패 테스트: 이름과 비밀번호 모두 변경사항이 없는 경우")
-        void updateMember_NotUpdate() {
+        @DisplayName("실패: 이름과 비밀번호 모두 변경사항이 없는 경우")
+        void updateMember_Notchanged() {
             // given
             UpdateMemberRequest req = new UpdateMemberRequest(member.getName(), member.getPassword(), member.getRole());
             given(memberRepository.findById(anyLong())).willReturn(Optional.of(member));
@@ -400,8 +403,8 @@ class MemberServiceTest {
     }
 
     @Nested
-    @DisplayName("회원 삭제 테스트")
-    class deleteMemberTest {
+    @DisplayName("회원 삭제")
+    class DeleteMemberTest {
         Member member;
 
         @BeforeEach
@@ -416,16 +419,11 @@ class MemberServiceTest {
 
         @Test
         @DisplayName("대출중인 도서가 없는 경우")
-        void deleteMember_notLoanedBook() {
+        void deleteMember_NotLoanedBook() {
             // given
             given(memberRepository.findById(anyLong())).willReturn(Optional.of(member));
             // 대출 기록을 빈 리스트로 반환
-            given(memberLoanHisRepository.searchHistory(
-                    LoanHistorySearchCondition
-                            .builder()
-                            .memberId(any())
-                            .notReturned(true)
-                            .build())).willReturn(Collections.emptyList());
+            given(memberLoanHisRepository.searchHistory(any(LoanHistorySearchCondition.class))).willReturn(Collections.emptyList());
             given(memberReqHisRepository.findByMemberIdAndIsApprovedFalse(anyLong())).willReturn(Collections.emptyList());
 
             // when
@@ -438,7 +436,7 @@ class MemberServiceTest {
 
         @Test
         @DisplayName("대출중인 도서가 있는 경우")
-        void deleteMember_forceReturnBook() {
+        void deleteMember_ForceReturnBook() {
             // given
             Book book = Book.builder()
                     .bookInfo(BookInfo.builder()
@@ -456,12 +454,7 @@ class MemberServiceTest {
             book.decreaseLoanableCnt();
 
             given(memberRepository.findById(anyLong())).willReturn(Optional.of(member));
-            given(memberLoanHisRepository.searchHistory(
-                    LoanHistorySearchCondition
-                            .builder()
-                            .memberId(any())
-                            .notReturned(true)
-                            .build())).willReturn(memberLoanHistoryList);
+            given(memberLoanHisRepository.searchHistory(any(LoanHistorySearchCondition.class))).willReturn(memberLoanHistoryList);
             given(bookRepository.findByBookInfoIsbn(anyString())).willReturn(Optional.of(book));
             given(memberReqHisRepository.findByMemberIdAndIsApprovedFalse(anyLong())).willReturn(Collections.emptyList());
 
@@ -472,7 +465,66 @@ class MemberServiceTest {
             then(bookRepository).should().findByBookInfoIsbn(anyString());
             then(bookRepository).should(times(1)).findByBookInfoIsbn(anyString());
             then(memberRepository).should(times(1)).delete(any(Member.class));
+            // 도서 수량 증가 확인
             assertThat(book.getLoanableCnt()).isEqualTo(2);
+        }
+
+        @Test
+        @DisplayName("요청 도서가 입고 처리되지 않았고, 해당 회원만 신청한 도서가 있는 경우")
+        void deleteMember_NotReceivedUniq() {
+            // given
+            BookInfo bookInfo = BookInfo.builder()
+                    .isbn("1234567891234")
+                    .title("title")
+                    .build();
+
+            // 신청 내역 생성
+            MemberRequestHistory reqHistory = MemberRequestHistory.builder()
+                    .member(member)
+                    .bookInfo(bookInfo)
+                    .build();
+
+            given(memberRepository.findById(anyLong())).willReturn(Optional.of(member));
+            given(memberLoanHisRepository.searchHistory(any(LoanHistorySearchCondition.class))).willReturn(Collections.emptyList());
+            given(memberReqHisRepository.findByMemberIdAndIsApprovedFalse(anyLong())).willReturn(List.of(reqHistory));
+            given(memberReqHisRepository.countByBookInfo(bookInfo)).willReturn(1L);
+
+            // when
+            memberService.deleteMember(1L);
+
+            // then
+            then(bookRepository).should(never()).findByBookInfoIsbn(anyString());
+            then(bookInfoRepository).should(times(1)).delete(bookInfo);
+            then(memberRepository).should(times(1)).delete(any(Member.class));
+        }
+
+        @Test
+        @DisplayName("요청 도서가 입고 처리되지 않았고, 다른 회원도 해당 도서를 신청한 경우")
+        void deleteMember_NotReceivedNotUniq() {
+            // given
+            BookInfo bookInfo = BookInfo.builder()
+                    .isbn("1234567891234")
+                    .title("title")
+                    .build();
+
+            // 신청 내역 생성
+            MemberRequestHistory reqHistory = MemberRequestHistory.builder()
+                    .member(member)
+                    .bookInfo(bookInfo)
+                    .build();
+
+            given(memberRepository.findById(anyLong())).willReturn(Optional.of(member));
+            given(memberLoanHisRepository.searchHistory(any(LoanHistorySearchCondition.class))).willReturn(Collections.emptyList());
+            given(memberReqHisRepository.findByMemberIdAndIsApprovedFalse(anyLong())).willReturn(List.of(reqHistory));
+            given(memberReqHisRepository.countByBookInfo(bookInfo)).willReturn(0L);
+
+            // when
+            memberService.deleteMember(1L);
+
+            // then
+            then(bookRepository).should(never()).findByBookInfoIsbn(anyString());
+            then(bookInfoRepository).should(never()).delete(bookInfo);
+            then(memberRepository).should(times(1)).delete(any(Member.class));
         }
     }
 }

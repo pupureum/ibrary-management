@@ -87,8 +87,7 @@ class MemberLoanHistoryCustomTest {
 
             // then
             assertThat(result).isNotNull();
-            assertThat(result.size()).isEqualTo(2);
-            assertThat(result).contains(loanHistory1, loanHistory2);
+            assertThat(result).hasSize(2).contains(loanHistory1, loanHistory2);
         }
 
         @Test
@@ -107,8 +106,7 @@ class MemberLoanHistoryCustomTest {
 
             // then
             assertThat(result).isNotNull();
-            assertThat(result.size()).isEqualTo(1);
-            assertThat(result).containsExactly(loanHistory2);
+            assertThat(result).hasSize(1).containsExactly(loanHistory2);
         }
     }
 
@@ -127,8 +125,7 @@ class MemberLoanHistoryCustomTest {
 
             // then
             assertThat(overdueHistories).isNotNull();
-            assertThat(overdueHistories.size()).isEqualTo(2);
-            assertThat(overdueHistories).contains(loanHistory1, loanHistory2);
+            assertThat(overdueHistories).hasSize(2).contains(loanHistory1, loanHistory2);
         }
 
         @Test
@@ -145,8 +142,7 @@ class MemberLoanHistoryCustomTest {
 
             // then
             assertThat(overdueHistories).isNotNull();
-            assertThat(overdueHistories.size()).isEqualTo(1);
-            assertThat(overdueHistories).containsExactly(loanHistory2);
+            assertThat(overdueHistories).hasSize(1).containsExactly(loanHistory2);
         }
 
         @Test

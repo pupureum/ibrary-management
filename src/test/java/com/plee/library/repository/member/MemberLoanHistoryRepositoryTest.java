@@ -54,7 +54,7 @@ class MemberLoanHistoryRepositoryTest {
     }
 
     @Test
-    @DisplayName("회원 대출 내역 생성 테스트")
+    @DisplayName("회원 대출 내역 생성")
     void saveMemberLoanHistory() {
         // given
         MemberLoanHistory loanHistory = MemberLoanHistory.builder()
@@ -66,11 +66,7 @@ class MemberLoanHistoryRepositoryTest {
         MemberLoanHistory savedLoanHistory = memberLoanHisRepository.save(loanHistory);
 
         // then
-        assertThat(savedLoanHistory).isNotNull();
-        assertThat(savedLoanHistory).isEqualTo(loanHistory);
-        assertThat(savedLoanHistory.getId()).isEqualTo(loanHistory.getId());
-        assertThat(savedLoanHistory.isRenew()).isEqualTo(loanHistory.isRenew());
-        assertThat(savedLoanHistory.getReturnedAt()).isEqualTo(loanHistory.getReturnedAt());
+        assertThat(savedLoanHistory).isNotNull().usingRecursiveComparison().isEqualTo(loanHistory);
     }
 
     @Test
@@ -103,12 +99,10 @@ class MemberLoanHistoryRepositoryTest {
         memberLoanHisRepository.save(loanHistory);
 
         // when
-        boolean result = memberLoanHisRepository.findByMemberIdAndBookInfoIsbnAndReturnedAtIsNull(member.getId(), bookInfo.getIsbn())
-                .isPresent();
+        boolean result = memberLoanHisRepository.findByMemberIdAndBookInfoIsbnAndReturnedAtIsNull(member.getId(), bookInfo.getIsbn()).isPresent();
 
         // then
         assertThat(result).isFalse();
-
     }
 
     @Test
@@ -140,12 +134,10 @@ class MemberLoanHistoryRepositoryTest {
         Page<MemberLoanHistory> result = memberLoanHisRepository.findAllByMemberId(member.getId(), pageable);
 
         // then
+
         assertThat(result).isNotNull();
         assertThat(result.getTotalElements()).isEqualTo(2);
-        assertThat(result.getContent()).contains(loanHistory1, loanHistory2);
-
-        assertThat(result.getContent().get(0)).isEqualTo(loanHistory2);
-        assertThat(result.getContent().get(1)).isEqualTo(loanHistory1);
+        assertThat(result.getContent()).containsExactly(loanHistory2, loanHistory1);
     }
 
     @Test
@@ -181,7 +173,6 @@ class MemberLoanHistoryRepositoryTest {
 
         // then
         assertThat(updatedLoanHistory.isRenew()).isTrue();
-        assertThat(updatedLoanHistory.isRenew()).isEqualTo(loanHistory.isRenew());
     }
 
     @Test

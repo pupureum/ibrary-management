@@ -18,6 +18,7 @@ import com.plee.library.dto.book.request.SaveBookRequest;
 import com.plee.library.dto.book.request.SearchKeywordBookRequest;
 import com.plee.library.dto.book.response.BooksMarkResponse;
 import com.plee.library.dto.book.response.BookInfoResponse;
+import com.plee.library.dto.book.response.LoanHistoryResponse;
 import com.plee.library.dto.member.condition.LoanHistorySearchCondition;
 import com.plee.library.repository.book.BookCategoryRepository;
 import com.plee.library.util.message.BookMessage;
@@ -93,7 +94,7 @@ class BookServiceTest {
     }
 
     @Nested
-    @DisplayName("도서 저장 테스트")
+    @DisplayName("도서 저장")
     class SaveBookTest {
         private SaveBookRequest req;
         private BookCategory category;
@@ -113,32 +114,31 @@ class BookServiceTest {
 
         @Test
         @DisplayName("도서 요청이 있던 도서인 경우")
-        void save_requestExist() {
+        void save_RequestExist() {
             // given
-            given(bookRepository.existsByBookInfoIsbn(req.getIsbn())).willReturn(false);
-            Optional<BookInfo> optionalBookInfo = Optional.of(bookInfo);
-            given(bookInfoRepository.findById(req.getIsbn())).willReturn(optionalBookInfo);
-            given(memberReqHisRepository.existsByBookInfoIsbnAndIsApprovedFalse(req.getIsbn())).willReturn(true);
-            given(bookCategoryRepository.findById(req.getCategoryId())).willReturn(Optional.of(category));
+            given(bookRepository.existsByBookInfoIsbn(anyString())).willReturn(false);
+            given(bookInfoRepository.findById(anyString())).willReturn(Optional.of(bookInfo));
+            given(memberReqHisRepository.existsByBookInfoIsbnAndIsApprovedFalse(anyString())).willReturn(true);
+            given(bookCategoryRepository.findById(anyLong())).willReturn(Optional.of(category));
 
             // when
             bookService.saveBook(req);
 
             // then
             then(memberReqHisRepository).should(times(1)).approveByBookInfoIsbn(req.getIsbn());
-            // 책 정보 저장은 호출 X
+            // 도서 정보 저장은 호출되면 X
             then(bookInfoRepository).should(never()).save(any(BookInfo.class));
             then(bookRepository).should(times(1)).save(any());
         }
 
         @DisplayName("도서 요청이 없던 도서인 경우")
         @Test
-        void save_requestNotExist() {
+        void save_RequestNotExist() {
             // given
-            given(bookRepository.existsByBookInfoIsbn(req.getIsbn())).willReturn(false);
-            given(bookInfoRepository.findById(req.getIsbn())).willReturn(Optional.ofNullable(null));
+            given(bookRepository.existsByBookInfoIsbn(anyString())).willReturn(false);
+            given(bookInfoRepository.findById(anyString())).willReturn(Optional.ofNullable(null));
             given(bookInfoRepository.save(any(BookInfo.class))).willReturn(bookInfo);
-            given(bookCategoryRepository.findById(req.getCategoryId())).willReturn(Optional.of(category));
+            given(bookCategoryRepository.findById(anyLong())).willReturn(Optional.of(category));
 
             // when
             bookService.saveBook(req);
@@ -150,9 +150,9 @@ class BookServiceTest {
 
         @Test
         @DisplayName("실패: 이미 존재하는 도서인 경우")
-        void saveBook_fail() {
+        void saveBook_Fail() {
             // given
-            given(bookRepository.existsByBookInfoIsbn(req.getIsbn())).willReturn(true);
+            given(bookRepository.existsByBookInfoIsbn(anyString())).willReturn(true);
 
             // when
             assertThatThrownBy(() -> bookService.saveBook(req))
@@ -162,7 +162,7 @@ class BookServiceTest {
     }
 
     @Nested
-    @DisplayName("신규 도서 요청 테스트")
+    @DisplayName("신규 도서 요청")
     class AddNewBookRequestTest {
         AddBookRequest req;
 
@@ -179,12 +179,12 @@ class BookServiceTest {
 
         @Test
         @DisplayName("도서 정보가 없는 경우")
-        void addNewBookRequest_notExistBookInfo() {
+        void addNewBookRequest_NotExistBookInfo() {
             // given
             given(memberRepository.findById(anyLong())).willReturn(Optional.of(member));
-            given(bookRepository.existsByBookInfoIsbn(req.getIsbn())).willReturn(false);
+            given(bookRepository.existsByBookInfoIsbn(anyString())).willReturn(false);
             given(memberReqHisRepository.existsByMemberIdAndBookInfoIsbn(member.getId(), req.getIsbn())).willReturn(false);
-            given(bookInfoRepository.findById(req.getIsbn())).willReturn(Optional.empty());
+            given(bookInfoRepository.findById(anyString())).willReturn(Optional.empty());
             given(bookInfoRepository.save(any(BookInfo.class))).willReturn(req.toEntity());
 
             // when
@@ -198,12 +198,12 @@ class BookServiceTest {
 
         @Test
         @DisplayName("도서 정보가 경우")
-        void addNewBookRequest_existBookInfo() {
+        void addNewBookRequest_ExistBookInfo() {
             // given
             given(memberRepository.findById(anyLong())).willReturn(Optional.of(member));
-            given(bookRepository.existsByBookInfoIsbn(req.getIsbn())).willReturn(false);
+            given(bookRepository.existsByBookInfoIsbn(anyString())).willReturn(false);
             given(memberReqHisRepository.existsByMemberIdAndBookInfoIsbn(member.getId(), req.getIsbn())).willReturn(false);
-            given(bookInfoRepository.findById(req.getIsbn())).willReturn(Optional.of(bookInfo));
+            given(bookInfoRepository.findById(anyString())).willReturn(Optional.of(bookInfo));
 
             // when
             bookService.addNewBookRequest(req, 1L);
@@ -216,10 +216,10 @@ class BookServiceTest {
 
         @Test
         @DisplayName("실패: 이미 보유한 도서인 경우")
-        void addNewBookRequest_failAlreadyBookExist() {
+        void addNewBookRequest_FailAlreadyBookExist() {
             // given
             given(memberRepository.findById(anyLong())).willReturn(Optional.of(member));
-            given(bookRepository.existsByBookInfoIsbn(req.getIsbn())).willReturn(true);
+            given(bookRepository.existsByBookInfoIsbn(anyString())).willReturn(true);
 
             // when
             assertThatThrownBy(() -> bookService.addNewBookRequest(req, 1L))
@@ -229,7 +229,7 @@ class BookServiceTest {
 
         @Test
         @DisplayName("실패: 이미 추가 요청한 도서인 경우")
-        void addNewBookRequest_failAlreadyReqExist() {
+        void addNewBookRequest_FailAlreadyReqExist() {
             // given
             given(memberRepository.findById(anyLong())).willReturn(Optional.of(member));
             given(bookRepository.existsByBookInfoIsbn(req.getIsbn())).willReturn(false);
@@ -243,7 +243,7 @@ class BookServiceTest {
     }
 
     @Nested
-    @DisplayName("도서 대출 테스트")
+    @DisplayName("도서 대출")
     class LoanBookTest {
         @Test
         @DisplayName("도서 대출 성공")
@@ -265,7 +265,7 @@ class BookServiceTest {
 
         @Test
         @DisplayName("실패: 대출 가능한 도서 수량이 없는 경우")
-        void loanBook_failLoanableCnt() {
+        void loanBook_FailLoanableCnt() {
             // given
             given(memberRepository.findById(anyLong())).willReturn(Optional.of(member));
             given(bookRepository.findById(anyLong())).willReturn(Optional.of(book));
@@ -280,7 +280,7 @@ class BookServiceTest {
 
         @Test
         @DisplayName("실패: 이미 대출한 도서인 경우")
-        void loanBook_failAlreadyLoan() {
+        void loanBook_FailAlreadyLoan() {
             // given
             given(memberRepository.findById(anyLong())).willReturn(Optional.of(member));
             given(bookRepository.findById(anyLong())).willReturn(Optional.of(book));
@@ -298,7 +298,7 @@ class BookServiceTest {
 
         @Test
         @DisplayName("실패: 최대 대출 수량인 3권을 대출중인 경우")
-        void loanBook_failExceedMax() {
+        void loanBook_FailExceedMax() {
             // given
             given(memberRepository.findById(member.getId())).willReturn(Optional.of(member));
             given(bookRepository.findById(book.getId())).willReturn(Optional.of(book));
@@ -314,7 +314,7 @@ class BookServiceTest {
     }
 
     @Nested
-    @DisplayName("도서 반납 테스트")
+    @DisplayName("도서 반납")
     class ReturnBookTest {
         private ReturnBookRequest req;
         private MemberLoanHistory history;
@@ -336,9 +336,9 @@ class BookServiceTest {
         void returnBook() {
             // given
             given(bookRepository.findByBookInfoIsbn(bookInfo.getIsbn())).willReturn(Optional.of(book));
-            given(memberLoanHisRepository.findByMemberIdAndBookInfoIsbnAndReturnedAtIsNull(1L,bookInfo.getIsbn()))
+            given(memberLoanHisRepository.findByMemberIdAndBookInfoIsbnAndReturnedAtIsNull(anyLong(), anyString()))
                     .willReturn(Optional.of(history));
-
+            // 도서 대출 처리
             member.loanBook(book);
             book.decreaseLoanableCnt();
 
@@ -353,9 +353,9 @@ class BookServiceTest {
 
         @Test
         @DisplayName("실패: 도서가 없는 경우")
-        void returnBook_failNotExistBook() {
+        void returnBook_FailNotExistBook() {
             // given
-            given(bookRepository.findByBookInfoIsbn(req.getBookInfoIsbn())).willReturn(Optional.empty());
+            given(bookRepository.findByBookInfoIsbn(anyString())).willReturn(Optional.empty());
 
             // when, then
             assertThatThrownBy(() -> bookService.returnBook(req, 1L))
@@ -365,10 +365,10 @@ class BookServiceTest {
 
         @Test
         @DisplayName("실패: 대출 기록이 없는 경우")
-        void returnBook_failNotLoaned() {
+        void returnBook_FailNotLoaned() {
             // given
-            given(bookRepository.findByBookInfoIsbn(req.getBookInfoIsbn())).willReturn(Optional.of(book));
-            given(memberLoanHisRepository.findByMemberIdAndBookInfoIsbnAndReturnedAtIsNull(1L,bookInfo.getIsbn()))
+            given(bookRepository.findByBookInfoIsbn(anyString())).willReturn(Optional.of(book));
+            given(memberLoanHisRepository.findByMemberIdAndBookInfoIsbnAndReturnedAtIsNull(anyLong(), anyString()))
                     .willReturn(Optional.empty());
 
             // when, then
@@ -379,7 +379,7 @@ class BookServiceTest {
     }
 
     @Nested
-    @DisplayName("도서 연장 테스트")
+    @DisplayName("도서 연장")
     class RenewBookTest {
         private MemberLoanHistory history;
 
@@ -406,7 +406,7 @@ class BookServiceTest {
 
         @Test
         @DisplayName("실패: 대출내역이 없는 경우")
-        void renewBook_failNotFountHistory() {
+        void renewBook_FailNotFountHistory() {
             // given
             given(memberLoanHisRepository.findById(anyLong())).willReturn(Optional.ofNullable(null));
 
@@ -418,7 +418,7 @@ class BookServiceTest {
 
         @Test
         @DisplayName("실패: 대출중이 아닌 경우")
-        void renewBook_failAlreadyReturn() {
+        void renewBook_FailAlreadyReturn() {
             // given
             given(memberLoanHisRepository.findById(anyLong())).willReturn(Optional.of(history));
             history.doReturn();
@@ -444,7 +444,7 @@ class BookServiceTest {
     }
 
     @Nested
-    @DisplayName("도서 수량 수정 테스트")
+    @DisplayName("도서 수량 수정")
     class UpdateBookQuantityTest {
 
         @Test
@@ -459,11 +459,13 @@ class BookServiceTest {
 
             // then
             assertThat(book.getQuantity()).isEqualTo(3);
+            // 대출 가능한 수량도 함께 증가 했는지 확인
+            assertThat(book.getLoanableCnt()).isEqualTo(3);
         }
 
         @Test
         @DisplayName("실패: 현재 수량과 같은 수량으로 수정하려는 경우")
-        void updateBookQuantity_failSameQuantity() {
+        void updateBookQuantity_FailSameQuantity() {
             // given
             UpdateBookRequest req = new UpdateBookRequest(2, 1L,"",0);
             given(bookRepository.findById(anyLong())).willReturn(Optional.of(book));
@@ -476,7 +478,7 @@ class BookServiceTest {
 
         @Test
         @DisplayName("실패: 대출중인 도서 수보다 적은 수량으로 수정하려는 경우")
-        void updateBookQuantity_failQuantity() {
+        void updateBookQuantity_FailQuantity() {
             // given
             UpdateBookRequest req = new UpdateBookRequest(1, 1L,"",0);
             given(bookRepository.findById(anyLong())).willReturn(Optional.of(book));
@@ -490,52 +492,8 @@ class BookServiceTest {
         }
     }
 
-//    @Nested
-//    @DisplayName("도서 정보 삭제 테스트")
-//    class DeleteBookInfoTest {
-//        @Test
-//        @DisplayName("대출 이력이 있는 경우")
-//        void deleteBookInfo_hasLoanHis() {
-//            // given
-//            given(memberLoanHisRepository.existsByBookInfoIsbnAndReturnedAtIsNull(anyString())).willReturn(true);
-//
-//            // when
-//            bookService.deleteBookInfo(anyString());
-//
-//            // then
-//            then(bookInfoRepository).should(never()).deleteById(anyString());
-//        }
-//
-//        @Test
-//        @DisplayName("대출 이력이 있는 경우")
-//        void deleteBookInfo_hasReqHis() {
-//            // given
-//            given(memberReqHisRepository.existsByBookInfoIsbn(anyString())).willReturn(true);
-//
-//            // when
-//            bookService.deleteBookInfo(anyString());
-//
-//            // then
-//            then(bookInfoRepository).should(never()).deleteById(anyString());
-//        }
-//
-//        @Test
-//        @DisplayName("이력이 없는 경우")
-//        void deleteBookInfo() {
-//            // given
-//            given(memberLoanHisRepository.existsByBookInfoIsbnAndReturnedAtIsNull(anyString())).willReturn(false);
-//            given(memberReqHisRepository.existsByBookInfoIsbn(anyString())).willReturn(false);
-//
-//            // when
-//            bookService.deleteBookInfo(anyString());
-//
-//            // then
-//            then(bookInfoRepository).should(times(1)).deleteById(anyString());
-//        }
-//    }
-
     @Nested
-    @DisplayName("도서 삭제 테스트")
+    @DisplayName("도서 삭제")
     class DeleteBookTest {
         @Test
         @DisplayName("어떤 이력도 없는 경우")
@@ -553,7 +511,7 @@ class BookServiceTest {
 
         @Test
         @DisplayName("대출중인 도서가 있는 경우")
-        void deleteBook_haveLoanedBook() {
+        void deleteBook_WithLoanedBook() {
             // given
             given(bookRepository.findById(anyLong())).willReturn(Optional.of(book));
             // 대출 기록 생성
@@ -585,7 +543,7 @@ class BookServiceTest {
 
         @Test
         @DisplayName("대출 기록은 없고, 찜 및 도서 요청 기록이 있는 경우")
-        void deleteBook_haveBookMark() {
+        void deleteBook_WithBookmark() {
             // given
             given(bookRepository.findById(anyLong())).willReturn(Optional.of(book));
             // 찜 기록 생성
@@ -618,15 +576,15 @@ class BookServiceTest {
     }
 
     @Nested
-    @DisplayName("찜 테스트")
-    class BookMarkTest {
+    @DisplayName("찜")
+    class BookmarkTest {
 
         @Nested
-        @DisplayName("찜 추가 테스트")
-        class AddBookMarkTest {
+        @DisplayName("찜 추가")
+        class AddBookmarkTest {
             @Test
             @DisplayName("찜 추가 성공")
-            void addBookMark() {
+            void addBookmark() {
                 // given
                 given(memberRepository.findById(anyLong())).willReturn(Optional.of(member));
                 given(bookRepository.findById(anyLong())).willReturn(Optional.of(book));
@@ -641,7 +599,7 @@ class BookServiceTest {
 
             @Test
             @DisplayName("실패: 도서가 없는 경우")
-            void addBookMark_failNotExistBook() {
+            void addBookmark_FailNotExistBook() {
                 // given
                 given(memberRepository.findById(anyLong())).willReturn(Optional.of(member));
                 given(bookRepository.findById(anyLong())).willReturn(Optional.empty());
@@ -654,7 +612,7 @@ class BookServiceTest {
 
             @Test
             @DisplayName("실패: 이미 찜한 경우")
-            void addBookMark_failAlreadyBookMark() {
+            void addBookmark_FailAlreadyBookmark() {
                 // given
                 given(memberRepository.findById(anyLong())).willReturn(Optional.of(member));
                 given(bookRepository.findById(anyLong())).willReturn(Optional.of(book));
@@ -668,7 +626,7 @@ class BookServiceTest {
         }
 
         @Nested
-        @DisplayName("찜 해제 테스트")
+        @DisplayName("찜 해제")
         class RemoveBookmarkTest {
             @Test
             @DisplayName("찜 해제 성공")
@@ -688,7 +646,7 @@ class BookServiceTest {
 
             @Test
             @DisplayName("실패: 도서가 없는 경우")
-            void removeBookmark_failNotExistBook() {
+            void removeBookmark_FailNotExistBook() {
                 // given
                 given(bookRepository.existsById(anyLong())).willReturn(false);
 
@@ -700,7 +658,7 @@ class BookServiceTest {
 
             @Test
             @DisplayName("실패: 찜하지 않은 경우")
-            void removeBookmark_failNotExistBookMark() {
+            void removeBookmark_FailNotExistBookmark() {
                 // given
                 given(bookRepository.existsById(anyLong())).willReturn(true);
                 given(memberBookmarkRepository.existsByMemberIdAndBookId(anyLong(), anyLong())).willReturn(false);
@@ -714,11 +672,11 @@ class BookServiceTest {
     }
 
     @Test
-    @DisplayName("최근 5일간의 대출 수 계산 테스트")
+    @DisplayName("최근 5일간의 대출 수 계산")
     void calculateDailyLoanCounts() {
         // given
         List<Object[]> expectedData = new ArrayList<>();
-        // 현재 날짜 기준으로 데이터 생성
+        // 현재 날짜 기준으로 2일전, 4일전, 1건씩 데이터 생성
         expectedData.add(new Object[]{java.sql.Date.valueOf(LocalDate.now().minusDays(4)), 1L});
         expectedData.add(new Object[]{java.sql.Date.valueOf(LocalDate.now().minusDays(2)), 1L});
         expectedData.add(new Object[]{java.sql.Date.valueOf(LocalDate.now()), 2L});
@@ -742,11 +700,10 @@ class BookServiceTest {
 
 
     @Test
-    @DisplayName("키워드 검색 테스트")
+    @DisplayName("키워드 검색")
     void findBySearchKeyword() {
         // given
         SearchKeywordBookRequest req = new SearchKeywordBookRequest("test", true, true, 0);
-
         // 검색 결과 생성
         List<Book> books = createBooks();
         Pageable pageable = PageRequest.of(0, 10);
@@ -760,7 +717,7 @@ class BookServiceTest {
 
         // then
         assertThat(result.getTotalElements()).isEqualTo(4);
-        // 찜 정보 모두 flase 확인
+        // 찜 정보 모두 false 확인
         assertThat(result.getContent()).allSatisfy(book -> assertThat(book.isMarked()).isEqualTo(false));
         then(bookRepository).should(times(1)).search(any(BookSearchCondition.class), any(Pageable.class));
         then(memberBookmarkRepository).should(times(4)).existsByMemberIdAndBookId(1L, null);
@@ -768,7 +725,7 @@ class BookServiceTest {
 
     @Nested
     @WithUserDetails
-    @DisplayName("관리자 사내 도서 목록 검색 테스트")
+    @DisplayName("관리자 사내 도서 목록 검색")
     class AdminSearchBooksTest {
         private BookCategory category;
         private SearchBookRequest request;
@@ -789,7 +746,7 @@ class BookServiceTest {
 
         @Test
         @DisplayName("도서 검색 성공 (카테고리 조건과 키워드 모두 있는 경우)")
-        void searchBooks_withCategory() {
+        void searchBooks_WithCategory() {
             // given
              given(bookCategoryRepository.findById(category.getId())).willReturn(Optional.of(category));
 
@@ -809,7 +766,7 @@ class BookServiceTest {
 
         @Test
         @DisplayName("실패: 존재하지 않는 카테고리로 검색하려는 경우")
-        void searchBooks_onlyKeyword() {
+        void searchBooks_OnlyKeyword() {
             // given
             given(bookCategoryRepository.findById(category.getId())).willReturn(Optional.empty());
 
@@ -821,7 +778,7 @@ class BookServiceTest {
     }
 
     @Test
-    @DisplayName("최근 입고된 도서 4권 조회 테스트")
+    @DisplayName("최근 입고된 도서 4권 조회")
     void findNewBooks() {
         // given
         List<Book> books = createBooks();
@@ -858,7 +815,7 @@ class BookServiceTest {
     }
 
     @Test
-    @DisplayName("전체 도서 조회 테스트")
+    @DisplayName("전체 도서 조회")
     void findAllBooks() {
         // given
         List<Book> books = createBooks();
@@ -879,7 +836,7 @@ class BookServiceTest {
     }
 
     @Test
-    @DisplayName("찜 정보와 함께 전체 도서 조회 테스트")
+    @DisplayName("찜 정보와 함께 전체 도서 조회")
     void findAllBooksWithMark() {
         // given
         List<Book> books = createBooks();
@@ -902,11 +859,11 @@ class BookServiceTest {
 
     @Nested
     @WithUserDetails
-    @DisplayName("특정 카테고리 도서 검색 테스트")
+    @DisplayName("특정 카테고리 도서 검색")
     class FindBooksByCategoryWithMarkTest {
         @Test
         @DisplayName("해당 카테고리의 도서 정보와 회원의 찜 정보 조회 성공")
-        void findAllBooksWithMark_success() {
+        void findBooksByCategoryWithMark_Success() {
             // given
             Long categoryId = 1L;
             given(bookCategoryRepository.existsById(categoryId)).willReturn(true);
@@ -937,7 +894,7 @@ class BookServiceTest {
 
         @Test
         @DisplayName("실패: 해당 카테고리 없는 경우")
-        void findAllBooksWithMark_fail() {
+        void findBooksByCategoryWithMark_Fail() {
             // given
             Long categoryId = 1L;
             given(bookCategoryRepository.existsById(categoryId)).willThrow(new NoSuchElementException(BookMessage.NOT_FOUND_CATEGORY.getMessage()));
@@ -950,7 +907,7 @@ class BookServiceTest {
     }
 
     @Nested
-    @DisplayName("도서 대출 이력 조회 테스트")
+    @DisplayName("도서 대출 이력 조회")
     class FindLoanHistoryTest {
         private MemberLoanHistory memberLoanHis;
         private MemberLoanHistory memberLoanHis2;
@@ -968,7 +925,7 @@ class BookServiceTest {
         }
 
         @Test
-        @DisplayName("모든 이력 조회 테스트")
+        @DisplayName("모든 이력 조회")
         void findAllLoanHistory() {
             // given
             Pageable pageable = PageRequest.of(0, 10);
@@ -987,7 +944,7 @@ class BookServiceTest {
         }
 
         @Test
-        @DisplayName("특정 회원 이력 조회 테스트")
+        @DisplayName("특정 회원 이력 조회")
         void findLoanHistory() {
             // given
             Pageable pageable = PageRequest.of(0, 10);
@@ -996,28 +953,42 @@ class BookServiceTest {
             given(memberLoanHisRepository.findAllByMemberId(anyLong(), any(Pageable.class))).willReturn(histories);
 
             // when
-            Page<com.plee.library.dto.book.response.LoanHistoryResponse> result = bookService.findLoanHistory(1L, pageable);
+            Page<LoanHistoryResponse> result = bookService.findLoanHistory(1L, pageable);
 
             // then
-            List<com.plee.library.dto.book.response.LoanHistoryResponse> expectedResponse = com.plee.library.dto.book.response.LoanHistoryResponse.from(histories.getContent());
+            List<LoanHistoryResponse> expectedResponse = LoanHistoryResponse.from(histories.getContent());
             assertThat(result.getTotalElements()).isEqualTo(2);
             assertThat(result.getContent()).usingRecursiveComparison().isEqualTo(expectedResponse);
         }
 
         @Test
-        @DisplayName("특정 회원의 대출중인 이력 조회 테스트")
+        @DisplayName("특정 회원의 대출중인 이력만 조회")
         void findOnLoanHistory() {
             // given
             List<MemberLoanHistory> histories = Arrays.asList(memberLoanHis, memberLoanHis2);
             given(memberLoanHisRepository.searchHistory(any(LoanHistorySearchCondition.class))).willReturn(histories);
 
             // when
-            Page<com.plee.library.dto.book.response.LoanHistoryResponse> result = bookService.findOnLoanHistory(1L);
+            Page<LoanHistoryResponse> result = bookService.findOnLoanHistory(1L);
 
             // then
-            List<com.plee.library.dto.book.response.LoanHistoryResponse> expectedResponse = com.plee.library.dto.book.response.LoanHistoryResponse.from(histories);
+            List<LoanHistoryResponse> expectedResponse = LoanHistoryResponse.from(histories);
             assertThat(result.getTotalElements()).isEqualTo(2);
             assertThat(result.getContent()).usingRecursiveComparison().isEqualTo(expectedResponse);
+        }
+
+        @Test
+        @DisplayName("대출중인 이력이 없는 경우, 대출중인 이력만 조회")
+        void findOnLoanHistory_Empty() {
+            // given
+            given(memberLoanHisRepository.searchHistory(any(LoanHistorySearchCondition.class))).willReturn(Collections.emptyList());
+
+            // when
+            Page<LoanHistoryResponse> result = bookService.findOnLoanHistory(1L);
+
+            // then
+            assertThat(result.getTotalElements()).isEqualTo(0);
+            assertThat(result.getContent()).isEmpty();
         }
     }
 }
